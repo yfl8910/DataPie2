@@ -1,0 +1,74 @@
+ **/bin
+**/obj
+
+bin/
+obj/
+
+
+*.dll
+*.pdb
+*.exe
+*.cache
+.vs/DataPieDesktop/v16/.suo
+
+bin/
+tmp/
+obj/
+DataPieDesktop/db/data.db
+DataPieCore/bin/Debug/netcoreapp3.1/DataPieCore.deps.json
+DataPieDesktop/Properties/PublishProfiles/FolderProfile.pubxml.user
+DataPieCore/obj/project.assets.json
+DataPieCore/obj/project.assets.json
+DataPieCore/obj/DataPieCore.csproj.nuget.dgspec.json
+<<<<<<< HEAD
+.vs/DataPieDesktop/v16/.suo
+.vs/DataPieDesktop/DesignTimeBuild/.dtbcache.v2
+=======
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (MonoDevelop/Xamarin Studio)
+*.userprefs
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+>>>>>>> c3bddb3694d83788ba20b2d7ca0b4df1a9bc60b8
+DataPieCore/obj/project.assets.json
+DataPieCore/obj/Debug/netcoreapp3.1/DataPieCore.csproj.FileListAbsolute.txt
+DataPieCore/obj/DataPieCore.csproj.nuget.dgspec.json
+DataPieDesktop/db/data.db
+DataPieCore/obj/Debug/netcoreapp3.1/DataPieCore.csproj.FileListAbsolute.txt
+DataPieDesktop/Properties/PublishProfiles/FolderProfile.pubxml.user
+DataPieCore/obj/DataPieCore.csproj.nuget.dgspec.json
+DataPieCore/obj/project.assets.json
+DataPieCore/obj/project.assets.json
+DataPieCore/obj/project.assets.json
+DataPieDesktop/Properties/PublishProfiles/FolderProfile.pubxml.user
+DataPieCore/obj/DataPieCore.csproj.nuget.dgspec.json
+DataPieDesktop/data.db
+DataPieDesktop/obj/Debug/net5.0-windows/DataPieDesktop.Form1.resources
+DataPieDesktop/Properties/PublishProfiles/FolderProfile.pubxml.user
+DataPieDesktop/obj/Debug/net5.0-windows/DataPieDesktop.csproj.FileListAbsolute.txt
+DataPieDesktop/obj/Debug/net5.0-windows/DataPieDesktop.AssemblyInfo.cs
+DataPieCore/obj/project.assets.json
+DataPieCore/obj/Debug/netcoreapp3.1/DataPieCore.csproj.FileListAbsolute.txt
+DataPieCore/obj/DataPieCore.csproj.nuget.dgspec.json
+.vs/DataPieDesktop/v16/.suo
+.vs/DataPieDesktop/DesignTimeBuild/.dtbcache.v2
+DataPieDesktop/obj/Debug/net5.0-windows/DataPieDesktop.csproj.FileListAbsolute.txt
