@@ -32,22 +32,9 @@ namespace DataPieDesktop
 
         DBConfig db = new DBConfig();
 
-        //int version = 202103;
-
-
-
         public Form1()
         {
-            //强制更新到最新版，有效期3年
-            //DateTime EffectiveDate = new DateTime((version+300) / 100 , version % 100, 20);
-            //if (DateTime.Now > EffectiveDate)
-            //{
-            //    MessageBox.Show("This version is too old \r\n Please contact the author for a new version \r\n Email：yfl8910@qq.com OR Wechat(微信号): yfl8910 \r\n Find More Information https://github.com/yfl8910/DataPiePulic");
-
-            //    Application.Exit();
-            //    System.Environment.Exit(0);
-            //}
-
+          
             InitializeComponent();
         }
 
