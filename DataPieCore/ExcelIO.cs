@@ -275,12 +275,12 @@ namespace DataPieCore
                 {
                     string sql = BuildSQl.GetSQLfromTable(table, dbtype);
 
-                    IDataReader reader = dbAccess.GetDataReader(sql);
-                    sheets.Add(table, reader); 
+                    //IDataReader reader = dbAccess.GetDataReader(sql);
+                    //sheets.Add(table, reader); 
 
 
-                    //System.Data.DataTable dt = dbAccess.GetDataTable(sql);
-                    //sheets.Add(table, dt);
+                    System.Data.DataTable dt = dbAccess.GetDataTable(sql);
+                    sheets.Add(table, dt);
 
                 }
 

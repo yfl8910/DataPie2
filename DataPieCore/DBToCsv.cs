@@ -79,11 +79,7 @@ namespace DataPieCore
             watch.Stop();
             return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
         }
-        //public static async Task<int> ExportCsvAsync(IDataReader reader, string filename)
-        //{
-        //    return await Task.Run(() => { return SaveCsv(reader, filename); });
-        //}
-
+    
         public static StreamWriter GetStreamWriter(string filename, int outCount)
         {
             string s = filename.Substring(0, filename.LastIndexOf("."));
@@ -132,10 +128,6 @@ namespace DataPieCore
             return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
 
         }
-        //public static async Task<int> ExportCsvAsync(IDataReader reader, string filename, int pagesize)
-        //{
-        //    return await Task.Run(() => { return SaveCsv(reader, filename, pagesize); });
-        //}
-
+    
     }
 }
