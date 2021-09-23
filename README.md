@@ -35,3 +35,6 @@ DataPie是一个通用的数据库导入，导出，数据查询，存储过程�
 
 - SQL Server下导出所有数据到SQLITE数据库，参考https://github.com/Jamaxack/SqlServerToSQLiteConverter
 
+---
+.NET Framework版本：  https://github.com/yfl8910/DataPie
+
