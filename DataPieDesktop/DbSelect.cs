@@ -32,6 +32,7 @@ namespace DataPieDesktop
 
         DBConfig db = new DBConfig();
 
+
         public Form1()
         {
           
@@ -60,7 +61,7 @@ namespace DataPieDesktop
             else
             {
                 main.Show();
-               await main.DataLoad();
+                await main.DataLoad();
 
             }
 
@@ -106,6 +107,7 @@ namespace DataPieDesktop
         {
             AppState.connStr = _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.ConnectionStrings).FirstOrDefault();
             AppState.Dbtype = _DataBaseList.Where(p=>p.Dbname == comboBox1.Text).Select(p => p.Dbtype).FirstOrDefault();
+            AppState.DbName= _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.Dbname).FirstOrDefault();
 
         }
 
@@ -321,7 +323,8 @@ namespace DataPieDesktop
             var dbaccess1 = IDBFactory.CreateIDB("Data Source=data.db", "SQLITE");
             string sql = string.Format("insert into Dbinfo(Dbname, ConnectionStrings,Dbtype) select '{0}', '{1}', '{2}' WHERE NOT EXISTS(select 1 from Dbinfo where Dbname= '{0}')", comboBox5.Text.ToString(), sqlcon, "SQLSERVER");
             dbaccess1.ExecuteSql(sql);
-            
+
+            AppState.DbName = comboBox5.Text.ToString();
             MainfromShow();
 
             this.Hide();
@@ -378,6 +381,8 @@ namespace DataPieDesktop
 
             AppState.connStr = sqlcon;
             AppState.Dbtype = "SQLITE";
+
+            AppState.DbName  = textBox5.Text.ToString();
 
             MainfromShow();
 

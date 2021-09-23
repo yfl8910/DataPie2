@@ -31,8 +31,7 @@ namespace DataPieDesktop
        IList<string> viewList = new List<string>();
 
        IList<string> SpList = new List<string>();
-
-        
+    
         string tableName="";
 
         SynchronizationContext _syncContext = null;
@@ -69,6 +68,10 @@ namespace DataPieDesktop
 
             await Task.Run(() =>
             {
+                string ss ="Loading data...";
+
+                this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
+
                 Stopwatch watch = Stopwatch.StartNew();
 
                 watch.Start();
@@ -98,7 +101,7 @@ namespace DataPieDesktop
 
                 watch.Stop();
 
-                string ss = string.Format("DataLoad successfully! Time:{0} second.", watch.ElapsedMilliseconds / 1000);
+                ss = string.Format("DataLoad successfully! Time:{0} second.", watch.ElapsedMilliseconds / 1000);
 
                 this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
@@ -618,7 +621,7 @@ namespace DataPieDesktop
 
         private void ShowMessage(object o, System.EventArgs e)
         {
-            statusStrip1.Items[0].Text = o.ToString();
+            statusStrip1.Items[0].Text =AppState.DbName +"-"+ o.ToString();
             statusStrip1.Items[0].ForeColor = Color.Red;
         }
 
@@ -626,7 +629,7 @@ namespace DataPieDesktop
         {
             Exception ee = o as Exception;
 
-            statusStrip1.Items[0].Text = "Error! "+ee.Message;
+            statusStrip1.Items[0].Text = AppState.DbName + "-" + "Error! " +ee.Message;
             statusStrip1.Items[0].ForeColor = Color.Red;
         }
 

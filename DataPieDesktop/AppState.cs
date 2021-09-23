@@ -11,5 +11,7 @@ namespace DataPieDesktop
         public static string Dbtype;
 
         public static string connStr;
+
+        public static string DbName;
     }
 }
