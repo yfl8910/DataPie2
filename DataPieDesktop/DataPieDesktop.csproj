@@ -1,17 +1,18 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <PropertyGroup>
-    <OutputType>WinExe</OutputType>
+    <OutputType>Exe</OutputType>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <Copyright>杨福来 2021</Copyright>
     <Authors>杨福来</Authors>
     <Product>DataPie</Product>
-    <Description>DataPie：通用数据库导入导出管理工具</Description>
-    <ApplicationIcon></ApplicationIcon>
+    <Description>通用数据库导入导出管理工具</Description>
+    <ApplicationIcon>database2.ico</ApplicationIcon>
     <RepositoryUrl>https://github.com/yfl8910/DataPie2</RepositoryUrl>
     <Company>DataPie</Company>
     <PackageProjectUrl>https://github.com/yfl8910/DataPie2</PackageProjectUrl>
+    <StartupObject />
   </PropertyGroup>
 
   <ItemGroup>

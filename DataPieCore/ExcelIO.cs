@@ -52,21 +52,10 @@ namespace DataPieCore
 
         public static void ExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
+
+ 
             var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
 
-            //using (var reader = ExcelReaderFactory.CreateReader(stream))
-            //{
-            //    var value = reader.GetSchemaTable();
-
-            //    do
-            //    {
-            //        while (reader.Read())
-            //        {
-            //            var value1= reader.GetValue(1);
-            //        }
-            //    } while (reader.NextResult());
-
-            //}
             var reader = ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
 
             try
@@ -276,7 +265,7 @@ namespace DataPieCore
                     string sql = BuildSQl.GetSQLfromTable(table, dbtype);
 
                     //IDataReader reader = dbAccess.GetDataReader(sql);
-                    //sheets.Add(table, reader); 
+                    //sheets.Add(table, reader);
 
 
                     System.Data.DataTable dt = dbAccess.GetDataTable(sql);

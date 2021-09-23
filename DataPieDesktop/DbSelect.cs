@@ -318,6 +318,10 @@ namespace DataPieDesktop
             AppState.connStr = sqlcon;
             AppState.Dbtype = "SQLSERVER";
 
+            var dbaccess1 = IDBFactory.CreateIDB("Data Source=data.db", "SQLITE");
+            string sql = string.Format("insert into Dbinfo(Dbname, ConnectionStrings,Dbtype) select '{0}', '{1}', '{2}' WHERE NOT EXISTS(select 1 from Dbinfo where Dbname= '{0}')", comboBox5.Text.ToString(), sqlcon, "SQLSERVER");
+            dbaccess1.ExecuteSql(sql);
+            
             MainfromShow();
 
             this.Hide();
