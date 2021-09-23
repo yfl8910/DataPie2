@@ -257,22 +257,25 @@ namespace DataPieCore
                     newFile = new FileInfo(filename);
                 }
 
-                var sheets = new Dictionary<string, object> {};
+                var sheets = new Dictionary<string, object> { };
 
-                foreach (var table in tableNames)
-                {
-                    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
+                //foreach (var table in tableNames)
+                //{
+                //    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
 
-                    //IDataReader reader = dbAccess.GetDataReader(sql);
-                    //sheets.Add(table, reader);
+                //    IDataReader reader = dbAccess.GetDataReader(sql);
+                //    sheets.Add(table, reader);
 
 
-                    System.Data.DataTable dt = dbAccess.GetDataTable(sql);
-                    sheets.Add(table, dt);
+                //    //System.Data.DataTable dt = dbAccess.GetDataTable(sql);
+                //    //sheets.Add(table, dt);
 
-                }
+                //}
 
-                MiniExcel.SaveAs(newFile.ToString(), sheets);
+                string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
+                IDataReader reader = dbAccess.GetDataReader(sql);
+
+                MiniExcel.SaveAs(newFile.ToString(), reader);
 
                 watch.Stop();
 

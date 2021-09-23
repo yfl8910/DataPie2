@@ -306,20 +306,20 @@ namespace DataPieDesktop
             // 
             // button19
             // 
-            this.button19.Location = new System.Drawing.Point(827, 32);
+            this.button19.Location = new System.Drawing.Point(477, 32);
             this.button19.Name = "button19";
-            this.button19.Size = new System.Drawing.Size(154, 62);
+            this.button19.Size = new System.Drawing.Size(207, 62);
             this.button19.TabIndex = 6;
-            this.button19.Text = "Export MiniExcel";
+            this.button19.Text = "MiniExcel(Fast) ";
             this.button19.UseVisualStyleBackColor = true;
             this.button19.Click += new System.EventHandler(this.button19_Click);
             // 
             // button11
             // 
-            this.button11.Location = new System.Drawing.Point(449, 32);
+            this.button11.Location = new System.Drawing.Point(734, 32);
             this.button11.Margin = new System.Windows.Forms.Padding(4);
             this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(168, 62);
+            this.button11.Size = new System.Drawing.Size(147, 62);
             this.button11.TabIndex = 5;
             this.button11.Text = "Export CSV";
             this.button11.UseVisualStyleBackColor = true;
@@ -327,10 +327,10 @@ namespace DataPieDesktop
             // 
             // button10
             // 
-            this.button10.Location = new System.Drawing.Point(641, 32);
+            this.button10.Location = new System.Drawing.Point(914, 32);
             this.button10.Margin = new System.Windows.Forms.Padding(4);
             this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(169, 62);
+            this.button10.Size = new System.Drawing.Size(140, 62);
             this.button10.TabIndex = 4;
             this.button10.Text = "Export Excel";
             this.button10.UseVisualStyleBackColor = true;
