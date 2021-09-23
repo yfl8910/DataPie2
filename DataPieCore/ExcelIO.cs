@@ -8,7 +8,6 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using MiniExcelLibs;
-//using ClosedXML.Excel;
 
 namespace DataPieCore
 {
@@ -342,57 +341,6 @@ namespace DataPieCore
             watch.Stop();
             return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
         }
-
-        //public static int SaveMutiClosedXMLExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
-        //{
-        //    if (filename != null)
-        //    {
-
-        //        Stopwatch watch = Stopwatch.StartNew();
-        //        watch.Start();
-
-        //        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-        //        FileInfo newFile = new FileInfo(filename);
-        //        if (newFile.Exists)
-        //        {
-        //            newFile.Delete();
-        //        }
-
-        //        using (var wb = new XLWorkbook())
-        //        {
-        //            foreach (var table in tableNames)
-        //            {
-        //                string sql = BuildSQl.GetSQLfromTable(table, dbtype);
-
-        //                DataTable dt = dbAccess.GetDataTable(sql);
-
-        //                try
-        //                {
-        //                    var ws = wb.Worksheets.Add(table);
-
-        //                    ws.Cell(1, 1).InsertTable(dt);
-        //                }
-
-        //                catch (Exception ex)
-        //                {
-        //                    throw ex;
-        //                }
-
-        //            }
-
-        //            wb.SaveAs(filename);
-
-        //        }
-
-        //        watch.Stop();
-
-        //        return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
-
-        //    }
-
-        //    return -1;
-
-        //}
+       
     }
 }
