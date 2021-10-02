@@ -216,7 +216,7 @@ namespace DataPieDesktop
         }
 
         //Delete
-        private void button2_Click(object sender, EventArgs e)
+        private async  void button2_Click(object sender, EventArgs e)
         {
 
             if (comboBox1.Text.ToString() == "")
@@ -234,13 +234,16 @@ namespace DataPieDesktop
                            
                 Stopwatch watch = Stopwatch.StartNew();
                 watch.Start();
-                statusStrip1.Items[1].Text = "deleting…";
-                statusStrip1.Items[1].ForeColor = Color.Red;
+
+                this.BeginInvoke(new System.EventHandler(ShowMessage), "deleting…");
 
                 dbaccess.TruncateTable(comboBox1.Text.ToString());
+
                 watch.Stop();
 
-                statusStrip1.Items[1].Text = string.Format("Delete time:{0} second", watch.ElapsedMilliseconds / 1000);
+                string ss = string.Format("Delete time:{0} second", watch.ElapsedMilliseconds / 1000);
+
+                this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
             }
 
@@ -864,7 +867,7 @@ namespace DataPieDesktop
 
 
         // run stored procedure 
-        private void button12_Click(object sender, EventArgs e)
+        private async void button12_Click(object sender, EventArgs e)
         {
             if (listBox2.Items.Count < 1)
             {
@@ -878,20 +881,20 @@ namespace DataPieDesktop
                     list.Add(item.ToString());
                 }
 
-                statusStrip1.Items[1].Text = "Processing…";
-                statusStrip1.Items[1].ForeColor = Color.Red;
-
-                Task t = TaskProcExeute(list);
+                await ProcExeute(list);
             }
         }
 
-        public async Task TaskProcExeute(IList<string> procs)
+        public async Task ProcExeute(IList<string> procs)
         {
 
             await Task.Run(() =>
             {
                 Stopwatch watch = Stopwatch.StartNew();
                 watch.Start();
+
+                this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
+
 
                 try
                 {
