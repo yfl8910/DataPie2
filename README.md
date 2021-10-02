@@ -38,3 +38,5 @@ DataPie is a general purpose database import, export, data query, stored procedu
 
 .NET Framework版本：https://github.com/yfl8910/DataPie  
 
+gitee链接： https://gitee.com/yfl8910/DataPieDesktop
+
