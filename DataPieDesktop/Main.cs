@@ -483,18 +483,6 @@ namespace DataPieDesktop
         }
 
 
-
-
-
-        //Create SQL
-        //private void button6_Click(object sender, EventArgs e)
-        //{
-        //    string sql = BuildSQl.BuildQuery(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault().Columns.Select(p => p.Name).ToList(), tableName, AppState.Dbtype,1000);
-
-        //    richTextBox1.Text = sql;
-        //}
-
-
         //OUTPUT CSV
         private async void button7_Click(object sender, EventArgs e)
         {
@@ -918,29 +906,28 @@ namespace DataPieDesktop
             });
         }
 
-        private void button9_Click(object sender, EventArgs e)
+        private async void button9_Click(object sender, EventArgs e)
         {
-           string sql = SqlWriter.WriteSelect(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault(),1000);
+            string sql = SqlWriter.WriteSelect(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault(),1000);
             richTextBox1.Text = sql;
+            this.BeginInvoke(new System.EventHandler(ShowMessage), "Select Sql Generated");
 
-            statusStrip1.Items[1].Text = "Select Sql Generated";
-            statusStrip1.Items[1].ForeColor = Color.Red;
         }
 
-        private void button13_Click(object sender, EventArgs e)
+        private async void button13_Click(object sender, EventArgs e)
         {
             string sql = SqlWriter.WriteDelete(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault());
             richTextBox1.Text = sql;
-            statusStrip1.Items[1].Text = "Delete Sql Generated";
-            statusStrip1.Items[1].ForeColor = Color.Red;
+            this.BeginInvoke(new System.EventHandler(ShowMessage), "Delete Sql Generated");
+
         }
 
-        private void button14_Click(object sender, EventArgs e)
+        private async void button14_Click(object sender, EventArgs e)
         {
             string sql = SqlWriter.WriteUpdate(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault());
             richTextBox1.Text = sql;
-            statusStrip1.Items[1].Text = "Update Sql Generated";
-            statusStrip1.Items[1].ForeColor = Color.Red;
+            this.BeginInvoke(new System.EventHandler(ShowMessage), "Update Sql Generated");
+
         }
 
         private async void button6_Click(object sender, EventArgs e)
@@ -1069,17 +1056,6 @@ namespace DataPieDesktop
         }
 
 
-        //private void button16_Click(object sender, EventArgs e)
-        //{
-        //    string filename = Common.ShowFileDialog(dbs.Name + ".db", ".db");
-
-        //    if (filename != null)
-        //    {
-        //        textBox2.Text = filename;
-
-        //    }
-        //}
-
         private void button17_Click(object sender, EventArgs e)
         {
             SqlServerToSQLite._cancelled = true;
@@ -1123,60 +1099,6 @@ namespace DataPieDesktop
 
             }
         }
-
-
-
-        //private async void button16_Click(object sender, EventArgs e)
-        //{
-        //    if (listBox1.Items.Count < 1)
-        //    {
-        //        MessageBox.Show("please choose a table !");
-        //        return;
-        //    }
-
-        //    IList<string> SheetNames = new List<string>();
-
-        //    foreach (var item in listBox1.Items)
-        //    {
-        //        SheetNames.Add(item.ToString());
-        //    }
-
-        //    string filename = Common.ShowFileDialog(SheetNames[0], ".xlsx");
-
-        //    if (filename != null)
-        //    {
-        //        await WriteMutiClosedXMLFromsql(SheetNames, filename);
-
-        //    }
-        //}
-
-        //public async Task WriteMutiClosedXMLFromsql(IList<string> TableNames, string filename)
-        //{
-        //    await Task.Run(() =>
-        //    {
-
-        //        try
-        //        {
-        //            this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
-
-        //            int i = ExcelIO.SaveMutiClosedXMLExcel(TableNames, filename, dbaccess, AppState.Dbtype);
-
-        //            string s = string.Format("Export successful! Time :{0} seconds", i);
-
-        //            this.BeginInvoke(new System.EventHandler(ShowMessage), s);
-
-        //            GC.Collect();
-        //        }
-
-        //        catch (System.Exception ex)
-        //        {
-        //            this.BeginInvoke(new System.EventHandler(ShowErr), ex);
-        //        }
-
-        //    });
-
-        //}
-
 
     }
 }
