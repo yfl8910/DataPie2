@@ -1,10 +1,11 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Authors>Yangfulai</Authors>
     <Description>DataPieCore</Description>
     <Copyright>Yangfulai</Copyright>
+    <OutputType>Library</OutputType>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,14 +14,14 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="5.7.5" />
+    <PackageReference Include="EPPlus" Version="5.8.2" />
     <PackageReference Include="ExcelDataReader" Version="3.6.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
-    <PackageReference Include="MiniExcel" Version="0.18.0" />
-    <PackageReference Include="MySql.Data" Version="8.0.26" />
-    <PackageReference Include="Npgsql" Version="5.0.10" />
+    <PackageReference Include="MiniExcel" Version="0.19.0" />
+    <PackageReference Include="MySql.Data" Version="8.0.27" />
+    <PackageReference Include="Npgsql" Version="6.0.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
-    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115" />
+    <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
   </ItemGroup>
 
 </Project>
