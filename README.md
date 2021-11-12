@@ -1,7 +1,11 @@
 ### DataPie简介
 
 
-DataPie是一个通用的数据库导入，导出，数据查询，存储过程调用的客户端工具，基于.NET 5 Winform，支持SQL Server，SQLITE，MYSQL,POSTGRESQL数据库。
+.NET Framework版本：https://github.com/yfl8910/DataPie  
+
+
+
+DataPie是一个通用的数据库导入，导出，数据查询，存储过程调用的客户端工具，基于.NET 6 Winform，支持SQL Server，SQLITE，MYSQL,POSTGRESQL数据库。
 
 -  支持EXCEL,CSV,SQLITE等格式文件的数据库导入导出；
 
@@ -17,7 +21,7 @@ DataPie是一个通用的数据库导入，导出，数据查询，存储过程�
 ### DataPie 
 
 
-DataPie is a general purpose database import, export, data query, stored procedure call client tool based on.NET 5 Winform, support SQL Server, SQLITE, MYSQL,POSTGRESQL database.
+DataPie is a general purpose database import, export, data query, stored procedure call client tool based on.NET 6 Winform, support SQL Server, SQLITE, MYSQL,POSTGRESQL database.
 
 -  Support import and export of database files in EXCEL,CSV,SQLITE and other formats;
 
@@ -33,10 +37,4 @@ DataPie is a general purpose database import, export, data query, stored procedu
 
 
 
----
-
-
-.NET Framework版本：https://github.com/yfl8910/DataPie  
-
-gitee链接： https://gitee.com/yfl8910/DataPieDesktop
 
