@@ -72,3 +72,8 @@ DataPieCore/obj/DataPieCore.csproj.nuget.dgspec.json
 .vs/DataPieDesktop/v16/.suo
 .vs/DataPieDesktop/DesignTimeBuild/.dtbcache.v2
 DataPieDesktop/obj/Debug/net5.0-windows/DataPieDesktop.csproj.FileListAbsolute.txt
+.vs/DataPieDesktop/v17/.futdcache.v1
+.vs/DataPieDesktop/project-colors.json
+DataPieDesktop/Properties/PublishProfiles/FolderProfile1.pubxml
+DataPieDesktop/Properties/PublishProfiles/FolderProfile1.pubxml
+*.pubxml
