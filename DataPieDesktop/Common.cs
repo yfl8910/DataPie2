@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.IO;
+
 
 namespace DataPieDesktop
 {
@@ -56,8 +58,37 @@ namespace DataPieDesktop
 
         #endregion
 
-     
+        public static List<FileInfo> FileList(string DirectoryPath, bool Recursive = false, string FileTypeExtension = "")
+        {
+            if (string.IsNullOrEmpty(DirectoryPath))
+                throw new ArgumentNullException("DirectoryPath");
+            List<FileInfo> Files = new List<FileInfo>();
+            if (DirectoryExists(DirectoryPath))
+            {
+                DirectoryInfo Directory = new DirectoryInfo(DirectoryPath);
+                Files.AddRange(Directory.GetFiles());
+                if (Recursive)
+                {
+                    DirectoryInfo[] SubDirectories = Directory.GetDirectories();
+                    foreach (DirectoryInfo SubDirectory in SubDirectories)
+                    {
+                        Files.AddRange(FileList(SubDirectory.FullName, true, FileTypeExtension));
+                    }
+                }
+            }
+            if (!string.IsNullOrEmpty(FileTypeExtension))
+                return Files.FindAll(x => x.Extension == FileTypeExtension);
+            return Files;
+        }
 
-   
+        public static bool DirectoryExists(string DirectoryPath)
+        {
+            if (string.IsNullOrEmpty(DirectoryPath))
+                throw new ArgumentNullException("DirectoryPath");
+            return Directory.Exists(DirectoryPath);
+        }
+
+
+
     }
 }

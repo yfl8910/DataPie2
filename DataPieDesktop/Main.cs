@@ -261,55 +261,16 @@ namespace DataPieDesktop
 
             else
             {
-                try
+                await Task.Run(() =>
                 {
-
-                  await ImportTheFile(tableName, textBox1.Text.ToString());
-
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message);
-                }
-
-
-            }
-        }
-
-        public async Task ImportTheFile(string DbTableName, string filename)
-        {
-            await Task.Run(() =>
-            {
-
-                try
-                {
+                    try
+                    {
                     Stopwatch watch = Stopwatch.StartNew();
                     watch.Start();
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
 
-                    string ext = Path.GetExtension(filename).ToLower();
-
-                    if (ext == ".xlsx" || ext == ".xls" )
-                    {
-
-                        ExcelIO.ExcelImport(filename, DbTableName, dbaccess);
-
-                        //ExcelIO.ExcelReaderImport(filename, DbTableName, dbaccess);
-
-                    }
-
-                    else if (ext == ".csv" ) {
-
-                        ExcelIO.CsvImport(filename, DbTableName, dbaccess);
-
-                    }
-
-                    else if (ext == ".db" )
-                    {
-                        DbImport(filename, DbTableName, dbaccess);
-
-                    }
+                     ImportTheFile(tableName, textBox1.Text.ToString());
 
                     watch.Stop();
 
@@ -321,14 +282,49 @@ namespace DataPieDesktop
 
 
                 }
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+                });
+
+
+            }
+        }
+
+        public void ImportTheFile(string DbTableName, string filename)
+        {
+            //await Task.Run(() =>
+            //{
+
+                try
+                {
+                   
+                    string ext = Path.GetExtension(filename).ToLower();
+
+                    if (ext == ".xlsx" || ext == ".xls" )
+                    {
+                        ExcelIO.ExcelImport(filename, DbTableName, dbaccess);
+                    }
+
+                    else if (ext == ".csv" ) {
+
+                        ExcelIO.CsvImport(filename, DbTableName, dbaccess);
+                    }
+
+                    else if (ext == ".db" )
+                    {
+                        DbImport(filename, DbTableName, dbaccess);
+
+                    }
+                
+                }
                 catch (System.Exception ex)
                 {
-                    this.BeginInvoke(new System.EventHandler(ShowErr), ex);
-
                     throw ex;
                 }
 
-            });
+            //});
 
         }
 
@@ -1099,6 +1095,90 @@ namespace DataPieDesktop
 
             }
         }
+
+        private void button21_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog folder = new FolderBrowserDialog();
+            if (folder.ShowDialog(this) == DialogResult.OK)
+            {
+                this.textBox3.Text = folder.SelectedPath;
+            }
+        }
+
+        private async void button20_Click(object sender, EventArgs e)
+        {
+            if (textBox3.Text.ToString() == "" || comboBox1.Text.ToString() == "")
+            {
+                MessageBox.Show("please choose table and fold to import!");
+            }
+
+            else
+            {
+                try
+                {
+                    await ImportTheFold(tableName, textBox3.Text.ToString());
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(ex.Message);
+                }
+            }
+        }
+
+        public async Task ImportTheFold(string DbTableName, string path)
+        {
+            await Task.Run(() =>
+            {
+
+                try
+                {
+                    Stopwatch watch = Stopwatch.StartNew();
+                    watch.Start();
+
+                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
+                   
+                    List<FileInfo> filelist = Common.FileList(path, false, ".csv");
+
+                    for (int i = 0; i < filelist.Count(); i++)
+                    {
+                        try
+                        {
+                            string m = "uploading " + (i + 1) + " file:" + filelist[i].ToString();
+
+                            this.BeginInvoke(new System.EventHandler(ShowMessage), m);
+
+                             ImportTheFile(DbTableName, filelist[i].ToString());
+
+                        }
+                        catch (Exception ee)
+                        {
+                            this.BeginInvoke(new System.EventHandler(ShowErr), ee);
+                            return;
+                        }
+                    }
+
+                    watch.Stop();
+
+                    string ss = string.Format("Import success, Time:{0} second", watch.ElapsedMilliseconds / 1000);
+
+                    this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
+
+                    GC.Collect();
+
+
+                }
+                catch (System.Exception ex)
+                {
+                    this.BeginInvoke(new System.EventHandler(ShowErr), ex);
+
+                    throw ex;
+                }
+
+            });
+
+        }
+
+   
 
     }
 }

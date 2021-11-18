@@ -32,6 +32,10 @@ namespace DataPieDesktop
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
+            this.groupBox8 = new System.Windows.Forms.GroupBox();
+            this.button20 = new System.Windows.Forms.Button();
+            this.textBox3 = new System.Windows.Forms.TextBox();
+            this.button21 = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.button3 = new System.Windows.Forms.Button();
             this.textBox1 = new System.Windows.Forms.TextBox();
@@ -86,6 +90,7 @@ namespace DataPieDesktop
             this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
+            this.groupBox8.SuspendLayout();
             this.groupBox2.SuspendLayout();
             this.groupBox1.SuspendLayout();
             this.tabPage2.SuspendLayout();
@@ -117,6 +122,7 @@ namespace DataPieDesktop
             // 
             // tabPage1
             // 
+            this.tabPage1.Controls.Add(this.groupBox8);
             this.tabPage1.Controls.Add(this.groupBox2);
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Location = new System.Drawing.Point(4, 29);
@@ -127,6 +133,45 @@ namespace DataPieDesktop
             this.tabPage1.Text = "Input";
             this.tabPage1.UseVisualStyleBackColor = true;
             this.tabPage1.Click += new System.EventHandler(this.tabPage1_Click);
+            // 
+            // groupBox8
+            // 
+            this.groupBox8.Controls.Add(this.button20);
+            this.groupBox8.Controls.Add(this.textBox3);
+            this.groupBox8.Controls.Add(this.button21);
+            this.groupBox8.Location = new System.Drawing.Point(13, 347);
+            this.groupBox8.Name = "groupBox8";
+            this.groupBox8.Size = new System.Drawing.Size(887, 153);
+            this.groupBox8.TabIndex = 6;
+            this.groupBox8.TabStop = false;
+            this.groupBox8.Text = "Excel/Csv fold Import";
+            // 
+            // button20
+            // 
+            this.button20.Location = new System.Drawing.Point(650, 47);
+            this.button20.Name = "button20";
+            this.button20.Size = new System.Drawing.Size(147, 50);
+            this.button20.TabIndex = 2;
+            this.button20.Text = "Import";
+            this.button20.UseVisualStyleBackColor = true;
+            this.button20.Click += new System.EventHandler(this.button20_Click);
+            // 
+            // textBox3
+            // 
+            this.textBox3.Location = new System.Drawing.Point(196, 65);
+            this.textBox3.Name = "textBox3";
+            this.textBox3.Size = new System.Drawing.Size(346, 27);
+            this.textBox3.TabIndex = 1;
+            // 
+            // button21
+            // 
+            this.button21.Location = new System.Drawing.Point(6, 60);
+            this.button21.Name = "button21";
+            this.button21.Size = new System.Drawing.Size(149, 37);
+            this.button21.TabIndex = 0;
+            this.button21.Text = "Browse the fold..";
+            this.button21.UseVisualStyleBackColor = true;
+            this.button21.Click += new System.EventHandler(this.button21_Click);
             // 
             // groupBox2
             // 
@@ -669,6 +714,8 @@ namespace DataPieDesktop
             this.Load += new System.EventHandler(this.Main_Load);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
+            this.groupBox8.ResumeLayout(false);
+            this.groupBox8.PerformLayout();
             this.groupBox2.ResumeLayout(false);
             this.groupBox2.PerformLayout();
             this.groupBox1.ResumeLayout(false);
@@ -753,5 +800,9 @@ namespace DataPieDesktop
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.Button button16;
         private System.Windows.Forms.Button button19;
+        private System.Windows.Forms.GroupBox groupBox8;
+        private System.Windows.Forms.Button button20;
+        private System.Windows.Forms.TextBox textBox3;
+        private System.Windows.Forms.Button button21;
     }
 }
