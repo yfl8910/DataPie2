@@ -121,7 +121,7 @@ namespace DataPieDesktop
             this.tabPage1.Controls.Add(this.groupBox1);
             this.tabPage1.Location = new System.Drawing.Point(4, 29);
             this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage1.Size = new System.Drawing.Size(916, 570);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Input";
@@ -224,7 +224,7 @@ namespace DataPieDesktop
             this.tabPage2.Controls.Add(this.groupBox4);
             this.tabPage2.Location = new System.Drawing.Point(4, 29);
             this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage2.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage2.Size = new System.Drawing.Size(916, 570);
             this.tabPage2.TabIndex = 1;
             this.tabPage2.Text = "Output";
@@ -286,7 +286,7 @@ namespace DataPieDesktop
             // button19
             // 
             this.button19.Location = new System.Drawing.Point(382, 26);
-            this.button19.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button19.Margin = new System.Windows.Forms.Padding(2);
             this.button19.Name = "button19";
             this.button19.Size = new System.Drawing.Size(166, 50);
             this.button19.TabIndex = 6;
@@ -322,7 +322,7 @@ namespace DataPieDesktop
             this.tabPage3.Controls.Add(this.groupBox3);
             this.tabPage3.Location = new System.Drawing.Point(4, 29);
             this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage3.Size = new System.Drawing.Size(916, 570);
             this.tabPage3.TabIndex = 2;
             this.tabPage3.Text = "DataView";
@@ -406,10 +406,10 @@ namespace DataPieDesktop
             // 
             // button16
             // 
-            this.button16.Location = new System.Drawing.Point(302, 75);
-            this.button16.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.button16.Location = new System.Drawing.Point(332, 75);
+            this.button16.Margin = new System.Windows.Forms.Padding(2);
             this.button16.Name = "button16";
-            this.button16.Size = new System.Drawing.Size(151, 43);
+            this.button16.Size = new System.Drawing.Size(151, 51);
             this.button16.TabIndex = 7;
             this.button16.Text = "Export Excel By Table";
             this.button16.UseVisualStyleBackColor = true;
@@ -417,7 +417,7 @@ namespace DataPieDesktop
             // 
             // button9
             // 
-            this.button9.Location = new System.Drawing.Point(302, 25);
+            this.button9.Location = new System.Drawing.Point(332, 26);
             this.button9.Name = "button9";
             this.button9.Size = new System.Drawing.Size(151, 41);
             this.button9.TabIndex = 6;
@@ -427,9 +427,9 @@ namespace DataPieDesktop
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(474, 75);
+            this.button7.Location = new System.Drawing.Point(498, 75);
             this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(141, 43);
+            this.button7.Size = new System.Drawing.Size(159, 51);
             this.button7.TabIndex = 5;
             this.button7.Text = "Export Csv By Table";
             this.button7.UseVisualStyleBackColor = true;
@@ -437,9 +437,9 @@ namespace DataPieDesktop
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(474, 26);
+            this.button5.Location = new System.Drawing.Point(498, 26);
             this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(141, 41);
+            this.button5.Size = new System.Drawing.Size(159, 43);
             this.button5.TabIndex = 3;
             this.button5.Text = "View Data";
             this.button5.UseVisualStyleBackColor = true;
@@ -449,7 +449,7 @@ namespace DataPieDesktop
             // 
             this.button4.Location = new System.Drawing.Point(139, 77);
             this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(144, 43);
+            this.button4.Size = new System.Drawing.Size(158, 49);
             this.button4.TabIndex = 2;
             this.button4.Text = "Export Excel By SQL";
             this.button4.UseVisualStyleBackColor = true;
@@ -478,7 +478,7 @@ namespace DataPieDesktop
             this.tabPage4.Controls.Add(this.groupBox6);
             this.tabPage4.Location = new System.Drawing.Point(4, 29);
             this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage4.Size = new System.Drawing.Size(916, 570);
             this.tabPage4.TabIndex = 3;
             this.tabPage4.Text = "Stored procedure";
@@ -533,7 +533,7 @@ namespace DataPieDesktop
             this.tabPage5.Controls.Add(this.button15);
             this.tabPage5.Location = new System.Drawing.Point(4, 29);
             this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            this.tabPage5.Padding = new System.Windows.Forms.Padding(3);
             this.tabPage5.Size = new System.Drawing.Size(916, 570);
             this.tabPage5.TabIndex = 4;
             this.tabPage5.Text = "Tools";
