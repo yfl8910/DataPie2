@@ -78,7 +78,9 @@ namespace DataPieDesktop
             }
             if (!string.IsNullOrEmpty(FileTypeExtension))
                 return Files.FindAll(x => x.Extension == FileTypeExtension);
-            return Files;
+            else
+                return Files.FindAll(x => x.Extension.ToLower() == ".csv" || x.Extension.ToLower() == ".xlsx");
+
         }
 
         public static bool DirectoryExists(string DirectoryPath)

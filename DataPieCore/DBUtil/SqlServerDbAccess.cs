@@ -829,7 +829,10 @@ namespace DBUtil
         /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql)
         {
-            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
+            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn)
+            {
+                CommandTimeout = 10000
+            };
             if (IsTran)
             {
                 cmd.Transaction = (SqlTransaction)tran;

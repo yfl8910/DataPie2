@@ -139,12 +139,12 @@ namespace DataPieDesktop
             this.groupBox8.Controls.Add(this.button20);
             this.groupBox8.Controls.Add(this.textBox3);
             this.groupBox8.Controls.Add(this.button21);
-            this.groupBox8.Location = new System.Drawing.Point(13, 347);
+            this.groupBox8.Location = new System.Drawing.Point(18, 347);
             this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Size = new System.Drawing.Size(887, 153);
+            this.groupBox8.Size = new System.Drawing.Size(887, 154);
             this.groupBox8.TabIndex = 6;
             this.groupBox8.TabStop = false;
-            this.groupBox8.Text = "Excel/Csv fold Import";
+            this.groupBox8.Text = "Excel/Csv folder Import";
             // 
             // button20
             // 
@@ -158,18 +158,18 @@ namespace DataPieDesktop
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(196, 65);
+            this.textBox3.Location = new System.Drawing.Point(201, 65);
             this.textBox3.Name = "textBox3";
             this.textBox3.Size = new System.Drawing.Size(346, 27);
             this.textBox3.TabIndex = 1;
             // 
             // button21
             // 
-            this.button21.Location = new System.Drawing.Point(6, 60);
+            this.button21.Location = new System.Drawing.Point(11, 60);
             this.button21.Name = "button21";
             this.button21.Size = new System.Drawing.Size(149, 37);
             this.button21.TabIndex = 0;
-            this.button21.Text = "Browse the fold..";
+            this.button21.Text = "Browse the folder..";
             this.button21.UseVisualStyleBackColor = true;
             this.button21.Click += new System.EventHandler(this.button21_Click);
             // 
@@ -183,11 +183,11 @@ namespace DataPieDesktop
             this.groupBox2.Size = new System.Drawing.Size(887, 153);
             this.groupBox2.TabIndex = 5;
             this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Excel/Csv Import";
+            this.groupBox2.Text = "Excel/Csv/Sqlite file Import";
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(650, 47);
+            this.button3.Location = new System.Drawing.Point(645, 47);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(147, 50);
             this.button3.TabIndex = 2;
@@ -236,7 +236,7 @@ namespace DataPieDesktop
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(650, 75);
+            this.button2.Location = new System.Drawing.Point(645, 75);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(151, 43);
             this.button2.TabIndex = 3;
@@ -255,7 +255,7 @@ namespace DataPieDesktop
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(650, 20);
+            this.button1.Location = new System.Drawing.Point(641, 15);
             this.button1.Name = "button1";
             this.button1.Size = new System.Drawing.Size(151, 49);
             this.button1.TabIndex = 1;

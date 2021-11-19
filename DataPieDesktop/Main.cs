@@ -1116,7 +1116,7 @@ namespace DataPieDesktop
             {
                 try
                 {
-                    await ImportTheFold(tableName, textBox3.Text.ToString());
+                    await ImportTheFolder(tableName, textBox3.Text.ToString());
                 }
                 catch (Exception ex)
                 {
@@ -1125,7 +1125,7 @@ namespace DataPieDesktop
             }
         }
 
-        public async Task ImportTheFold(string DbTableName, string path)
+        public async Task ImportTheFolder(string DbTableName, string path)
         {
             await Task.Run(() =>
             {
@@ -1137,7 +1137,7 @@ namespace DataPieDesktop
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
                    
-                    List<FileInfo> filelist = Common.FileList(path, false, ".csv");
+                    List<FileInfo> filelist = Common.FileList(path, false, "");
 
                     for (int i = 0; i < filelist.Count(); i++)
                     {
