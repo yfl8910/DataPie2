@@ -190,28 +190,26 @@ namespace DataPieDesktop
         //Template Export
         private void button1_Click(object sender, EventArgs e)
         {
-            if (comboBox1.Text.ToString() == "")
+
+            string filename = Common.ShowFileDialog(tableName, ".xlsx");
+
+            if (comboBox1.Text.ToString() == "" || filename == null)
             {
-                MessageBox.Show("please choose a table");
+                MessageBox.Show("please choose one table and file for save");
             }
             else
             {
-
-                string filename = Common.ShowFileDialog(tableName, ".xlsx");
-
                 string sql = BuildSQl.GetSQLfromTable(tableName, AppState.Dbtype);
 
                 IDataReader reader = dbaccess.GetDataReader(sql + " where 1=2");
 
                 int  i=  ExcelIO.SaveExcel(filename, reader, tableName);
 
-                statusStrip1.ShowItemToolTips = true;
-                statusStrip1.Items[1].Text =string.Format("Export time:{0} second", i);
-                statusStrip1.Items[1].ForeColor = Color.Red;
+                string ss = string.Format("Export success! Time:{0} second", i / 1000);
 
-                MessageBox.Show("Export success!");
+                this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
+
             }
-
 
         }
 
@@ -426,8 +424,6 @@ namespace DataPieDesktop
 
                 richTextBox1.Text = sql;
 
-                //string sql = BuildSQl.BuildQuery(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault().Columns.Select(p => p.Name).ToList(), tableName, AppState.Dbtype, 1000);
-
                 await GetViewData(sql);
             }
 
@@ -457,9 +453,6 @@ namespace DataPieDesktop
                     this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
                     _syncContext.Post(SetDatagrid, dt);//子线程中通过UI线程上下文更新UI 
-
-
-                    //dataGridView1.DataSource = dt;
 
                 }
                 catch (System.Exception ex)

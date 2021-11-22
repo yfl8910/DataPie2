@@ -174,7 +174,10 @@ namespace DataPieCore
                 throw ex;
             }
 
-            reader.Close();
+            finally
+            {
+                reader.Close();
+            }
 
             package.Save();
 
