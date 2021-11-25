@@ -14,7 +14,6 @@ DataPie是一个通用的数据库导入，导出，数据查询，存储过程�
 
 - SQL Server下导出所有数据到SQLITE数据库，参考https://github.com/Jamaxack/SqlServerToSQLiteConverter
 
----
 DataPie is a general purpose database import, export, data query, stored procedure call client tool based on.NET 6 Winform, support SQL Server, SQLITE, MYSQL,POSTGRESQL database.
 
 -  Support import and export of database files in EXCEL,CSV,SQLITE and other formats;
