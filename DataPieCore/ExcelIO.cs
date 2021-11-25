@@ -13,7 +13,7 @@ namespace DataPieCore
 {
     public class ExcelIO
     {
-        public static void ExcelImport(string filePath, string tableName, IDbAccess dbAccess)
+        public static void ExcelDataReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
             var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
             var reader = ExcelDataReader.ExcelReaderFactory.CreateReader(stream);

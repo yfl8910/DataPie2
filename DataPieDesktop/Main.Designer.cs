@@ -386,9 +386,9 @@ namespace DataPieDesktop
             this.groupBox7.Controls.Add(this.button13);
             this.groupBox7.Controls.Add(this.button14);
             this.groupBox7.Controls.Add(this.button6);
-            this.groupBox7.Location = new System.Drawing.Point(700, 3);
+            this.groupBox7.Location = new System.Drawing.Point(729, 3);
             this.groupBox7.Name = "groupBox7";
-            this.groupBox7.Size = new System.Drawing.Size(210, 154);
+            this.groupBox7.Size = new System.Drawing.Size(181, 154);
             this.groupBox7.TabIndex = 3;
             this.groupBox7.TabStop = false;
             this.groupBox7.Text = "Excute SQL";
@@ -444,7 +444,7 @@ namespace DataPieDesktop
             this.groupBox3.Controls.Add(this.comboBox2);
             this.groupBox3.Location = new System.Drawing.Point(37, 3);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(657, 154);
+            this.groupBox3.Size = new System.Drawing.Size(686, 154);
             this.groupBox3.TabIndex = 1;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Data View";
