@@ -100,6 +100,9 @@ namespace DataPieDesktop
 
             comboBox2.DataSource = dbtypes;
 
+            textBox3.Enabled = false;
+            textBox4.Enabled = false;
+
 
         }
 
@@ -392,7 +395,19 @@ namespace DataPieDesktop
             this.Hide();
         }
 
-     
+        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBox3.Text.ToString() == "Windows")
+            {
+                textBox3.Enabled = false;
+                textBox4.Enabled = false;
+            }
+            else
+            {
+                textBox3.Enabled = true;
+                textBox4.Enabled = true;
+            }
+        }
     }
 
     public class Dbinfo
