@@ -2,6 +2,9 @@
 
 .NET Framework版本：https://github.com/yfl8910/DataPie  
 
+.NET 6 版本：https://github.com/yfl8910/DataPie2
+
+
 DataPie是一个通用的数据库导入，导出，数据查询，存储过程调用的客户端工具，基于.NET 6 Winform，支持SQL Server，SQLITE，MYSQL,POSTGRESQL数据库。
 
 -  支持EXCEL,CSV,SQLITE等格式文件的数据库导入导出；
