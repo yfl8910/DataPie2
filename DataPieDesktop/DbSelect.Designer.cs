@@ -135,12 +135,12 @@ namespace DataPieDesktop
             this.groupBox1.Controls.Add(this.label6);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.label4);
-            this.groupBox1.Location = new System.Drawing.Point(21, 36);
+            this.groupBox1.Location = new System.Drawing.Point(0, 6);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(751, 415);
+            this.groupBox1.Size = new System.Drawing.Size(804, 457);
             this.groupBox1.TabIndex = 2;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Config";
+            this.groupBox1.Text = "Sql Server Login Info";
             // 
             // button7
             // 
