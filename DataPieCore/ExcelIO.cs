@@ -260,7 +260,7 @@ namespace DataPieCore
                     newFile = new FileInfo(filename);
                 }
 
-                var sheets = new Dictionary<string, object> { };
+                //var sheets = new Dictionary<string, object> { };
 
                 //foreach (var table in tableNames)
                 //{
@@ -274,6 +274,8 @@ namespace DataPieCore
                 //    //sheets.Add(table, dt);
 
                 //}
+
+                //MiniExcel.SaveAs(newFile.ToString(), sheets);
 
                 string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
                 IDataReader reader = dbAccess.GetDataReader(sql);
