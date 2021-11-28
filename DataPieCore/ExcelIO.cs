@@ -280,6 +280,8 @@ namespace DataPieCore
 
                 MiniExcel.SaveAs(newFile.ToString(), reader);
 
+                reader.Close();
+
                 watch.Stop();
 
                 return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
