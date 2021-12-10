@@ -1171,7 +1171,53 @@ namespace DataPieDesktop
 
         }
 
-   
+        private void buttonExAdd_Click(object sender, EventArgs e)
+        {
+            if (listBox1.Items.Contains(treeView1.SelectedNode.Text.ToString()))
+            {
+                return;
+            }
+            else
+            {
+                listBox1.Items.Add(treeView1.SelectedNode.Text.ToString());
+            }
+        }
 
+        private void buttonExRemove_Click(object sender, EventArgs e)
+        {
+            if (listBox1.SelectedIndex < 0)
+            { 
+                MessageBox.Show("Please Choose a Table！"); 
+            }
+            else
+            {
+                listBox1.Items.RemoveAt(listBox1.SelectedIndex);
+            }
+        }
+
+        private void btnAddProce_Click(object sender, EventArgs e)
+        {
+            if (listBox2.Items.Contains(treeView2.SelectedNode.Text.ToString()))
+            {
+                return;
+            }
+
+            else
+            {
+                listBox2.Items.Add(treeView2.SelectedNode.Text.ToString());
+            }
+        }
+
+        private void btnDeleteProc_Click(object sender, EventArgs e)
+        {
+            if (listBox2.SelectedIndex < 0)
+            { 
+                MessageBox.Show("Pease Choose a procedure"); 
+            }
+            else
+            { 
+                listBox2.Items.RemoveAt(listBox2.SelectedIndex); 
+            }
+        }
     }
 }
