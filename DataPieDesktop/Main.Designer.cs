@@ -616,9 +616,9 @@ namespace DataPieDesktop
             // 
             // btnDeleteProc
             // 
-            this.btnDeleteProc.Location = new System.Drawing.Point(613, 254);
+            this.btnDeleteProc.Location = new System.Drawing.Point(582, 249);
             this.btnDeleteProc.Name = "btnDeleteProc";
-            this.btnDeleteProc.Size = new System.Drawing.Size(230, 78);
+            this.btnDeleteProc.Size = new System.Drawing.Size(252, 78);
             this.btnDeleteProc.TabIndex = 4;
             this.btnDeleteProc.Text = "Remove a procedure";
             this.btnDeleteProc.UseVisualStyleBackColor = true;
@@ -626,9 +626,9 @@ namespace DataPieDesktop
             // 
             // btnAddProce
             // 
-            this.btnAddProce.Location = new System.Drawing.Point(613, 135);
+            this.btnAddProce.Location = new System.Drawing.Point(582, 135);
             this.btnAddProce.Name = "btnAddProce";
-            this.btnAddProce.Size = new System.Drawing.Size(230, 86);
+            this.btnAddProce.Size = new System.Drawing.Size(252, 86);
             this.btnAddProce.TabIndex = 3;
             this.btnAddProce.Text = "Add a procedure";
             this.btnAddProce.UseVisualStyleBackColor = true;
