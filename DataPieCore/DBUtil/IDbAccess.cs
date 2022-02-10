@@ -70,19 +70,7 @@ namespace DBUtil
         /// <returns>针对当前数据库类型的参数对象</returns>
         IDbDataParameter CreatePara(string name, object value);
 
-        /// <summary>
-        /// 根据指定日期范围生成过滤字符串
-        /// <para>
-        /// 示例：iDb.GetDateFilter("CreateTime", DateTime.Now.ToString("yyyy-MM-dd"), DateTime.Now.ToString("yyyy-MM-dd 23:59:59"), false, true);//返回 "and CreateTime&gt;'2019-11-13' and CreateTime&lt;='2019-11-13 23:59:59'"
-        /// </para>
-        /// </summary>
-        /// <param name="dateColumn">要进行过滤的字段名称</param>
-        /// <param name="minDate">最小日期</param>
-        /// <param name="MaxDate">最大日期</param>
-        /// <param name="isMinInclude">最小日期是否包含</param>
-        /// <param name="isMaxInclude">最大日期是否包含</param>
-        /// <returns>返回生成的过滤字符串</returns>
-        string GetDateFilter(string dateColumn, string minDate, string MaxDate, bool isMinInclude, bool isMaxInclude);
+      
 
         /// <summary>
         /// 执行sql语句
@@ -129,204 +117,24 @@ namespace DBUtil
         bool BulkInsert(string tableName, IDataReader reader);
 
         /// <summary>
-        /// 向一个表中添加一行数据
+        /// 批量插入一个table
         /// </summary>
         /// <param name="tableName">表名</param>
         /// <param name="dt">数据表</param>
-        /// <returns>返回是受影响的行数</returns>
+        /// <returns>返回是否成功</returns>
         bool BulkInsert(string tableName, DataTable dt);
+
+        /// <summary>
+        /// 批量插入一个table
+        /// </summary>
+        /// <param name="tableName">表名</param>
+        /// <param name="dt">数据表</param>
+        /// <param name="maplist">字段映射</param>
+        /// <returns>返回是否成功</returns>
 
         public bool BulkInsert(string tableName, DataTable dt, IList<string> maplist);
 
-        /// <summary>
-        /// 向一个表中添加一行数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="ht">列名和值的键值对</param>
-        /// <returns>是否插入成功</returns>
-        bool AddData(string tableName, Hashtable ht);
 
-        /// <summary>
-        /// 向一个表中添加一行数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dic">列名和值的键值对</param>
-        /// <returns>是否插入成功</returns>
-        bool AddData(string tableName, Dictionary<string, object> dic);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="ht">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateData(string tableName, Hashtable ht, string filterStr);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dic">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateData(string tableName, Dictionary<string, object> dic, string filterStr);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="ht">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <param name="paraArr">过滤条件中的参数数组</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateData(string tableName, Hashtable ht, string filterStr, params IDbDataParameter[] paraArr);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dic">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <param name="paraArr">过滤条件中的参数数组</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateData(string tableName, Dictionary<string, object> dic, string filterStr, params IDbDataParameter[] paraArr);
-
-        /// <summary>
-        /// 向表中更新数据并根据指定的键值对作为关键字更新(关键字默认不参与更新)
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="ht">键值表</param>
-        /// <param name="keys">关键字集合</param>
-        /// <param name="isKeyAttend">关键字是否参与到更新中</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateData(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false);
-
-        /// <summary>
-        /// 向表中更新数据并根据指定的键值对作为关键字更新(关键字默认不参与更新)
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dic">键值表</param>
-        /// <param name="keys">关键字集合</param>
-        /// <param name="isKeyAttend">关键字是否参与到更新中</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateData(string tableName, Dictionary<string, object> dic, List<string> keys, bool isKeyAttend = false);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中添加或更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="ht">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateOrAdd(string tableName, Hashtable ht, string filterStr);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中添加或更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dic">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateOrAdd(string tableName, Dictionary<string, object> dic, string filterStr);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中添加或更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="ht">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <param name="paraArr">过滤条件中的参数数组</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateOrAdd(string tableName, Hashtable ht, string filterStr, params IDbDataParameter[] paraArr);
-
-        /// <summary>
-        /// 根据键值表中的数据向表中添加或更新数据
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dic">键值表</param>
-        /// <param name="filterStr">过滤条件以and开头</param>
-        /// <param name="paraArr">过滤条件中的参数数组</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateOrAdd(string tableName, Dictionary<string, object> dic, string filterStr, params IDbDataParameter[] paraArr);
-
-        /// <summary>
-        /// 向表中添加或更新数据并根据里面的键值对作为关键字更新(关键字默认不参与更新)
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="ht">键值表</param>
-        /// <param name="keys">关键字集合</param>
-        /// <param name="isKeyAttend">关键字是否参与到更新中</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateOrAdd(string tableName, Hashtable ht, List<string> keys, bool isKeyAttend = false);
-
-        /// <summary>
-        /// 向表中添加或更新数据并根据里面的键值对作为关键字更新(关键字默认不参与更新)
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dic">键值表</param>
-        /// <param name="keys">关键字集合</param>
-        /// <param name="isKeyAttend">关键字是否参与到更新中</param>
-        /// <returns>是否更新成功</returns>
-        bool UpdateOrAdd(string tableName, Dictionary<string, object> dic, List<string> keys, bool isKeyAttend = false);
-
-        /// <summary>
-        /// 删除一行
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="strFilter">过滤条件</param>
-        /// <returns>返回受影响的行数</returns>
-        int DeleteTableRow(string tableName, string strFilter);
-
-        /// <summary>
-        /// 删除一行
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="strFilter">过滤条件</param>
-        /// <param name="paraArr">过滤条件中的参数集合</param>
-        /// <returns>返回受影响的行数</returns>
-        int DeleteTableRow(string tableName, string strFilter, params IDbDataParameter[] paraArr);
-
-        /// <summary>
-        /// 返回查到的第一行第一列的值
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <returns>返回查到的第一行第一列的值</returns>
-        object GetFirstColumn(string strSql);
-
-        /// <summary>
-        /// 返回查到的第一行第一列的值
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">sql语句参数</param>
-        /// <returns>返回查到的第一行第一列的值</returns>
-        object GetFirstColumn(string strSql, params IDbDataParameter[] paraArr);
-
-        /// <summary>
-        /// 返回查到的第一行第一列的字符串值(该方法将调用GetFirstColumn,并将返回的对象转换成字符串)
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="isReturnNull">false:查询结果为null就返回""否则返回null</param>
-        /// <returns>返回查到的第一行第一列的值</returns>
-        string GetFirstColumnString(string strSql, bool isReturnNull = false);
-
-        /// <summary>
-        /// 返回查到的第一行第一列的字符串值(该方法将调用GetFirstColumn,并将返回的对象转换成字符串)
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">sql语句中的参数数组</param>
-        /// <param name="isReturnNull">false:查询结果为null就返回""否则返回null</param>
-        /// <returns>返回查到的第一行第一列的值</returns>
-        string GetFirstColumnString(string strSql, IDbDataParameter[] paraArr, bool isReturnNull = false);
-
-        /// <summary>
-        /// 返回查到的第一行第一列的字符串值(该方法将调用GetFirstColumn,并将返回的对象转换成字符串)
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">sql语句中的参数数组</param>
-        /// <param name="isReturnNull">false:查询结果为null就返回""否则返回null</param>
-        /// <returns>返回查到的第一行第一列的值</returns>
-        string GetFirstColumnString(string strSql, bool isReturnNull = false, params IDbDataParameter[] paraArr);
 
         /// <summary>
         /// 获取阅读器
@@ -398,20 +206,8 @@ namespace DBUtil
         /// <returns></returns>
         string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex);
 
-        /// <summary>
-        /// 判断指定表或视图中是否有某一列
-        /// </summary>
-        /// <param name="tableName">表或视图名</param>
-        /// <param name="columnName">列名</param>
-        /// <returns>返回列是否存在</returns>
-        bool JudgeColumnExist(string tableName, string columnName);
 
-        /// <summary>
-        /// 返回表或视图是否存在
-        /// </summary>
-        /// <param name="tableName">表或视图名</param>
-        /// <returns>返回表或视图是否存在</returns>
-        bool JudgeTableOrViewExist(string tableName);
+     
 
         /// <summary>
         /// 返回所有的表
@@ -466,8 +262,14 @@ namespace DBUtil
         /// <returns>DataSet</returns>
         public DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName);
 
+        /// <summary>
+        /// 获取数据库信息
+        /// </summary>
         public List<string> GetDataBaseInfo();
 
+        /// <summary>
+        /// 获取Schema信息
+        /// </summary>
         public DbSchema ShowDbSchema();
     }
 }

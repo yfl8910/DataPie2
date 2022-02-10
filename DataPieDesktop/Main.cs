@@ -303,9 +303,12 @@ namespace DataPieDesktop
                     if (ext == ".xlsx" || ext == ".xls" )
                     {
                         ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
-                    }
+                        //ExcelIO.ExcelReaderImport(filename, DbTableName, dbaccess);
 
-                    else if (ext == ".csv" ) {
+
+                }
+
+                else if (ext == ".csv" ) {
 
                         ExcelIO.CsvImport(filename, DbTableName, dbaccess);
                     }

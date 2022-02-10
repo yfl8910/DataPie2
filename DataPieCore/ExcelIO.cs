@@ -8,6 +8,7 @@ using System.IO;
 using System.Text;
 using System.Diagnostics;
 using MiniExcelLibs;
+using System.Linq;
 
 namespace DataPieCore
 {
@@ -51,11 +52,18 @@ namespace DataPieCore
 
         public static void ExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
+            IDataReader reader;
 
- 
             var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
 
-            var reader = ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
+            if (filePath.EndsWith(".xls"))
+                 reader = ExcelReaderFactory.CreateBinaryReader(stream);
+            else if (filePath.EndsWith(".xlsx"))
+                 reader = ExcelReaderFactory.CreateOpenXmlReader(stream);
+            else
+                throw new Exception("The file to be processed is not an Excel file");
+
+            //var reader = ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
 
             try
             {
