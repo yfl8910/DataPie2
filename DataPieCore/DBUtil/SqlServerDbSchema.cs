@@ -470,39 +470,39 @@ where ROUTINE_TYPE='PROCEDURE'";
 
                     //去除参数表和存储过程定义，提升速度
 
-                    sql = @"sp_helptext '" + proc.Name + "'";
-                    StringBuilder sb = new StringBuilder("");
-                    DataTable dt2 = GetDataTable(sql);
-                    if (dt2.Rows.Count > 0)
-                    {
-                        for (int ii = 0; ii < dt2.Rows.Count; ii++)
-                        {
-                            sb.AppendLine(dt2.Rows[ii][0].ToString());
-                        }
-                        proc.CreateSql = sb.ToString();
-                    }
+                    //sql = @"sp_helptext '" + proc.Name + "'";
+                    //StringBuilder sb = new StringBuilder("");
+                    //DataTable dt2 = GetDataTable(sql);
+                    //if (dt2.Rows.Count > 0)
+                    //{
+                    //    for (int ii = 0; ii < dt2.Rows.Count; ii++)
+                    //    {
+                    //        sb.AppendLine(dt2.Rows[ii][0].ToString());
+                    //    }
+                    //    proc.CreateSql = sb.ToString();
+                    //}
 
-                    string sql2 = @"select '参数名称' = name,
-                    '类型' = type_name(xusertype),
-                    '长度' = length
-                    from syscolumns
-                    where id = object_id('" + proc.Name + "')";
-                    DataTable dt3 = GetDataTable(sql2);
-                    List<Procparam> p = new List<Procparam>();
-                    if (dt3.Rows.Count > 0)
-                    {
-                        for (int ii = 0; ii < dt3.Rows.Count; ii++)
-                        {
-                            Procparam param1 = new Procparam
-                            {
-                                Name = dt3.Rows[ii]["参数名称"].ToString(),
-                                Type = dt3.Rows[ii]["类型"].ToString(),
-                                Length = dt3.Rows[ii]["长度"].ToString()
-                            };
-                            p.Add(param1);
-                        }
-                    }
-                    proc.Param = p;
+                    //string sql2 = @"select '参数名称' = name,
+                    //'类型' = type_name(xusertype),
+                    //'长度' = length
+                    //from syscolumns
+                    //where id = object_id('" + proc.Name + "')";
+                    //DataTable dt3 = GetDataTable(sql2);
+                    //List<Procparam> p = new List<Procparam>();
+                    //if (dt3.Rows.Count > 0)
+                    //{
+                    //    for (int ii = 0; ii < dt3.Rows.Count; ii++)
+                    //    {
+                    //        Procparam param1 = new Procparam
+                    //        {
+                    //            Name = dt3.Rows[ii]["参数名称"].ToString(),
+                    //            Type = dt3.Rows[ii]["类型"].ToString(),
+                    //            Length = dt3.Rows[ii]["长度"].ToString()
+                    //        };
+                    //        p.Add(param1);
+                    //    }
+                    //}
+                    //proc.Param = p;
 
                     res.Add(proc);
                 }

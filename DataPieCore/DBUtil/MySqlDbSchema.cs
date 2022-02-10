@@ -106,51 +106,6 @@ namespace DBUtil
             return list;
         }
 
-        //public List<TableStruct> ShowTables()
-        //{
-        //    List<TableStruct> list = new List<TableStruct>();
-
-        //    DataTable dt = GetSchema("tables");
-        //    int num = dt.Rows.Count;
-        //    if (dt.Rows.Count > 0)
-        //    {
-        //        foreach (DataRow _DataRowItem in dt.Rows)
-        //        {
-        //            TableStruct tbl = new TableStruct();
-        //            tbl.Name = _DataRowItem["TABLE_NAME"].ToString();
-        //            tbl.Desc = string.Format("{0}.{1}", _DataRowItem["TABLE_SCHEMA"].ToString(), _DataRowItem["TABLE_NAME"].ToString());
-        //            tbl.Columns = ShowColumns(_DataRowItem["TABLE_NAME"].ToString());
-        //            list.Add(tbl);
-        //        }
-        //    }
-        //    return list;
-        //}
-
-        //public List<Column> ShowColumns(string tablename)
-        //{
-        //    List<Column> list = new List<Column>();
-
-        //    DataTable dt = GetSchema("Columns", new string[] { null, null, tablename, null });
-        //    if (dt.Rows.Count > 0)
-        //    {
-        //        foreach (DataRow row in dt.Rows)
-        //        {
-        //            Column column = new Column();
-        //            column.Name = row["COLUMN_NAME"].ToString();
-        //            column.Desc = string.Format("{0}.{1}", row["COLUMN_NAME"].ToString(), row["DATA_TYPE"].ToString());
-        //            column.Type = row["DATA_TYPE"].ToString();
-
-        //            //column.IsNullable = bool.Parse(row["IsNullable"].ToString());
-        //            //column.IsIdentity = (bool)row["IsAutoIncrement"];
-        //            //column.IsPrimaryKey = (bool)row["IsKey"];
-        //            //column.IsUnique = (bool)row["IsUnique"];
-        //            list.Add(column);
-        //        }
-        //    }
-        //    return list;
-
-        //}
-
         public string GetDbName()
         {
             string DBName;
@@ -238,14 +193,8 @@ namespace DBUtil
                         Proc proc = new Proc();
                         proc.Name = _DataRowItem["SPECIFIC_NAME"].ToString();
                         proc.CreateSql = _DataRowItem["ROUTINE_DEFINITION"].ToString();
-                        string sql2 = string.Format(@"SELECT SPECIFIC_SCHEMA,
-  SPECIFIC_NAME,
-  PARAMETER_NAME,
-  ORDINAL_POSITION,
-  PARAMETER_MODE,
-  DATA_TYPE,
-  CHARACTER_MAXIMUM_LENGTH
-FROM INFORMATION_SCHEMA.PARAMETERS where SPECIFIC_NAME='{0}'", proc.Name);
+                        string sql2 = string.Format(@"SELECT SPECIFIC_SCHEMA,SPECIFIC_NAME,PARAMETER_NAME,ORDINAL_POSITION,PARAMETER_MODE,DATA_TYPE,CHARACTER_MAXIMUM_LENGTH
+                                                      FROM INFORMATION_SCHEMA.PARAMETERS where SPECIFIC_NAME='{0}'", proc.Name);
                         DataTable dt3 = GetDataTable(sql2);
                         List<Procparam> p = new List<Procparam>();
                         if (dt3.Rows.Count > 0)
