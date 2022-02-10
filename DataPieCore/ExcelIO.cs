@@ -52,26 +52,18 @@ namespace DataPieCore
 
         public static void ExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-            IDataReader reader;
 
             var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
 
-            if (filePath.EndsWith(".xls"))
-                 reader = ExcelReaderFactory.CreateBinaryReader(stream);
-            else if (filePath.EndsWith(".xlsx"))
-                 reader = ExcelReaderFactory.CreateOpenXmlReader(stream);
-            else
-                throw new Exception("The file to be processed is not an Excel file");
-
-            //var reader = ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
+            var reader = ExcelReaderFactory.CreateReader(stream);
 
             try
             {
                 dbAccess.BulkInsert(tableName, reader);
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                throw ex;
+                throw ;
             }
             finally
             {
