@@ -50,12 +50,9 @@ namespace DataPieCore
             }
         }
 
-        public static void ExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
+        public static void MiniExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-
-            var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
-
-            var reader = ExcelReaderFactory.CreateReader(stream);
+            var reader = MiniExcel.GetReader(filePath, true);
 
             try
             {
@@ -68,7 +65,6 @@ namespace DataPieCore
             finally
             {
                 reader.Close();
-                stream.Close();
             }
 
         }

@@ -25,14 +25,14 @@ namespace DataPieDesktop
         static IDbAccess dbaccess;
 
         static DbSchema dbs;
-        
-       IList<string> tableList = new List<string>();
 
-       IList<string> viewList = new List<string>();
+        IList<string> tableList = new List<string>();
 
-       IList<string> SpList = new List<string>();
-    
-        string tableName="";
+        IList<string> viewList = new List<string>();
+
+        IList<string> SpList = new List<string>();
+
+        string tableName = "";
 
         SynchronizationContext _syncContext = null;
 
@@ -68,7 +68,7 @@ namespace DataPieDesktop
 
             await Task.Run(() =>
             {
-                string ss ="Loading data...";
+                string ss = "Loading data...";
 
                 this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
@@ -89,12 +89,13 @@ namespace DataPieDesktop
 
                     SpList = dbs.DbProcs.Select(p => p.Name).ToList();
                 }
-                else {
+                else
+                {
 
                     SpList.Clear();
                 }
 
-                SqlWriter.DBtype= AppState.Dbtype;
+                SqlWriter.DBtype = AppState.Dbtype;
 
 
                 _syncContext.Post(SetcomboBox, tableList);//子线程中通过UI线程上下文更新UI 
@@ -156,7 +157,7 @@ namespace DataPieDesktop
             Node.Text = "Stored Procedure";
             treeView2.Nodes.Add(Node);
 
-   
+
             if (SpList.Count > 0)
             {
 
@@ -168,7 +169,7 @@ namespace DataPieDesktop
                     treeView2.Nodes["Stored Procedure"].Nodes.Add(tn);
                 }
             }
-    
+
             treeView1.ExpandAll();
             treeView2.ExpandAll();
 
@@ -203,7 +204,7 @@ namespace DataPieDesktop
 
                 IDataReader reader = dbaccess.GetDataReader(sql + " where 1=2");
 
-                int  i=  ExcelIO.SaveExcel(filename, reader, tableName);
+                int i = ExcelIO.SaveExcel(filename, reader, tableName);
 
                 string ss = string.Format("Export success! Time:{0} second", i / 1000);
 
@@ -214,7 +215,7 @@ namespace DataPieDesktop
         }
 
         //Delete
-        private async  void button2_Click(object sender, EventArgs e)
+        private async void button2_Click(object sender, EventArgs e)
         {
 
             if (comboBox1.Text.ToString() == "")
@@ -229,7 +230,7 @@ namespace DataPieDesktop
 
             if (result == DialogResult.OK)
             {
-                           
+
                 Stopwatch watch = Stopwatch.StartNew();
                 watch.Start();
 
@@ -263,27 +264,27 @@ namespace DataPieDesktop
                 {
                     try
                     {
-                    Stopwatch watch = Stopwatch.StartNew();
-                    watch.Start();
+                        Stopwatch watch = Stopwatch.StartNew();
+                        watch.Start();
 
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
+                        this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
 
-                     ImportTheFile(tableName, textBox1.Text.ToString());
+                        ImportTheFile(tableName, textBox1.Text.ToString());
 
-                    watch.Stop();
+                        watch.Stop();
 
-                    string ss = string.Format("Import success, Time:{0} second", watch.ElapsedMilliseconds / 1000);
+                        string ss = string.Format("Import success, Time:{0} second", watch.ElapsedMilliseconds / 1000);
 
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
+                        this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
-                    GC.Collect();
+                        GC.Collect();
 
 
-                }
-                catch (Exception ex)
-                {
-                    throw new Exception(ex.Message);
-                }
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new Exception(ex.Message);
+                    }
                 });
 
 
@@ -292,44 +293,49 @@ namespace DataPieDesktop
 
         public void ImportTheFile(string DbTableName, string filename)
         {
-            //await Task.Run(() =>
-            //{
+            try
+            {
 
-                try
+                string ext = Path.GetExtension(filename).ToLower();
+
+                //if (ext == ".xlsx" || ext == ".xls")
+                //{
+                //    ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
+                //    //ExcelIO.MiniExcelReaderImport(filename, DbTableName, dbaccess);
+                //}
+
+                if (ext == ".xlsx")
                 {
-                   
-                    string ext = Path.GetExtension(filename).ToLower();
-
-                    if (ext == ".xlsx" || ext == ".xls" )
-                    {
-                        ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
-                        //ExcelIO.ExcelReaderImport(filename, DbTableName, dbaccess);
-
-
+                    ExcelIO.MiniExcelReaderImport(filename, DbTableName, dbaccess);
                 }
 
-                else if (ext == ".csv" ) {
 
-                        ExcelIO.CsvImport(filename, DbTableName, dbaccess);
-                    }
-
-                    else if (ext == ".db" )
-                    {
-                        DbImport(filename, DbTableName, dbaccess);
-
-                    }
-                
-                }
-                catch (System.Exception ex)
+                else if (ext == ".xls")
                 {
-                    throw ex;
+                    ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
                 }
 
-            //});
+                else if (ext == ".csv")
+                {
+
+                    ExcelIO.CsvImport(filename, DbTableName, dbaccess);
+                }
+
+                else if (ext == ".db")
+                {
+                    DbImport(filename, DbTableName, dbaccess);
+
+                }
+
+            }
+            catch (System.Exception ex)
+            {
+                throw ex;
+            }
 
         }
 
-        public  void DbImport(string filePath, string tableName, IDbAccess dbAccess)
+        public void DbImport(string filePath, string tableName, IDbAccess dbAccess)
         {
             DBConfig db = new DBConfig();
 
@@ -344,7 +350,7 @@ namespace DataPieDesktop
             var reader = dbaccess.GetDataReader(BuildSQl.GetSQLfromTable(tableName, "SQLITE"));
 
             try
-            {             
+            {
                 dbAccess.BulkInsert(tableName, reader);
             }
             catch (Exception ex)
@@ -392,12 +398,12 @@ namespace DataPieDesktop
 
 
 
-        private  void LoginformShow()
+        private void LoginformShow()
         {
 
             loginform = new Form1();
             loginform.Show();
-  
+
         }
 
         private void toolStripButton2_Click(object sender, EventArgs e)
@@ -416,7 +422,7 @@ namespace DataPieDesktop
         //View Data
         private async void button5_Click(object sender, EventArgs e)
         {
-           
+
             if (richTextBox1.Text.Length > 0)
             {
                 await GetViewData(richTextBox1.Text);
@@ -432,7 +438,7 @@ namespace DataPieDesktop
 
         }
 
-        public async Task  GetViewData(string Sql)
+        public async Task GetViewData(string Sql)
         {
             await Task.Run(() =>
             {
@@ -451,7 +457,7 @@ namespace DataPieDesktop
 
                     watch.Stop();
 
-                    string ss = string.Format("Execute successful, Time:{0} second ,Rows: "+ dt.Rows.Count, watch.ElapsedMilliseconds / 1000);
+                    string ss = string.Format("Execute successful, Time:{0} second ,Rows: " + dt.Rows.Count, watch.ElapsedMilliseconds / 1000);
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
@@ -471,7 +477,7 @@ namespace DataPieDesktop
         private void SetDatagrid(object collection)
         {
             this.dataGridView1.DataSource = collection;
- 
+
         }
 
 
@@ -480,10 +486,10 @@ namespace DataPieDesktop
         {
             try
             {
-                string filename = Common.ShowFileDialog(tableName , ".csv");
+                string filename = Common.ShowFileDialog(tableName, ".csv");
                 if (filename != null)
                 {
-                   await WriteCsvFromsql(tableName, filename);
+                    await WriteCsvFromsql(tableName, filename);
 
                 }
 
@@ -505,7 +511,7 @@ namespace DataPieDesktop
 
                     string sql = BuildSQl.GetSQLfromTable(tableName, AppState.Dbtype);
 
-                    IDataReader reader = dbaccess.GetDataReader(sql); 
+                    IDataReader reader = dbaccess.GetDataReader(sql);
 
                     var t = DBToCsv.SaveCsv(reader, filename);
 
@@ -521,7 +527,7 @@ namespace DataPieDesktop
                 }
 
             });
-               
+
         }
 
 
@@ -581,7 +587,7 @@ namespace DataPieDesktop
                     //string sql = BuildSQl.GetSQLfromTable(tableName, AppState.Dbtype);
 
                     IDataReader reader = dbaccess.GetDataReader(sql);
-                   
+
                     //int i = ExcelIO.SaveExcel(filename, reader, tableName);
 
                     int i = ExcelIO.SaveMiniExcel(filename, reader, tableName);
@@ -604,7 +610,7 @@ namespace DataPieDesktop
 
         private void ShowMessage(object o, System.EventArgs e)
         {
-            statusStrip1.Items[0].Text =AppState.DbName +"-"+ o.ToString();
+            statusStrip1.Items[0].Text = AppState.DbName + "-" + o.ToString();
             statusStrip1.Items[0].ForeColor = Color.Red;
         }
 
@@ -612,13 +618,13 @@ namespace DataPieDesktop
         {
             Exception ee = o as Exception;
 
-            statusStrip1.Items[0].Text = AppState.DbName + "-" + "Error! " +ee.Message;
+            statusStrip1.Items[0].Text = AppState.DbName + "-" + "Error! " + ee.Message;
             statusStrip1.Items[0].ForeColor = Color.Red;
         }
 
 
 
-        
+
         private void ClearAllTables_Click(object sender, EventArgs e)
         {
             listBox1.Items.Clear();
@@ -668,7 +674,7 @@ namespace DataPieDesktop
             pi = new Point(e.X, e.Y);
         }
 
-  
+
 
         private void listBox2_DoubleClick(object sender, EventArgs e)
         {
@@ -709,7 +715,7 @@ namespace DataPieDesktop
             }
         }
 
-        public async Task WriteMutiExcelFromsql(IList<string> TableNames,string filename)
+        public async Task WriteMutiExcelFromsql(IList<string> TableNames, string filename)
         {
             await Task.Run(() =>
             {
@@ -742,9 +748,9 @@ namespace DataPieDesktop
             await Task.Run(() =>
             {
 
-            try
-            {
-                this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
+                try
+                {
+                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
 
                     int i = ExcelIO.SaveMutiMiniExcel(TableNames, filename, dbaccess, AppState.Dbtype);
 
@@ -786,13 +792,13 @@ namespace DataPieDesktop
 
             if (filename != null)
             {
-                await WriteMutiCsvFromsql(SheetNames, filename,AppState.Dbtype);
+                await WriteMutiCsvFromsql(SheetNames, filename, AppState.Dbtype);
 
             }
 
         }
 
-        public async Task WriteMutiCsvFromsql(IList<string> TableNames, string filename,string dbtype)
+        public async Task WriteMutiCsvFromsql(IList<string> TableNames, string filename, string dbtype)
         {
             await Task.Run(() =>
             {
@@ -825,7 +831,7 @@ namespace DataPieDesktop
                         time += t;
 
 
-                        reader.Close();                     
+                        reader.Close();
 
                     }
 
@@ -892,7 +898,7 @@ namespace DataPieDesktop
 
                 watch.Stop();
 
-                string ss=  string.Format("Procedure Execute successfully! Time:{0} second.", watch.ElapsedMilliseconds / 1000);
+                string ss = string.Format("Procedure Execute successfully! Time:{0} second.", watch.ElapsedMilliseconds / 1000);
                 this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
                 return;
             });
@@ -900,7 +906,7 @@ namespace DataPieDesktop
 
         private async void button9_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteSelect(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault(),1000);
+            string sql = SqlWriter.WriteSelect(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault(), 1000);
             richTextBox1.Text = sql;
             this.BeginInvoke(new System.EventHandler(ShowMessage), "Select Sql Generated");
 
@@ -947,11 +953,11 @@ namespace DataPieDesktop
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
 
 
-                   int i= dbaccess.ExecuteSql(Sql);
+                    int i = dbaccess.ExecuteSql(Sql);
 
                     watch.Stop();
 
-                    string ss = string.Format("Execute success, Time:{0} second,Affect "+ i+" Rows", watch.ElapsedMilliseconds / 1000);
+                    string ss = string.Format("Execute success, Time:{0} second,Affect " + i + " Rows", watch.ElapsedMilliseconds / 1000);
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
@@ -999,7 +1005,7 @@ namespace DataPieDesktop
 
                     SqlServerToSQLite.dbs = dbs;
 
-                    SqlServerToSQLite.CreateSQLiteDatabase(filename,null,false);
+                    SqlServerToSQLite.CreateSQLiteDatabase(filename, null, false);
 
                     SqlServerToSQLite.CopySqlServerRowsToSQLiteDB(dbaccess.ConnectionString, filename, password);
 
@@ -1018,10 +1024,11 @@ namespace DataPieDesktop
 
             });
 
-          
+
         }
 
-        public async Task checkStatus() {
+        public async Task checkStatus()
+        {
 
             await Task.Run(() =>
             {
@@ -1031,11 +1038,11 @@ namespace DataPieDesktop
 
                     while (!SqlServerToSQLite.Done)
 
-                      {
+                    {
                         string ss = string.Format("Current Table: {0}, Copy Rows: {1}", SqlServerToSQLite.currentProcessTable, SqlServerToSQLite.TotalCopyed);
                         this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
                         Thread.Sleep(1000);
-                        }
+                    }
 
                 }
                 catch (System.Exception ex)
@@ -1052,13 +1059,13 @@ namespace DataPieDesktop
         {
             SqlServerToSQLite._cancelled = true;
 
-            statusStrip1.Items[1].Text = "Stoped, Copyed Rows:"+ SqlServerToSQLite.TotalCopyed;
+            statusStrip1.Items[1].Text = "Stoped, Copyed Rows:" + SqlServerToSQLite.TotalCopyed;
             statusStrip1.Items[1].ForeColor = Color.Red;
         }
 
         private async void button18_Click(object sender, EventArgs e)
         {
-           await checkStatus();
+            await checkStatus();
 
         }
 
@@ -1132,7 +1139,7 @@ namespace DataPieDesktop
                     watch.Start();
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
-                   
+
                     List<FileInfo> filelist = Common.FileList(path, false, "");
 
                     for (int i = 0; i < filelist.Count(); i++)
@@ -1143,7 +1150,7 @@ namespace DataPieDesktop
 
                             this.BeginInvoke(new System.EventHandler(ShowMessage), m);
 
-                             ImportTheFile(DbTableName, filelist[i].ToString());
+                            ImportTheFile(DbTableName, filelist[i].ToString());
 
                         }
                         catch (Exception ee)
@@ -1189,8 +1196,8 @@ namespace DataPieDesktop
         private void buttonExRemove_Click(object sender, EventArgs e)
         {
             if (listBox1.SelectedIndex < 0)
-            { 
-                MessageBox.Show("Please Choose a Table！"); 
+            {
+                MessageBox.Show("Please Choose a Table！");
             }
             else
             {
@@ -1214,12 +1221,12 @@ namespace DataPieDesktop
         private void btnDeleteProc_Click(object sender, EventArgs e)
         {
             if (listBox2.SelectedIndex < 0)
-            { 
-                MessageBox.Show("Pease Choose a procedure"); 
+            {
+                MessageBox.Show("Pease Choose a procedure");
             }
             else
-            { 
-                listBox2.Items.RemoveAt(listBox2.SelectedIndex); 
+            {
+                listBox2.Items.RemoveAt(listBox2.SelectedIndex);
             }
         }
     }
