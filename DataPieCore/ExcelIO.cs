@@ -212,7 +212,6 @@ namespace DataPieCore
 
                             ws.Cells["A1"].LoadFromDataReader(reader, true);
 
-                            reader.Close();
                         }
 
                         catch (Exception ex)

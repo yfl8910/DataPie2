@@ -242,15 +242,9 @@ namespace DBUtil
             {
                 cmd.Transaction = (SqlTransaction)tran;
             }
-
-            cmd.CommandTimeout = 10000;
             try
             {
-                if (!IsOpen)
-                {
-                    conn.Open();
-                    IsOpen = true;
-                }
+                conn.Open();
                 SqlDataReader myReader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
                 return myReader;
             }
