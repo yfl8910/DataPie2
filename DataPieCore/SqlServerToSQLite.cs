@@ -336,6 +336,8 @@ namespace DataPieCore
                 return DbType.Int64;
             if (cs.Type == "datetimeoffset")
                 return DbType.String;
+            if (cs.Type == "decimal")
+                return DbType.Double;
 
 
 
