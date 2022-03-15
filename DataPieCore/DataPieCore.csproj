@@ -14,10 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="5.8.6" />
+    <PackageReference Include="EPPlus" Version="5.8.7" />
     <PackageReference Include="ExcelDataReader" Version="3.6.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
-    <PackageReference Include="MiniExcel" Version="1.23.1" />
+    <PackageReference Include="MiniExcel" Version="1.24.0" />
     <PackageReference Include="MySql.Data" Version="8.0.28" />
     <PackageReference Include="Npgsql" Version="6.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
