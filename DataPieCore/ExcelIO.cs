@@ -64,7 +64,7 @@ namespace DataPieCore
             }
             finally
             {
-                reader.Close();
+                reader.Dispose();
             }
 
         }
