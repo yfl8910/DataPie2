@@ -52,7 +52,18 @@ namespace DataPieCore
 
         public static void MiniExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-            var reader = MiniExcel.GetReader(filePath, true,sheetName:tableName);
+            var cnt = MiniExcel.GetSheetNames(filePath).Count;
+
+            IDataReader reader;
+
+            if (cnt > 1)
+            {
+                reader = MiniExcel.GetReader(filePath, true, sheetName: tableName);
+            }
+            else 
+            {
+                reader = MiniExcel.GetReader(filePath, true);
+            }
 
             try
             {
