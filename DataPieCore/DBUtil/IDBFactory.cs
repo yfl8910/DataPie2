@@ -39,11 +39,11 @@ namespace DBUtil
                 };
                 return iDb;
             }
-            else if (DBType == "MYSQL")
-            {
-                //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有mysql组件而报错
-                return CreateMySql(connStr);
-            }
+            //else if (DBType == "MYSQL")
+            //{
+            //    //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有mysql组件而报错
+            //    return CreateMySql(connStr);
+            //}
             //else if (DBType == "ORACLE")
             //{
             //    //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有oracle组件而报错
@@ -54,11 +54,11 @@ namespace DBUtil
                 //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有sqlite组件而报错
                 return CreateSQLite(connStr);
             }
-            else if (DBType == "POSTGRESQL")
-            {
-                //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有postgresql组件而报错
-                return CreatePostgreSql(connStr);
-            }
+            //else if (DBType == "POSTGRESQL")
+            //{
+            //    //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有postgresql组件而报错
+            //    return CreatePostgreSql(connStr);
+            //}
             else
             {
                 throw new Exception("暂不支持这种(" + DBType + ")数据库!");
@@ -90,29 +90,29 @@ namespace DBUtil
         //    return iDb;
         //}
 
-        private static IDbAccess CreateMySql(string connStr)
-        {
-            MySql.Data.MySqlClient.MySqlConnection conn = new MySql.Data.MySqlClient.MySqlConnection(connStr);
-            IDbAccess iDb = new MySqlDbAccess()
-            {
-                conn = conn,
-                ConnectionString = connStr,
-                DataBaseType = DataBaseType.MYSQL
-            };
-            return iDb;
-        }
+        //private static IDbAccess CreateMySql(string connStr)
+        //{
+        //    MySql.Data.MySqlClient.MySqlConnection conn = new MySql.Data.MySqlClient.MySqlConnection(connStr);
+        //    IDbAccess iDb = new MySqlDbAccess()
+        //    {
+        //        conn = conn,
+        //        ConnectionString = connStr,
+        //        DataBaseType = DataBaseType.MYSQL
+        //    };
+        //    return iDb;
+        //}
 
-        private static IDbAccess CreatePostgreSql(string connStr)
-        {
-            Npgsql.NpgsqlConnection conn = new Npgsql.NpgsqlConnection(connStr);
-            IDbAccess iDb = new PostgreSqlDbAccess()
-            {
-                conn = conn,
-                ConnectionString = connStr,
-                DataBaseType = DataBaseType.POSTGRESQL
-            };
-            return iDb;
-        }
+        //private static IDbAccess CreatePostgreSql(string connStr)
+        //{
+        //    Npgsql.NpgsqlConnection conn = new Npgsql.NpgsqlConnection(connStr);
+        //    IDbAccess iDb = new PostgreSqlDbAccess()
+        //    {
+        //        conn = conn,
+        //        ConnectionString = connStr,
+        //        DataBaseType = DataBaseType.POSTGRESQL
+        //    };
+        //    return iDb;
+        //}
 
         /// <summary>
         /// 创建Sqlite数据库文件,如果已存在就报错

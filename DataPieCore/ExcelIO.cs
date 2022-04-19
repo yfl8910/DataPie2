@@ -1,6 +1,6 @@
 ﻿using DBUtil;
 using ExcelDataReader;
-using OfficeOpenXml;
+//using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -157,100 +157,100 @@ namespace DataPieCore
 
         }
   
-        public static int SaveExcel(string FileName, IDataReader reader, string SheetName)
-        {
-            Stopwatch watch = Stopwatch.StartNew();
-            watch.Start();
+        //public static int SaveExcel(string FileName, IDataReader reader, string SheetName)
+        //{
+        //    Stopwatch watch = Stopwatch.StartNew();
+        //    watch.Start();
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        //    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            FileInfo newFile = new FileInfo(FileName);
-            if (newFile.Exists)
-            {
-                newFile.Delete();
-                newFile = new FileInfo(FileName);
-            }
-            using ExcelPackage package = new ExcelPackage(newFile);
-            try
-            {
-                ExcelWorksheet ws = package.Workbook.Worksheets.Add(SheetName);
-                ws.Cells["A1"].LoadFromDataReader(reader, true);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+        //    FileInfo newFile = new FileInfo(FileName);
+        //    if (newFile.Exists)
+        //    {
+        //        newFile.Delete();
+        //        newFile = new FileInfo(FileName);
+        //    }
+        //    using ExcelPackage package = new ExcelPackage(newFile);
+        //    try
+        //    {
+        //        ExcelWorksheet ws = package.Workbook.Worksheets.Add(SheetName);
+        //        ws.Cells["A1"].LoadFromDataReader(reader, true);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        throw ex;
+        //    }
 
-            finally
-            {
-                reader.Close();
-            }
+        //    finally
+        //    {
+        //        reader.Close();
+        //    }
 
-            package.Save();
+        //    package.Save();
 
-            watch.Stop();
-            return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
-        }
+        //    watch.Stop();
+        //    return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
+        //}
 
-        public static int SaveMutiExcel(IList<string> tableNames, string filename, IDbAccess dbAccess,string dbtype)
-        {
-            if (filename != null)
-            {               
-                    Stopwatch watch = Stopwatch.StartNew();
-                    watch.Start();
+        //public static int SaveMutiExcel(IList<string> tableNames, string filename, IDbAccess dbAccess,string dbtype)
+        //{
+        //    if (filename != null)
+        //    {               
+        //            Stopwatch watch = Stopwatch.StartNew();
+        //            watch.Start();
 
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        //            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-                    FileInfo newFile = new FileInfo(filename);
-                    if (newFile.Exists)
-                    {
-                        newFile.Delete();
-                        newFile = new FileInfo(filename);
-                    }
+        //            FileInfo newFile = new FileInfo(filename);
+        //            if (newFile.Exists)
+        //            {
+        //                newFile.Delete();
+        //                newFile = new FileInfo(filename);
+        //            }
 
-                    using (ExcelPackage package = new ExcelPackage(newFile))
-                    {
+        //            using (ExcelPackage package = new ExcelPackage(newFile))
+        //            {
                                                             
-                    foreach (var table in tableNames)
-                    {
-                        string sql = BuildSQl.GetSQLfromTable(table, dbtype);
+        //            foreach (var table in tableNames)
+        //            {
+        //                string sql = BuildSQl.GetSQLfromTable(table, dbtype);
 
-                        IDataReader reader = dbAccess.GetDataReader(sql);
+        //                IDataReader reader = dbAccess.GetDataReader(sql);
 
-                        try
-                        {
-                            ExcelWorksheet ws = package.Workbook.Worksheets.Add(table);
+        //                try
+        //                {
+        //                    ExcelWorksheet ws = package.Workbook.Worksheets.Add(table);
 
-                            ws.Cells["A1"].LoadFromDataReader(reader, true);
+        //                    ws.Cells["A1"].LoadFromDataReader(reader, true);
 
-                        }
+        //                }
 
-                        catch (Exception ex)
-                        {
-                            throw ex;
-                        }
+        //                catch (Exception ex)
+        //                {
+        //                    throw ex;
+        //                }
 
-                        finally
-                        {
-                            reader.Close();
-                        }
+        //                finally
+        //                {
+        //                    reader.Close();
+        //                }
 
-                    }
+        //            }
 
-                    package.Save();
+        //            package.Save();
 
-                    }
+        //            }
 
 
-                    watch.Stop();
+        //            watch.Stop();
 
-                    return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
+        //            return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
                       
-            }
+        //    }
 
-            return -1;
+        //    return -1;
 
-        }
+        //}
 
         public static int SaveMutiMiniExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
@@ -266,29 +266,23 @@ namespace DataPieCore
                     newFile = new FileInfo(filename);
                 }
 
-                //var sheets = new Dictionary<string, object> { };
+                var sheets = new DataSet();
 
-                //foreach (var table in tableNames)
-                //{
-                //    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
+                foreach (var table in tableNames)
+                {
+                    System.Data.DataTable dt = dbAccess.GetDataTable(BuildSQl.GetSQLfromTable(table, dbtype));
+                    dt.TableName = table;
+                    sheets.Tables.Add(dt);
+                }
 
-                //    IDataReader reader = dbAccess.GetDataReader(sql);
-                //    sheets.Add(table, reader);
+                MiniExcel.SaveAs(newFile.ToString(), sheets);
 
+                //string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
+                //IDataReader reader = dbAccess.GetDataReader(sql);
 
-                //    //System.Data.DataTable dt = dbAccess.GetDataTable(sql);
-                //    //sheets.Add(table, dt);
+                //MiniExcel.SaveAs(newFile.ToString(), reader);
 
-                //}
-
-                //MiniExcel.SaveAs(newFile.ToString(), sheets);
-
-                string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
-                IDataReader reader = dbAccess.GetDataReader(sql);
-
-                MiniExcel.SaveAs(newFile.ToString(), reader);
-
-                reader.Close();
+                //reader.Close();
 
                 watch.Stop();
 

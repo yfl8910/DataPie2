@@ -813,7 +813,7 @@ namespace DataPieDesktop
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(5);
             this.Name = "Main";
-            this.Text = "DataPie V2021.11（杨福来）";
+            this.Text = "DataPieExpress V2022.04（杨福来）";
             this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
             this.Load += new System.EventHandler(this.Main_Load);
             this.tabControl1.ResumeLayout(false);

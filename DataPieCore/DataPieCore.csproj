@@ -9,16 +9,17 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="DBUtil\MySqlDbAccess.cs" />
+    <Compile Remove="DBUtil\MySqlDbSchema.cs" />
     <Compile Remove="DBUtil\OracleDbAccess.cs" />
     <Compile Remove="DBUtil\OracleDbSchema.cs" />
+    <Compile Remove="DBUtil\PostgreSqlDbAccess.cs" />
+    <Compile Remove="DBUtil\PostgreSqlDbSchema.cs" />
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="5.8.8" />
     <PackageReference Include="ExcelDataReader" Version="3.6.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.6.0" />
-    <PackageReference Include="MySql.Data" Version="8.0.28" />
-    <PackageReference Include="Npgsql" Version="6.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.115.5" />
   </ItemGroup>

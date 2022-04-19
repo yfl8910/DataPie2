@@ -204,7 +204,7 @@ namespace DataPieDesktop
 
                 IDataReader reader = dbaccess.GetDataReader(sql + " where 1=2");
 
-                int i = ExcelIO.SaveExcel(filename, reader, tableName);
+                int i = ExcelIO.SaveMiniExcel(filename, reader, tableName);
 
                 string ss = string.Format("Export success! Time:{0} second", i / 1000);
 
@@ -724,8 +724,9 @@ namespace DataPieDesktop
                 {
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
 
-                    int i = ExcelIO.SaveMutiExcel(TableNames, filename, dbaccess, AppState.Dbtype);
-
+                    //int i = ExcelIO.SaveMutiExcel(TableNames, filename, dbaccess, AppState.Dbtype);
+                    int i = ExcelIO.SaveMutiMiniExcel(TableNames, filename, dbaccess, AppState.Dbtype);
+                
                     string s = string.Format("Export successful! Time :{0} seconds", i);
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), s);
