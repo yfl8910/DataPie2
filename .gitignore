@@ -77,3 +77,4 @@ DataPieDesktop/obj/Debug/net5.0-windows/DataPieDesktop.csproj.FileListAbsolute.t
 DataPieDesktop/Properties/PublishProfiles/FolderProfile1.pubxml
 DataPieDesktop/Properties/PublishProfiles/FolderProfile1.pubxml
 *.pubxml
+.vs/DataPieDesktop/v17/HierarchyCache.v1.txt
