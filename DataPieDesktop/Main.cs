@@ -298,28 +298,21 @@ namespace DataPieDesktop
 
                 string ext = Path.GetExtension(filename).ToLower();
 
-                //if (ext == ".xlsx" || ext == ".xls")
-                //{
-                //    //ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
-                //    ExcelIO.MiniExcelReaderImport(filename, DbTableName, dbaccess);
-                //}
-
                 if (ext == ".xlsx")
                 {
                     ExcelIO.MiniExcelReaderImport(filename, DbTableName, dbaccess);
                 }
 
+                //else if (ext == ".xls")
+                //{
+                //    ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
+                //}
 
-                else if (ext == ".xls")
-                {
-                    ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
-                }
+                //else if (ext == ".csv")
+                //{
 
-                else if (ext == ".csv")
-                {
-
-                    ExcelIO.CsvImport(filename, DbTableName, dbaccess);
-                }
+                //    ExcelIO.CsvImport(filename, DbTableName, dbaccess);
+                //}
 
                 else if (ext == ".db")
                 {
