@@ -320,6 +320,12 @@ namespace DataPieDesktop
 
                 }
 
+                else
+                {
+                    throw new Exception("Not support!");
+                }
+
+
             }
             catch (System.Exception ex)
             {
