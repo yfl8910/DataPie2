@@ -81,13 +81,6 @@ namespace DataPieCore
 
                 MiniExcel.SaveAs(newFile.ToString(), sheets);
 
-                //string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
-                //IDataReader reader = dbAccess.GetDataReader(sql);
-
-                //MiniExcel.SaveAs(newFile.ToString(), reader);
-
-                //reader.Close();
-
                 watch.Stop();
 
                 return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
