@@ -41,6 +41,21 @@ namespace DataPieCore
 
         }
 
+        public static void MiniExcelCsvImport(string filePath, string tableName, IDbAccess dbAccess)
+        {
+            var table = MiniExcel.QueryAsDataTable(filePath, useHeaderRow: true);
+
+            try
+            {
+                dbAccess.BulkInsert(tableName, table);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+        }
+
         public static int SaveMutiMiniExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
             if (filename != null)

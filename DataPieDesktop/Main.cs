@@ -308,11 +308,11 @@ namespace DataPieDesktop
                 //    ExcelIO.ExcelDataReaderImport(filename, DbTableName, dbaccess);
                 //}
 
-                //else if (ext == ".csv")
-                //{
+                else if (ext == ".csv")
+                {
 
-                //    ExcelIO.CsvImport(filename, DbTableName, dbaccess);
-                //}
+                    ExcelIO.MiniExcelCsvImport(filename, DbTableName, dbaccess);
+                }
 
                 else if (ext == ".db")
                 {
