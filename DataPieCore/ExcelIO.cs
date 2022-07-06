@@ -5,6 +5,7 @@ using System.Data;
 using System.IO;
 using System.Diagnostics;
 using MiniExcelLibs;
+using MiniExcelLibs.OpenXml;
 
 namespace DataPieCore
 {
@@ -110,7 +111,12 @@ namespace DataPieCore
                     sheets.Tables.Add(dt);
                 }
 
-                MiniExcel.SaveAs(newFile.ToString(), sheets);
+                var config = new OpenXmlConfiguration()
+                {
+                    TableStyles = TableStyles.None
+                };
+
+                MiniExcel.SaveAs(newFile.ToString(), sheets, configuration: config);
 
                 watch.Stop();
 
@@ -135,7 +141,12 @@ namespace DataPieCore
 
             try
             {
-                MiniExcel.SaveAs(newFile.ToString(), table, printHeader: true, sheetName: SheetName);
+
+                var config = new OpenXmlConfiguration()
+                {
+                    TableStyles = TableStyles.None
+                };
+                MiniExcel.SaveAs(newFile.ToString(), table, printHeader: true, sheetName: SheetName, configuration: config);
 
             }
             catch (Exception ex)
@@ -164,7 +175,12 @@ namespace DataPieCore
 
             try
             {
-                MiniExcel.SaveAs(newFile.ToString(), reader, printHeader: true, sheetName: SheetName);
+                var config = new OpenXmlConfiguration()
+                {
+                    TableStyles = TableStyles.None
+                };
+
+                MiniExcel.SaveAs(newFile.ToString(), reader, printHeader: true, sheetName: SheetName, configuration: config);
 
             }
             catch (Exception ex)

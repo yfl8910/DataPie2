@@ -583,11 +583,7 @@ namespace DataPieDesktop
                 {
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
 
-                    //string sql = BuildSQl.GetSQLfromTable(tableName, AppState.Dbtype);
-
                     IDataReader reader = dbaccess.GetDataReader(sql);
-
-                    //int i = ExcelIO.SaveExcel(filename, reader, tableName);
 
                     int i = ExcelIO.SaveMiniExcel(filename, reader, tableName);
 
@@ -723,7 +719,6 @@ namespace DataPieDesktop
                 {
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
 
-                    //int i = ExcelIO.SaveMutiExcel(TableNames, filename, dbaccess, AppState.Dbtype);
                     int i = ExcelIO.SaveMutiMiniExcel(TableNames, filename, dbaccess, AppState.Dbtype);
                 
                     string s = string.Format("Export successful! Time :{0} seconds", i);
@@ -1075,6 +1070,7 @@ namespace DataPieDesktop
             about.Show();
         }
 
+        //MiniExcel(Fast) 
         private async void button19_Click(object sender, EventArgs e)
         {
             if (listBox1.Items.Count < 1)
@@ -1094,7 +1090,11 @@ namespace DataPieDesktop
 
             if (filename != null)
             {
-                await WriteMutiMiniExcelFromsql(SheetNames, filename);
+                //await WriteMutiMiniExcelFromsql(SheetNames, filename);
+
+                string sql = BuildSQl.GetSQLfromTable(SheetNames[0], AppState.Dbtype);
+
+                await WriteExcelFromsql(sql, filename);
 
             }
         }
