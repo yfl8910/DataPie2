@@ -10,7 +10,7 @@ namespace DataPieCore
 {
     public class ExcelIO
     {
-       
+
         public static void MiniExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
             var cnt = MiniExcel.GetSheetNames(filePath).Count;
@@ -21,7 +21,7 @@ namespace DataPieCore
             {
                 reader = MiniExcel.GetReader(filePath, true, sheetName: tableName);
             }
-            else 
+            else
             {
                 reader = MiniExcel.GetReader(filePath, true);
             }
@@ -32,12 +32,43 @@ namespace DataPieCore
             }
             catch (Exception)
             {
-                throw ;
+                throw;
             }
             finally
             {
                 reader.Dispose();
             }
+
+        }
+
+        public static void MiniExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess, bool Sqlite)
+        {
+            if (Sqlite)
+            {
+
+                var cnt = MiniExcel.GetSheetNames(filePath).Count;
+
+                DataTable table;
+
+                if (cnt > 1)
+                {
+                    table = MiniExcel.QueryAsDataTable(filePath, true, sheetName: tableName);
+                }
+                else
+                {
+                    table = MiniExcel.QueryAsDataTable(filePath, useHeaderRow: true);
+                }
+
+                dbAccess.BulkInsert(tableName, table);
+
+            }
+            else
+            {
+
+                MiniExcelReaderImport(filePath, tableName, dbAccess);
+
+            }
+
 
         }
 
@@ -104,7 +135,7 @@ namespace DataPieCore
 
             try
             {
-                MiniExcel.SaveAs(newFile.ToString(), table,printHeader:true,sheetName:SheetName);
+                MiniExcel.SaveAs(newFile.ToString(), table, printHeader: true, sheetName: SheetName);
 
             }
             catch (Exception ex)
@@ -148,6 +179,6 @@ namespace DataPieCore
             watch.Stop();
             return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
         }
-       
+
     }
 }

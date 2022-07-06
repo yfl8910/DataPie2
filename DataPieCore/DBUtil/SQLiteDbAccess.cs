@@ -408,7 +408,7 @@ namespace DBUtil
         {
             DataTable table = new DataTable();
             table.Load(reader);
-           return BulkInsert(tableName, table);
+            return BulkInsert(tableName, table);
         }
 
         List<string> IDbAccess.ShowViews()

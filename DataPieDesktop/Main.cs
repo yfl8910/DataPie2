@@ -300,7 +300,7 @@ namespace DataPieDesktop
 
                 if (ext == ".xlsx")
                 {
-                    ExcelIO.MiniExcelReaderImport(filename, DbTableName, dbaccess);
+                    ExcelIO.MiniExcelReaderImport(filename, DbTableName, dbaccess,dbs.Dbtype == "SQLITE");
                 }
 
                 //else if (ext == ".xls")
