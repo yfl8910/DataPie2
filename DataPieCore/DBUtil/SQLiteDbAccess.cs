@@ -406,7 +406,9 @@ namespace DBUtil
 
         public bool BulkInsert(string tableName, IDataReader reader)
         {
-            throw new NotImplementedException();
+            DataTable table = new DataTable();
+            table.Load(reader);
+           return BulkInsert(tableName, table);
         }
 
         List<string> IDbAccess.ShowViews()
