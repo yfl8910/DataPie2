@@ -199,9 +199,9 @@ namespace DataPieCore
                     Stopwatch watch = Stopwatch.StartNew();
                     watch.Start();
 
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                ExcelPackage.License.SetNonCommercialOrganization("<DataPie>"); //This will also set the Company property to the organization name provided in the argument.
 
-                    FileInfo newFile = new FileInfo(filename);
+                FileInfo newFile = new FileInfo(filename);
                     if (newFile.Exists)
                     {
                         newFile.Delete();
