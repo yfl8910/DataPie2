@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <Authors>Yangfulai</Authors>
     <Description>DataPieCore</Description>
     <Copyright>Yangfulai</Copyright>
@@ -17,7 +17,7 @@
     <PackageReference Include="EPPlus" Version="8.0.2" />
     <PackageReference Include="ExcelDataReader" Version="3.7.0" />
     <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
-    <PackageReference Include="MiniExcel" Version="1.40.1" />
+    <PackageReference Include="MiniExcel" Version="1.41.1" />
     <PackageReference Include="MySql.Data" Version="9.3.0" />
     <PackageReference Include="Npgsql" Version="9.0.3" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />

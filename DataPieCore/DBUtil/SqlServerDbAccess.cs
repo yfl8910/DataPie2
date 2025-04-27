@@ -107,6 +107,8 @@ namespace DBUtil
             try
             {
                 SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
+                cmd.CommandTimeout = 1000;
+
                 if (IsTran)
                 {
                     cmd.Transaction = (SqlTransaction)tran;
@@ -142,11 +144,13 @@ namespace DBUtil
             try
             {
                 SqlCommand cmd = new SqlCommand
+
                 {
                     Connection = (SqlConnection)conn
                 };
                 if (IsTran)
                 {
+                    cmd.CommandTimeout = 1000;
                     cmd.Transaction = (SqlTransaction)tran;
                 }
                 if (!IsOpen)
@@ -184,6 +188,8 @@ namespace DBUtil
             try
             {
                 SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
+                cmd.CommandTimeout = 1000;
+
                 if (IsTran)
                 {
                     cmd.Transaction = (SqlTransaction)tran;
