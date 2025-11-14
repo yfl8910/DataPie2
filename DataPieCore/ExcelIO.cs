@@ -16,347 +16,238 @@ namespace DataPieCore
     {
         public static void ExcelDataReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-            var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
-            var reader = ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
-            try
-            {
-                var result = reader.AsDataSet(new ExcelDataSetConfiguration()
-                {
-                    ConfigureDataTable = (_) => new ExcelDataTableConfiguration()
+                    if (filePath is null) throw new ArgumentNullException(nameof(filePath));
+                    if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
+
+                    // Use FileStream with SequentialScan and allow other readers
+                    using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
+                    using var reader = ExcelReaderFactory.CreateReader(stream);
+
+                    // Use dataset only when multiple sheets exist or specific sheet requested.
+                    var result = reader.AsDataSet(new ExcelDataSetConfiguration
                     {
-                        UseHeaderRow = true
+                        ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
+                    });
+
+                    DataTable dt;
+                    if (result.Tables.Count == 1)
+                    {
+                        dt = result.Tables[0];
                     }
-                });
+                    else
+                    {
+                        dt = result.Tables.Contains(tableName) ? result.Tables[tableName] : result.Tables[0];
+                    }
 
-                int count = result.Tables.Count;
-
-                if (count == 1)
-                {
-                    dbAccess.BulkInsert(tableName, result.Tables[0]);
+                    dbAccess.BulkInsert(tableName, dt);
                 }
-                else
-                {
-                    dbAccess.BulkInsert(tableName, result.Tables[tableName]);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                reader.Close();
-                stream.Close();
-            }
-        }
 
         public static void MiniExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-            var cnt = MiniExcel.GetSheetNames(filePath).Count;
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
+            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
-            IDataReader reader;
-
-            if (cnt > 1)
-            {
-                reader = MiniExcel.GetReader(filePath, true, sheetName: tableName);
-            }
-            else 
-            {
-                reader = MiniExcel.GetReader(filePath, true);
-            }
-
+            // Try to open a reader for the requested sheet first; if not found, fall back to first sheet.
+            IDataReader reader = null;
             try
             {
-                dbAccess.BulkInsert(tableName, reader);
-            }
-            catch (Exception)
-            {
-                throw ;
+                try
+                {
+                    reader = MiniExcel.GetReader(filePath, true, sheetName: tableName);
+                }
+                catch
+                {
+                    reader = MiniExcel.GetReader(filePath, true);
+                }
+
+                using (reader)
+                {
+                    dbAccess.BulkInsert(tableName, reader);
+                }
             }
             finally
             {
-                reader.Dispose();
+                // ensured disposal via using above
             }
-
         }
 
         public static void CsvImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-            var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
-            var reader = ExcelDataReader.ExcelReaderFactory.CreateCsvReader(stream, new ExcelReaderConfiguration() {
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
+            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
+            using var reader = ExcelReaderFactory.CreateCsvReader(stream, new ExcelReaderConfiguration
+            {
                 FallbackEncoding = Encoding.GetEncoding("GB2312"),
-
-                AutodetectSeparators = new char[] { ',', ';', '\t', '|', '#' },
-
+                AutodetectSeparators = new[] { ',', ';', '\t', '|', '#' },
             });
-            try
-            {
-                var result = reader.AsDataSet(new ExcelDataSetConfiguration()
-                {
-                    ConfigureDataTable = (_) => new ExcelDataTableConfiguration()
-                    {
-                        UseHeaderRow = true
-                    }
-                });
 
-                dbAccess.BulkInsert(tableName, result.Tables[0]);
+            var result = reader.AsDataSet(new ExcelDataSetConfiguration
+            {
+                ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
+            });
 
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                reader.Close();
-                stream.Close();
-            }
+            dbAccess.BulkInsert(tableName, result.Tables[0]);
         }
 
         public static DataTable GetDataTable(string filePath)
         {
-            var stream = File.Open(filePath, FileMode.Open, FileAccess.Read);
-            var reader = ExcelDataReader.ExcelReaderFactory.CreateReader(stream);
-            try
-            {
-                var result = reader.AsDataSet(new ExcelDataSetConfiguration()
-                {
-                    ConfigureDataTable = (_) => new ExcelDataTableConfiguration()
-                    {
-                        UseHeaderRow = true
-                    }
-                });
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
 
-                return result.Tables[0];
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
+            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
+            using var reader = ExcelReaderFactory.CreateReader(stream);
 
-            finally
+            var result = reader.AsDataSet(new ExcelDataSetConfiguration
             {
-                reader.Close();
-                stream.Close();
-            }
+                ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
+            });
 
+            return result.Tables[0];
         }
 
-        public static void DataTableImport(System.Data.DataTable dt, string tableName, IDbAccess dbAccess)
+        public static void DataTableImport(DataTable dt, string tableName, IDbAccess dbAccess)
         {
-            try
-            {
-                dbAccess.BulkInsert(tableName, dt);
-            }
+            if (dt is null) throw new ArgumentNullException(nameof(dt));
+            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-
+            dbAccess.BulkInsert(tableName, dt);
         }
-  
+
         public static int SaveExcel(string FileName, IDataReader reader, string SheetName)
         {
-            Stopwatch watch = Stopwatch.StartNew();
-            watch.Start();
+            if (FileName is null) throw new ArgumentNullException(nameof(FileName));
+            if (reader is null) throw new ArgumentNullException(nameof(reader));
+
+            var watch = Stopwatch.StartNew();
 
             ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
-            FileInfo newFile = new FileInfo(FileName);
+            var newFile = new FileInfo(FileName);
             if (newFile.Exists)
             {
                 newFile.Delete();
                 newFile = new FileInfo(FileName);
             }
-            using ExcelPackage package = new ExcelPackage(newFile);
-            try
-            {
-                ExcelWorksheet ws = package.Workbook.Worksheets.Add(SheetName);
-                ws.Cells["A1"].LoadFromDataReader(reader, true);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
 
-            finally
+            using (var package = new ExcelPackage(newFile))
             {
-                reader.Close();
+                using (reader)
+                {
+                    var ws = package.Workbook.Worksheets.Add(SheetName);
+                    ws.Cells["A1"].LoadFromDataReader(reader, true);
+                }
+                package.Save();
             }
-
-            package.Save();
 
             watch.Stop();
-            return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
+            return (int)watch.Elapsed.TotalSeconds;
         }
 
-        public static int SaveMutiExcel(IList<string> tableNames, string filename, IDbAccess dbAccess,string dbtype)
+        public static int SaveMutiExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
-            if (filename != null)
-            {               
-                    Stopwatch watch = Stopwatch.StartNew();
-                    watch.Start();
+            if (filename is null) throw new ArgumentNullException(nameof(filename));
+            if (tableNames is null || tableNames.Count == 0) throw new ArgumentException("tableNames required", nameof(tableNames));
+            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
-                ExcelPackage.License.SetNonCommercialOrganization("<DataPie>"); //This will also set the Company property to the organization name provided in the argument.
+            var watch = Stopwatch.StartNew();
 
-                FileInfo newFile = new FileInfo(filename);
-                    if (newFile.Exists)
-                    {
-                        newFile.Delete();
-                        newFile = new FileInfo(filename);
-                    }
+            // Keep EPPlus licensing call if required by your usage
+            ExcelPackage.License.SetNonCommercialOrganization("<DataPie>");
 
-                    using (ExcelPackage package = new ExcelPackage(newFile))
-                    {
-                                                            
-                    foreach (var table in tableNames)
-                    {
-                        string sql = BuildSQl.GetSQLfromTable(table, dbtype);
-
-                        IDataReader reader = dbAccess.GetDataReader(sql);
-
-                        try
-                        {
-                            ExcelWorksheet ws = package.Workbook.Worksheets.Add(table);
-
-                            ws.Cells["A1"].LoadFromDataReader(reader, true);
-
-                        }
-
-                        catch (Exception ex)
-                        {
-                            throw ex;
-                        }
-
-                        finally
-                        {
-                            reader.Close();
-                        }
-
-                    }
-
-                    package.Save();
-
-                    }
-
-
-                    watch.Stop();
-
-                    return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
-                      
+            var newFile = new FileInfo(filename);
+            if (newFile.Exists)
+            {
+                newFile.Delete();
+                newFile = new FileInfo(filename);
             }
 
-            return -1;
+            using (var package = new ExcelPackage(newFile))
+            {
+                foreach (var table in tableNames)
+                {
+                    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
+                    using (var reader = dbAccess.GetDataReader(sql))
+                    {
+                        var ws = package.Workbook.Worksheets.Add(table);
+                        ws.Cells["A1"].LoadFromDataReader(reader, true);
+                    }
+                }
 
+                package.Save();
+            }
+
+            watch.Stop();
+            return (int)watch.Elapsed.TotalSeconds;
         }
 
         public static int SaveMutiMiniExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
-            if (filename != null)
+            if (filename is null) throw new ArgumentNullException(nameof(filename));
+            if (tableNames is null || tableNames.Count == 0) throw new ArgumentException("tableNames required", nameof(tableNames));
+            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
+
+            var watch = Stopwatch.StartNew();
+
+            var newFile = new FileInfo(filename);
+            if (newFile.Exists)
             {
-                Stopwatch watch = Stopwatch.StartNew();
-                watch.Start();
-
-                FileInfo newFile = new FileInfo(filename);
-                if (newFile.Exists)
-                {
-                    newFile.Delete();
-                    newFile = new FileInfo(filename);
-                }
-
-                //var sheets = new Dictionary<string, object> { };
-
-                //foreach (var table in tableNames)
-                //{
-                //    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
-
-                //    IDataReader reader = dbAccess.GetDataReader(sql);
-                //    sheets.Add(table, reader);
-
-
-                //    //System.Data.DataTable dt = dbAccess.GetDataTable(sql);
-                //    //sheets.Add(table, dt);
-
-                //}
-
-                //MiniExcel.SaveAs(newFile.ToString(), sheets);
-
-                string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
-                IDataReader reader = dbAccess.GetDataReader(sql);
-
-                MiniExcel.SaveAs(newFile.ToString(), reader);
-
-                reader.Close();
-
-                watch.Stop();
-
-                return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
+                newFile.Delete();
+                newFile = new FileInfo(filename);
             }
 
-            return -1;
+            // For now we export first table with MiniExcel (MiniExcel supports multiple sheet saving via IDictionary<string, object>)
+            string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
+            using (var reader = dbAccess.GetDataReader(sql))
+            {
+                MiniExcel.SaveAs(newFile.ToString(), reader);
+            }
+
+            watch.Stop();
+            return (int)watch.Elapsed.TotalSeconds;
         }
 
         public static int SaveMiniExcel(string FileName, DataTable table, string SheetName)
         {
-            Stopwatch watch = Stopwatch.StartNew();
-            watch.Start();
+            if (FileName is null) throw new ArgumentNullException(nameof(FileName));
+            if (table is null) throw new ArgumentNullException(nameof(table));
 
+            var watch = Stopwatch.StartNew();
 
-            FileInfo newFile = new FileInfo(FileName);
+            var newFile = new FileInfo(FileName);
             if (newFile.Exists)
             {
                 newFile.Delete();
                 newFile = new FileInfo(FileName);
             }
 
-            try
-            {
-                MiniExcel.SaveAs(newFile.ToString(), table,printHeader:true,sheetName:SheetName);
-
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-
-
+            MiniExcel.SaveAs(newFile.ToString(), table, printHeader: true, sheetName: SheetName);
 
             watch.Stop();
-            return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
+            return (int)watch.Elapsed.TotalSeconds;
         }
 
         public static int SaveMiniExcel(string FileName, IDataReader reader, string SheetName)
         {
-            Stopwatch watch = Stopwatch.StartNew();
-            watch.Start();
+            if (FileName is null) throw new ArgumentNullException(nameof(FileName));
+            if (reader is null) throw new ArgumentNullException(nameof(reader));
 
+            var watch = Stopwatch.StartNew();
 
-            FileInfo newFile = new FileInfo(FileName);
+            var newFile = new FileInfo(FileName);
             if (newFile.Exists)
             {
                 newFile.Delete();
                 newFile = new FileInfo(FileName);
             }
 
-            try
+            using (reader)
             {
                 MiniExcel.SaveAs(newFile.ToString(), reader, printHeader: true, sheetName: SheetName);
-
             }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-
-
-            reader.Close();
 
             watch.Stop();
-            return Convert.ToInt32(watch.ElapsedMilliseconds / 1000);
+            return (int)watch.Elapsed.TotalSeconds;
         }
-       
     }
 }

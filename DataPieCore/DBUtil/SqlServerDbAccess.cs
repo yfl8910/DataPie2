@@ -106,30 +106,33 @@ namespace DBUtil
         {
             try
             {
-                SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
-                cmd.CommandTimeout = 1000;
-
+                using SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn)
+                {
+                    CommandTimeout = 1000
+                };
+                    
                 if (IsTran)
                 {
                     cmd.Transaction = (SqlTransaction)tran;
                 }
+
                 if (!IsOpen)
                 {
                     conn.Open();
                     IsOpen = true;
                 }
-                int r = cmd.ExecuteNonQuery();
-                return r;
+
+                return cmd.ExecuteNonQuery();
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw e;
+                throw;
             }
             finally
             {
                 if (!IsTran && !IsKeepConnect)
                 {
-                    conn.Close();
+                    try { conn?.Close(); } catch { }
                     this.IsOpen = false;
                 }
             }
@@ -141,37 +144,44 @@ namespace DBUtil
         /// <param name="strSql">多个SQL语句的数组</param>
         public void ExecuteSql(string[] strSql)
         {
+            if (strSql == null) return;
+
             try
             {
-                SqlCommand cmd = new SqlCommand
-
+                using SqlCommand cmd = new SqlCommand
                 {
-                    Connection = (SqlConnection)conn
+                    Connection = (SqlConnection)conn,
+                    CommandTimeout = 1000
                 };
+
                 if (IsTran)
                 {
-                    cmd.CommandTimeout = 1000;
                     cmd.Transaction = (SqlTransaction)tran;
                 }
+
                 if (!IsOpen)
                 {
                     conn.Open();
+                    IsOpen = true;
                 }
+
                 foreach (string sql in strSql)
                 {
+                    if (string.IsNullOrWhiteSpace(sql)) continue;
                     cmd.CommandText = sql;
+                    cmd.Parameters.Clear();
                     cmd.ExecuteNonQuery();
                 }
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw e;
+                throw;
             }
             finally
             {
                 if (!IsTran && !IsKeepConnect)
                 {
-                    conn.Close();
+                    try { conn?.Close(); } catch { }
                     this.IsOpen = false;
                 }
             }
@@ -433,9 +443,9 @@ namespace DBUtil
         {
             try
             {
-                if (this.conn.State != ConnectionState.Closed)
+                if (this.conn != null && this.conn.State != ConnectionState.Closed)
                 {
-                    this.conn.Close();
+                    try { this.conn.Close(); } catch { }
                     this.IsOpen = false;
                 }
             }
@@ -455,8 +465,26 @@ namespace DBUtil
 
         #region 批量插入操作
 
+        // Helper to get column names for a table using the provided connection (avoids using this.conn)
+        private static List<string> GetTableColumnsUsingConnection(SqlConnection connection, string tableName)
+        {
+            if (connection == null) return new List<string>();
+            string sql = $"SELECT TOP (0) * FROM [{tableName}]";
+            using var cmd = new SqlCommand(sql, connection);
+            using var reader = cmd.ExecuteReader();
+            var names = new List<string>(reader.FieldCount);
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                names.Add(reader.GetName(i));
+            }
+            return names;
+        }
+
         public bool BulkInsert(string tableName, IDataReader reader)
         {
+            if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentException(nameof(tableName));
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
+
             using SqlConnection connection = new SqlConnection(ConnectionString);
             connection.Open();
             using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
@@ -464,19 +492,16 @@ namespace DBUtil
                 DestinationTableName = tableName
             };
 
-            DataTable dt = GetDataTable("select * from " + tableName + " where 1=2");
-
-            List<string> columns1 = new List<string>();
-
-            foreach (DataColumn col in dt.Columns)
+            // Discover columns using the SAME connection used for bulk copy
+            var columns2 = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();
+            List<string> columns1;
+            using (var schemaCmd = new SqlCommand($"SELECT TOP (0) * FROM [{tableName}]", connection))
+            using (var schemaReader = schemaCmd.ExecuteReader())
             {
-                columns1.Add(col.ColumnName);
+                columns1 = Enumerable.Range(0, schemaReader.FieldCount).Select(schemaReader.GetName).ToList();
             }
 
-            var columns2 = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();
-
             var newcolumns = columns1.Intersect(columns2);
-
             foreach (var cl in newcolumns)
             {
                 bulkCopy.ColumnMappings.Add(cl, cl);
@@ -485,12 +510,11 @@ namespace DBUtil
             try
             {
                 bulkCopy.WriteToServer(reader);
-                connection.Close();
                 return true;
             }
-            catch (Exception e)
+            catch (Exception)
             {
-                throw e;
+                throw;
             }
         }
 

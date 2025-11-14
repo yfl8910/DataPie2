@@ -14,12 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="8.0.2" />
-    <PackageReference Include="ExcelDataReader" Version="3.7.0" />
-    <PackageReference Include="ExcelDataReader.DataSet" Version="3.7.0" />
-    <PackageReference Include="MiniExcel" Version="1.41.1" />
-    <PackageReference Include="MySql.Data" Version="9.3.0" />
-    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="EPPlus" Version="8.2.1" />
+    <PackageReference Include="ExcelDataReader" Version="3.8.0" />
+    <PackageReference Include="ExcelDataReader.DataSet" Version="3.8.0" />
+    <PackageReference Include="MiniExcel" Version="1.41.4" />
+    <PackageReference Include="MySql.Data" Version="9.5.0" />
+    <PackageReference Include="Npgsql" Version="9.0.4" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
   </ItemGroup>
