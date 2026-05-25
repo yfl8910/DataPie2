@@ -18,12 +18,10 @@ namespace DBUtil
         /// <param name="connStr">
         /// <para>连接字符串:</para>
         /// <para>SQLSERVER:   Data Source=.;Initial Catalog=test;User ID=sa;Password=xx;</para>
-        /// <para>ORACLE:   Data Source=test;Password=sys123;User ID=sys;DBA Privilege=SYSDBA;</para>
         /// <para>MYSQL:   Data Source=localhost;Initial Catalog=test;User ID=root;Password=xxxx;</para>
-        /// <para>POSTGRESQL:   Server=localhost;Port=5432;UserId=postgres;Password=xxxx;Database=test</para>
         /// <para>SQLITE:   Data Source=D:\demo.db;</para>
         /// </param>
-        /// <param name="DBType">数据库类型:SQLSERVER、ORACLE、MYSQL、SQLITE、ACCESS、POSTGRESQL</param>
+        /// <param name="DBType">数据库类型:SQLSERVER、MYSQL、SQLITE</param>
         /// <returns></returns>
         public static IDbAccess CreateIDB(string connStr, string DBType)
         {
@@ -44,20 +42,10 @@ namespace DBUtil
                 //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有mysql组件而报错
                 return CreateMySql(connStr);
             }
-            //else if (DBType == "ORACLE")
-            //{
-            //    //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有oracle组件而报错
-            //    return CreateOracle(connStr);
-            //}
             else if (DBType == "SQLITE")
             {
                 //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有sqlite组件而报错
                 return CreateSQLite(connStr);
-            }
-            else if (DBType == "POSTGRESQL")
-            {
-                //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有postgresql组件而报错
-                return CreatePostgreSql(connStr);
             }
             else
             {
@@ -78,18 +66,6 @@ namespace DBUtil
             return CreateIDB(connStr, dbtype);
         }
 
-        //private static IDbAccess CreateOracle(string connStr)
-        //{
-        //    Oracle.ManagedDataAccess.Client.OracleConnection conn = new Oracle.ManagedDataAccess.Client.OracleConnection(connStr);
-        //    IDbAccess iDb = new OracleDbAccess()
-        //    {
-        //        conn = conn,
-        //        ConnectionString = connStr,
-        //        DataBaseType = DataBaseType.ORACLE
-        //    };
-        //    return iDb;
-        //}
-
         private static IDbAccess CreateMySql(string connStr)
         {
             MySql.Data.MySqlClient.MySqlConnection conn = new MySql.Data.MySqlClient.MySqlConnection(connStr);
@@ -98,18 +74,6 @@ namespace DBUtil
                 conn = conn,
                 ConnectionString = connStr,
                 DataBaseType = DataBaseType.MYSQL
-            };
-            return iDb;
-        }
-
-        private static IDbAccess CreatePostgreSql(string connStr)
-        {
-            Npgsql.NpgsqlConnection conn = new Npgsql.NpgsqlConnection(connStr);
-            IDbAccess iDb = new PostgreSqlDbAccess()
-            {
-                conn = conn,
-                ConnectionString = connStr,
-                DataBaseType = DataBaseType.POSTGRESQL
             };
             return iDb;
         }

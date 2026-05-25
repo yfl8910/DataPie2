@@ -86,7 +86,7 @@ namespace DataPieDesktop
 
             _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo").ToList<Dbinfo>();
 
-            string[] dbtypes = { "SQLSERVER", "MYSQL", "SQLITE", "POSTGRESQL", "ORACLE" };
+            string[] dbtypes = { "SQLSERVER", "MYSQL", "SQLITE" };
 
             if (_DataBaseList.Count > 0)
             {
