@@ -8,9 +8,9 @@ DataPie是一个通用的数据库导入，导出，数据查询，存储过程�
 
 -  支持无参数存储过程的调用；
 
--  支持读取多数据库Schema（SQL Server，SQLITE，MYSQL,POSTGRESQL）；
+-  支持读取多数据库Schema（SQL Server，SQLITE，MYSQL）；
 
-DataPie is a general purpose database import, export, data query, stored procedure call client tool based on.NET 6 Winform, support SQL Server, SQLITE, MYSQL,POSTGRESQL database.
+DataPie is a general purpose database import, export, data query, stored procedure call client tool based on.NET 6 Winform, support SQL Server, SQLITE, MYSQL database.
 
 -  Support import and export of database files in EXCEL,CSV,SQLITE and other formats;
 
@@ -18,7 +18,7 @@ DataPie is a general purpose database import, export, data query, stored procedu
  
 -  Supports calls of stored procedures without arguments;
 
--  Supports Database schema read（SQL Server，SQLITE，MYSQL,POSTGRESQL）;
+-  Supports Database schema read（SQL Server，SQLITE，MYSQL）;
  
 -  Export all data from SQL Server to SQLITE database.
 
