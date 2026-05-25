@@ -196,11 +196,36 @@ namespace DataPieCore
                 newFile = new FileInfo(filename);
             }
 
-            // For now we export first table with MiniExcel (MiniExcel supports multiple sheet saving via IDictionary<string, object>)
-            string sql = BuildSQl.GetSQLfromTable(tableNames[0], dbtype);
-            using (var reader = dbAccess.GetDataReader(sql))
+            var sheets = new Dictionary<string, object>();
+            var exportDbAccesses = new List<IDbAccess>();
+            var readers = new List<IDataReader>();
+
+            try
             {
-                MiniExcel.SaveAs(newFile.ToString(), reader);
+                foreach (var table in tableNames)
+                {
+                    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
+                    var exportDbAccess = dbAccess.CreateNewIDB();
+                    exportDbAccesses.Add(exportDbAccess);
+
+                    var reader = exportDbAccess.GetDataReader(sql);
+                    readers.Add(reader);
+                    sheets.Add(table, reader);
+                }
+
+                MiniExcel.SaveAs(newFile.ToString(), sheets);
+            }
+            finally
+            {
+                foreach (var reader in readers)
+                {
+                    reader.Dispose();
+                }
+
+                foreach (var exportDbAccess in exportDbAccesses)
+                {
+                    exportDbAccess.Dispose();
+                }
             }
 
             watch.Stop();

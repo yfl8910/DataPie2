@@ -30,818 +30,815 @@ namespace DataPieDesktop
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Main));
-            this.tabControl1 = new System.Windows.Forms.TabControl();
-            this.tabPage1 = new System.Windows.Forms.TabPage();
-            this.groupBox8 = new System.Windows.Forms.GroupBox();
-            this.button20 = new System.Windows.Forms.Button();
-            this.textBox3 = new System.Windows.Forms.TextBox();
-            this.button21 = new System.Windows.Forms.Button();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
-            this.button3 = new System.Windows.Forms.Button();
-            this.textBox1 = new System.Windows.Forms.TextBox();
-            this.BrowseBtn1 = new System.Windows.Forms.Button();
-            this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.label1 = new System.Windows.Forms.Label();
-            this.button2 = new System.Windows.Forms.Button();
-            this.comboBox1 = new System.Windows.Forms.ComboBox();
-            this.button1 = new System.Windows.Forms.Button();
-            this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.groupBox5 = new System.Windows.Forms.GroupBox();
-            this.buttonExRemove = new System.Windows.Forms.Button();
-            this.buttonExAdd = new System.Windows.Forms.Button();
-            this.button8 = new System.Windows.Forms.Button();
-            this.treeView1 = new System.Windows.Forms.TreeView();
-            this.listBox1 = new System.Windows.Forms.ListBox();
-            this.groupBox4 = new System.Windows.Forms.GroupBox();
-            this.button19 = new System.Windows.Forms.Button();
-            this.button11 = new System.Windows.Forms.Button();
-            this.button10 = new System.Windows.Forms.Button();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
-            this.richTextBox1 = new System.Windows.Forms.RichTextBox();
-            this.groupBox7 = new System.Windows.Forms.GroupBox();
-            this.button13 = new System.Windows.Forms.Button();
-            this.button14 = new System.Windows.Forms.Button();
-            this.button6 = new System.Windows.Forms.Button();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.button16 = new System.Windows.Forms.Button();
-            this.button9 = new System.Windows.Forms.Button();
-            this.button7 = new System.Windows.Forms.Button();
-            this.button5 = new System.Windows.Forms.Button();
-            this.button4 = new System.Windows.Forms.Button();
-            this.label2 = new System.Windows.Forms.Label();
-            this.comboBox2 = new System.Windows.Forms.ComboBox();
-            this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.groupBox6 = new System.Windows.Forms.GroupBox();
-            this.btnDeleteProc = new System.Windows.Forms.Button();
-            this.btnAddProce = new System.Windows.Forms.Button();
-            this.listBox2 = new System.Windows.Forms.ListBox();
-            this.button12 = new System.Windows.Forms.Button();
-            this.treeView2 = new System.Windows.Forms.TreeView();
-            this.tabPage5 = new System.Windows.Forms.TabPage();
-            this.button18 = new System.Windows.Forms.Button();
-            this.button17 = new System.Windows.Forms.Button();
-            this.textBox2 = new System.Windows.Forms.TextBox();
-            this.button15 = new System.Windows.Forms.Button();
-            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
-            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButton2 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripButton3 = new System.Windows.Forms.ToolStripButton();
-            this.statusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
-            this.tabControl1.SuspendLayout();
-            this.tabPage1.SuspendLayout();
-            this.groupBox8.SuspendLayout();
-            this.groupBox2.SuspendLayout();
-            this.groupBox1.SuspendLayout();
-            this.tabPage2.SuspendLayout();
-            this.groupBox5.SuspendLayout();
-            this.groupBox4.SuspendLayout();
-            this.tabPage3.SuspendLayout();
-            this.groupBox7.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
-            this.groupBox3.SuspendLayout();
-            this.tabPage4.SuspendLayout();
-            this.groupBox6.SuspendLayout();
-            this.tabPage5.SuspendLayout();
-            this.toolStrip1.SuspendLayout();
-            this.statusStrip1.SuspendLayout();
-            this.SuspendLayout();
+            tabControl1 = new System.Windows.Forms.TabControl();
+            tabPage1 = new System.Windows.Forms.TabPage();
+            groupBox8 = new System.Windows.Forms.GroupBox();
+            button20 = new System.Windows.Forms.Button();
+            textBox3 = new System.Windows.Forms.TextBox();
+            button21 = new System.Windows.Forms.Button();
+            groupBox2 = new System.Windows.Forms.GroupBox();
+            button3 = new System.Windows.Forms.Button();
+            textBox1 = new System.Windows.Forms.TextBox();
+            BrowseBtn1 = new System.Windows.Forms.Button();
+            groupBox1 = new System.Windows.Forms.GroupBox();
+            label1 = new System.Windows.Forms.Label();
+            button2 = new System.Windows.Forms.Button();
+            comboBox1 = new System.Windows.Forms.ComboBox();
+            button1 = new System.Windows.Forms.Button();
+            tabPage2 = new System.Windows.Forms.TabPage();
+            groupBox5 = new System.Windows.Forms.GroupBox();
+            buttonExRemove = new System.Windows.Forms.Button();
+            buttonExAdd = new System.Windows.Forms.Button();
+            button8 = new System.Windows.Forms.Button();
+            treeView1 = new System.Windows.Forms.TreeView();
+            listBox1 = new System.Windows.Forms.ListBox();
+            groupBox4 = new System.Windows.Forms.GroupBox();
+            button19 = new System.Windows.Forms.Button();
+            button11 = new System.Windows.Forms.Button();
+            button10 = new System.Windows.Forms.Button();
+            tabPage3 = new System.Windows.Forms.TabPage();
+            richTextBox1 = new System.Windows.Forms.RichTextBox();
+            groupBox7 = new System.Windows.Forms.GroupBox();
+            button13 = new System.Windows.Forms.Button();
+            button14 = new System.Windows.Forms.Button();
+            button6 = new System.Windows.Forms.Button();
+            dataGridView1 = new System.Windows.Forms.DataGridView();
+            groupBox3 = new System.Windows.Forms.GroupBox();
+            button16 = new System.Windows.Forms.Button();
+            button9 = new System.Windows.Forms.Button();
+            button7 = new System.Windows.Forms.Button();
+            button5 = new System.Windows.Forms.Button();
+            button4 = new System.Windows.Forms.Button();
+            label2 = new System.Windows.Forms.Label();
+            comboBox2 = new System.Windows.Forms.ComboBox();
+            tabPage4 = new System.Windows.Forms.TabPage();
+            groupBox6 = new System.Windows.Forms.GroupBox();
+            btnDeleteProc = new System.Windows.Forms.Button();
+            btnAddProce = new System.Windows.Forms.Button();
+            listBox2 = new System.Windows.Forms.ListBox();
+            button12 = new System.Windows.Forms.Button();
+            treeView2 = new System.Windows.Forms.TreeView();
+            tabPage5 = new System.Windows.Forms.TabPage();
+            button18 = new System.Windows.Forms.Button();
+            button17 = new System.Windows.Forms.Button();
+            textBox2 = new System.Windows.Forms.TextBox();
+            button15 = new System.Windows.Forms.Button();
+            toolStrip1 = new System.Windows.Forms.ToolStrip();
+            toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripButton2 = new System.Windows.Forms.ToolStripButton();
+            toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            toolStripButton3 = new System.Windows.Forms.ToolStripButton();
+            statusStrip1 = new System.Windows.Forms.StatusStrip();
+            toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
+            toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            tabControl1.SuspendLayout();
+            tabPage1.SuspendLayout();
+            groupBox8.SuspendLayout();
+            groupBox2.SuspendLayout();
+            groupBox1.SuspendLayout();
+            tabPage2.SuspendLayout();
+            groupBox5.SuspendLayout();
+            groupBox4.SuspendLayout();
+            tabPage3.SuspendLayout();
+            groupBox7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            groupBox3.SuspendLayout();
+            tabPage4.SuspendLayout();
+            groupBox6.SuspendLayout();
+            tabPage5.SuspendLayout();
+            toolStrip1.SuspendLayout();
+            statusStrip1.SuspendLayout();
+            SuspendLayout();
             // 
             // tabControl1
             // 
-            this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage2);
-            this.tabControl1.Controls.Add(this.tabPage3);
-            this.tabControl1.Controls.Add(this.tabPage4);
-            this.tabControl1.Controls.Add(this.tabPage5);
-            this.tabControl1.Location = new System.Drawing.Point(16, 70);
-            this.tabControl1.Margin = new System.Windows.Forms.Padding(5);
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(1502, 965);
-            this.tabControl1.TabIndex = 0;
+            tabControl1.Controls.Add(tabPage1);
+            tabControl1.Controls.Add(tabPage2);
+            tabControl1.Controls.Add(tabPage3);
+            tabControl1.Controls.Add(tabPage4);
+            tabControl1.Controls.Add(tabPage5);
+            tabControl1.Location = new System.Drawing.Point(14, 52);
+            tabControl1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabControl1.Name = "tabControl1";
+            tabControl1.SelectedIndex = 0;
+            tabControl1.Size = new System.Drawing.Size(1271, 724);
+            tabControl1.TabIndex = 0;
             // 
             // tabPage1
             // 
-            this.tabPage1.Controls.Add(this.groupBox8);
-            this.tabPage1.Controls.Add(this.groupBox2);
-            this.tabPage1.Controls.Add(this.groupBox1);
-            this.tabPage1.Location = new System.Drawing.Point(8, 46);
-            this.tabPage1.Margin = new System.Windows.Forms.Padding(5);
-            this.tabPage1.Name = "tabPage1";
-            this.tabPage1.Padding = new System.Windows.Forms.Padding(5);
-            this.tabPage1.Size = new System.Drawing.Size(1486, 911);
-            this.tabPage1.TabIndex = 0;
-            this.tabPage1.Text = "Input";
-            this.tabPage1.UseVisualStyleBackColor = true;
-            this.tabPage1.Click += new System.EventHandler(this.tabPage1_Click);
+            tabPage1.Controls.Add(groupBox8);
+            tabPage1.Controls.Add(groupBox2);
+            tabPage1.Controls.Add(groupBox1);
+            tabPage1.Location = new System.Drawing.Point(4, 33);
+            tabPage1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage1.Name = "tabPage1";
+            tabPage1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage1.Size = new System.Drawing.Size(1263, 687);
+            tabPage1.TabIndex = 0;
+            tabPage1.Text = "Input";
+            tabPage1.UseVisualStyleBackColor = true;
+            tabPage1.Click += tabPage1_Click;
             // 
             // groupBox8
             // 
-            this.groupBox8.Controls.Add(this.button20);
-            this.groupBox8.Controls.Add(this.textBox3);
-            this.groupBox8.Controls.Add(this.button21);
-            this.groupBox8.Location = new System.Drawing.Point(29, 555);
-            this.groupBox8.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox8.Name = "groupBox8";
-            this.groupBox8.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox8.Size = new System.Drawing.Size(1441, 246);
-            this.groupBox8.TabIndex = 6;
-            this.groupBox8.TabStop = false;
-            this.groupBox8.Text = "Excel/Csv folder Import";
+            groupBox8.Controls.Add(button20);
+            groupBox8.Controls.Add(textBox3);
+            groupBox8.Controls.Add(button21);
+            groupBox8.Location = new System.Drawing.Point(25, 416);
+            groupBox8.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox8.Name = "groupBox8";
+            groupBox8.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox8.Size = new System.Drawing.Size(1219, 184);
+            groupBox8.TabIndex = 6;
+            groupBox8.TabStop = false;
+            groupBox8.Text = "Excel/Csv folder Import";
             // 
             // button20
             // 
-            this.button20.Location = new System.Drawing.Point(1056, 75);
-            this.button20.Margin = new System.Windows.Forms.Padding(5);
-            this.button20.Name = "button20";
-            this.button20.Size = new System.Drawing.Size(239, 80);
-            this.button20.TabIndex = 2;
-            this.button20.Text = "Import";
-            this.button20.UseVisualStyleBackColor = true;
-            this.button20.Click += new System.EventHandler(this.button20_Click);
+            button20.Location = new System.Drawing.Point(894, 56);
+            button20.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button20.Name = "button20";
+            button20.Size = new System.Drawing.Size(202, 60);
+            button20.TabIndex = 2;
+            button20.Text = "Import";
+            button20.UseVisualStyleBackColor = true;
+            button20.Click += button20_Click;
             // 
             // textBox3
             // 
-            this.textBox3.Location = new System.Drawing.Point(327, 104);
-            this.textBox3.Margin = new System.Windows.Forms.Padding(5);
-            this.textBox3.Name = "textBox3";
-            this.textBox3.Size = new System.Drawing.Size(560, 39);
-            this.textBox3.TabIndex = 1;
+            textBox3.Location = new System.Drawing.Point(277, 78);
+            textBox3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            textBox3.Name = "textBox3";
+            textBox3.Size = new System.Drawing.Size(474, 30);
+            textBox3.TabIndex = 1;
             // 
             // button21
             // 
-            this.button21.Location = new System.Drawing.Point(18, 96);
-            this.button21.Margin = new System.Windows.Forms.Padding(5);
-            this.button21.Name = "button21";
-            this.button21.Size = new System.Drawing.Size(242, 59);
-            this.button21.TabIndex = 0;
-            this.button21.Text = "Browse the folder..";
-            this.button21.UseVisualStyleBackColor = true;
-            this.button21.Click += new System.EventHandler(this.button21_Click);
+            button21.Location = new System.Drawing.Point(15, 72);
+            button21.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button21.Name = "button21";
+            button21.Size = new System.Drawing.Size(205, 44);
+            button21.TabIndex = 0;
+            button21.Text = "Browse the folder..";
+            button21.UseVisualStyleBackColor = true;
+            button21.Click += button21_Click;
             // 
             // groupBox2
             // 
-            this.groupBox2.Controls.Add(this.button3);
-            this.groupBox2.Controls.Add(this.textBox1);
-            this.groupBox2.Controls.Add(this.BrowseBtn1);
-            this.groupBox2.Location = new System.Drawing.Point(29, 280);
-            this.groupBox2.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox2.Size = new System.Drawing.Size(1441, 245);
-            this.groupBox2.TabIndex = 5;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Excel/Csv/Sqlite file Import";
+            groupBox2.Controls.Add(button3);
+            groupBox2.Controls.Add(textBox1);
+            groupBox2.Controls.Add(BrowseBtn1);
+            groupBox2.Location = new System.Drawing.Point(25, 210);
+            groupBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox2.Name = "groupBox2";
+            groupBox2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox2.Size = new System.Drawing.Size(1219, 184);
+            groupBox2.TabIndex = 5;
+            groupBox2.TabStop = false;
+            groupBox2.Text = "Excel/Csv/Sqlite file Import";
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(1048, 75);
-            this.button3.Margin = new System.Windows.Forms.Padding(5);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(239, 80);
-            this.button3.TabIndex = 2;
-            this.button3.Text = "Import";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            button3.Location = new System.Drawing.Point(887, 56);
+            button3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button3.Name = "button3";
+            button3.Size = new System.Drawing.Size(202, 60);
+            button3.TabIndex = 2;
+            button3.Text = "Import";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
             // 
             // textBox1
             // 
-            this.textBox1.Location = new System.Drawing.Point(318, 104);
-            this.textBox1.Margin = new System.Windows.Forms.Padding(5);
-            this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(560, 39);
-            this.textBox1.TabIndex = 1;
+            textBox1.Location = new System.Drawing.Point(269, 78);
+            textBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            textBox1.Name = "textBox1";
+            textBox1.Size = new System.Drawing.Size(474, 30);
+            textBox1.TabIndex = 1;
             // 
             // BrowseBtn1
             // 
-            this.BrowseBtn1.Location = new System.Drawing.Point(10, 96);
-            this.BrowseBtn1.Margin = new System.Windows.Forms.Padding(5);
-            this.BrowseBtn1.Name = "BrowseBtn1";
-            this.BrowseBtn1.Size = new System.Drawing.Size(242, 59);
-            this.BrowseBtn1.TabIndex = 0;
-            this.BrowseBtn1.Text = "Browse the file...";
-            this.BrowseBtn1.UseVisualStyleBackColor = true;
-            this.BrowseBtn1.Click += new System.EventHandler(this.BrowseBtn1_Click);
+            BrowseBtn1.Location = new System.Drawing.Point(8, 72);
+            BrowseBtn1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            BrowseBtn1.Name = "BrowseBtn1";
+            BrowseBtn1.Size = new System.Drawing.Size(205, 44);
+            BrowseBtn1.TabIndex = 0;
+            BrowseBtn1.Text = "Browse the file...";
+            BrowseBtn1.UseVisualStyleBackColor = true;
+            BrowseBtn1.Click += BrowseBtn1_Click;
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.label1);
-            this.groupBox1.Controls.Add(this.button2);
-            this.groupBox1.Controls.Add(this.comboBox1);
-            this.groupBox1.Controls.Add(this.button1);
-            this.groupBox1.Location = new System.Drawing.Point(29, 32);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox1.Size = new System.Drawing.Size(1441, 219);
-            this.groupBox1.TabIndex = 4;
-            this.groupBox1.TabStop = false;
-            this.groupBox1.Text = " Table select";
+            groupBox1.Controls.Add(label1);
+            groupBox1.Controls.Add(button2);
+            groupBox1.Controls.Add(comboBox1);
+            groupBox1.Controls.Add(button1);
+            groupBox1.Location = new System.Drawing.Point(25, 24);
+            groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox1.Name = "groupBox1";
+            groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox1.Size = new System.Drawing.Size(1219, 164);
+            groupBox1.TabIndex = 4;
+            groupBox1.TabStop = false;
+            groupBox1.Text = " Table select";
             // 
             // label1
             // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(26, 54);
-            this.label1.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(237, 32);
-            this.label1.TabIndex = 2;
-            this.label1.Text = "please choose table：";
+            label1.AutoSize = true;
+            label1.Location = new System.Drawing.Point(22, 40);
+            label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label1.Name = "label1";
+            label1.Size = new System.Drawing.Size(197, 24);
+            label1.TabIndex = 2;
+            label1.Text = "please choose table：";
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(1048, 120);
-            this.button2.Margin = new System.Windows.Forms.Padding(5);
-            this.button2.Name = "button2";
-            this.button2.Size = new System.Drawing.Size(245, 69);
-            this.button2.TabIndex = 3;
-            this.button2.Text = "Delete";
-            this.button2.UseVisualStyleBackColor = true;
-            this.button2.Click += new System.EventHandler(this.button2_Click);
+            button2.Location = new System.Drawing.Point(887, 90);
+            button2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button2.Name = "button2";
+            button2.Size = new System.Drawing.Size(207, 52);
+            button2.TabIndex = 3;
+            button2.Text = "Delete";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
             // 
             // comboBox1
             // 
-            this.comboBox1.FormattingEnabled = true;
-            this.comboBox1.Location = new System.Drawing.Point(318, 42);
-            this.comboBox1.Margin = new System.Windows.Forms.Padding(5);
-            this.comboBox1.Name = "comboBox1";
-            this.comboBox1.Size = new System.Drawing.Size(560, 40);
-            this.comboBox1.TabIndex = 0;
-            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
+            comboBox1.FormattingEnabled = true;
+            comboBox1.Location = new System.Drawing.Point(269, 32);
+            comboBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            comboBox1.Name = "comboBox1";
+            comboBox1.Size = new System.Drawing.Size(474, 32);
+            comboBox1.TabIndex = 0;
+            comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
             // button1
             // 
-            this.button1.Location = new System.Drawing.Point(1042, 24);
-            this.button1.Margin = new System.Windows.Forms.Padding(5);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(245, 78);
-            this.button1.TabIndex = 1;
-            this.button1.Text = "Export Template";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            button1.Location = new System.Drawing.Point(882, 18);
+            button1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button1.Name = "button1";
+            button1.Size = new System.Drawing.Size(207, 58);
+            button1.TabIndex = 1;
+            button1.Text = "Export Template";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
             // 
             // tabPage2
             // 
-            this.tabPage2.Controls.Add(this.groupBox5);
-            this.tabPage2.Controls.Add(this.groupBox4);
-            this.tabPage2.Location = new System.Drawing.Point(8, 46);
-            this.tabPage2.Margin = new System.Windows.Forms.Padding(5);
-            this.tabPage2.Name = "tabPage2";
-            this.tabPage2.Padding = new System.Windows.Forms.Padding(5);
-            this.tabPage2.Size = new System.Drawing.Size(1486, 911);
-            this.tabPage2.TabIndex = 1;
-            this.tabPage2.Text = "Output";
-            this.tabPage2.UseVisualStyleBackColor = true;
+            tabPage2.Controls.Add(groupBox5);
+            tabPage2.Controls.Add(groupBox4);
+            tabPage2.Location = new System.Drawing.Point(4, 33);
+            tabPage2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage2.Name = "tabPage2";
+            tabPage2.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage2.Size = new System.Drawing.Size(1263, 687);
+            tabPage2.TabIndex = 1;
+            tabPage2.Text = "Output";
+            tabPage2.UseVisualStyleBackColor = true;
             // 
             // groupBox5
             // 
-            this.groupBox5.Controls.Add(this.buttonExRemove);
-            this.groupBox5.Controls.Add(this.buttonExAdd);
-            this.groupBox5.Controls.Add(this.button8);
-            this.groupBox5.Controls.Add(this.treeView1);
-            this.groupBox5.Controls.Add(this.listBox1);
-            this.groupBox5.Location = new System.Drawing.Point(41, 21);
-            this.groupBox5.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox5.Name = "groupBox5";
-            this.groupBox5.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox5.Size = new System.Drawing.Size(1450, 739);
-            this.groupBox5.TabIndex = 6;
-            this.groupBox5.TabStop = false;
-            this.groupBox5.Text = "Choose Tables to Export";
+            groupBox5.Controls.Add(buttonExRemove);
+            groupBox5.Controls.Add(buttonExAdd);
+            groupBox5.Controls.Add(button8);
+            groupBox5.Controls.Add(treeView1);
+            groupBox5.Controls.Add(listBox1);
+            groupBox5.Location = new System.Drawing.Point(35, 16);
+            groupBox5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox5.Name = "groupBox5";
+            groupBox5.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox5.Size = new System.Drawing.Size(1227, 554);
+            groupBox5.TabIndex = 6;
+            groupBox5.TabStop = false;
+            groupBox5.Text = "Choose Tables to Export";
             // 
             // buttonExRemove
             // 
-            this.buttonExRemove.Location = new System.Drawing.Point(629, 253);
-            this.buttonExRemove.Name = "buttonExRemove";
-            this.buttonExRemove.Size = new System.Drawing.Size(206, 58);
-            this.buttonExRemove.TabIndex = 8;
-            this.buttonExRemove.Text = "Remove a Table";
-            this.buttonExRemove.UseVisualStyleBackColor = true;
-            this.buttonExRemove.Click += new System.EventHandler(this.buttonExRemove_Click);
+            buttonExRemove.Location = new System.Drawing.Point(532, 190);
+            buttonExRemove.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            buttonExRemove.Name = "buttonExRemove";
+            buttonExRemove.Size = new System.Drawing.Size(174, 44);
+            buttonExRemove.TabIndex = 8;
+            buttonExRemove.Text = "Remove a Table";
+            buttonExRemove.UseVisualStyleBackColor = true;
+            buttonExRemove.Click += buttonExRemove_Click;
             // 
             // buttonExAdd
             // 
-            this.buttonExAdd.Location = new System.Drawing.Point(629, 145);
-            this.buttonExAdd.Name = "buttonExAdd";
-            this.buttonExAdd.Size = new System.Drawing.Size(206, 60);
-            this.buttonExAdd.TabIndex = 7;
-            this.buttonExAdd.Text = "Add a Table";
-            this.buttonExAdd.UseVisualStyleBackColor = true;
-            this.buttonExAdd.Click += new System.EventHandler(this.buttonExAdd_Click);
+            buttonExAdd.Location = new System.Drawing.Point(532, 109);
+            buttonExAdd.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            buttonExAdd.Name = "buttonExAdd";
+            buttonExAdd.Size = new System.Drawing.Size(174, 45);
+            buttonExAdd.TabIndex = 7;
+            buttonExAdd.Text = "Add a Table";
+            buttonExAdd.UseVisualStyleBackColor = true;
+            buttonExAdd.Click += buttonExAdd_Click;
             // 
             // button8
             // 
-            this.button8.Location = new System.Drawing.Point(629, 469);
-            this.button8.Margin = new System.Windows.Forms.Padding(5);
-            this.button8.Name = "button8";
-            this.button8.Size = new System.Drawing.Size(206, 59);
-            this.button8.TabIndex = 6;
-            this.button8.Text = "Clear All Tables";
-            this.button8.UseVisualStyleBackColor = true;
-            this.button8.Click += new System.EventHandler(this.ClearAllTables_Click);
+            button8.Location = new System.Drawing.Point(532, 352);
+            button8.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button8.Name = "button8";
+            button8.Size = new System.Drawing.Size(174, 44);
+            button8.TabIndex = 6;
+            button8.Text = "Clear All Tables";
+            button8.UseVisualStyleBackColor = true;
+            button8.Click += ClearAllTables_Click;
             // 
             // treeView1
             // 
-            this.treeView1.Location = new System.Drawing.Point(88, 59);
-            this.treeView1.Margin = new System.Windows.Forms.Padding(5);
-            this.treeView1.Name = "treeView1";
-            this.treeView1.Size = new System.Drawing.Size(508, 670);
-            this.treeView1.TabIndex = 0;
-            this.treeView1.DoubleClick += new System.EventHandler(this.treeView1_DoubleClick);
-            this.treeView1.MouseDown += new System.Windows.Forms.MouseEventHandler(this.treeView1_MouseDown);
+            treeView1.Location = new System.Drawing.Point(74, 44);
+            treeView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            treeView1.Name = "treeView1";
+            treeView1.Size = new System.Drawing.Size(430, 504);
+            treeView1.TabIndex = 0;
+            treeView1.DoubleClick += treeView1_DoubleClick;
+            treeView1.MouseDown += treeView1_MouseDown;
             // 
             // listBox1
             // 
-            this.listBox1.FormattingEnabled = true;
-            this.listBox1.ItemHeight = 32;
-            this.listBox1.Location = new System.Drawing.Point(886, 59);
-            this.listBox1.Margin = new System.Windows.Forms.Padding(5);
-            this.listBox1.Name = "listBox1";
-            this.listBox1.Size = new System.Drawing.Size(483, 676);
-            this.listBox1.TabIndex = 3;
-            this.listBox1.DoubleClick += new System.EventHandler(this.listBox1_DoubleClick);
+            listBox1.FormattingEnabled = true;
+            listBox1.Location = new System.Drawing.Point(750, 44);
+            listBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            listBox1.Name = "listBox1";
+            listBox1.Size = new System.Drawing.Size(409, 508);
+            listBox1.TabIndex = 3;
+            listBox1.DoubleClick += listBox1_DoubleClick;
             // 
             // groupBox4
             // 
-            this.groupBox4.Controls.Add(this.button19);
-            this.groupBox4.Controls.Add(this.button11);
-            this.groupBox4.Controls.Add(this.button10);
-            this.groupBox4.Location = new System.Drawing.Point(41, 771);
-            this.groupBox4.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox4.Name = "groupBox4";
-            this.groupBox4.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox4.Size = new System.Drawing.Size(1450, 139);
-            this.groupBox4.TabIndex = 5;
-            this.groupBox4.TabStop = false;
-            this.groupBox4.Text = "Export";
+            groupBox4.Controls.Add(button19);
+            groupBox4.Controls.Add(button11);
+            groupBox4.Controls.Add(button10);
+            groupBox4.Location = new System.Drawing.Point(35, 578);
+            groupBox4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox4.Name = "groupBox4";
+            groupBox4.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox4.Size = new System.Drawing.Size(1227, 104);
+            groupBox4.TabIndex = 5;
+            groupBox4.TabStop = false;
+            groupBox4.Text = "Export";
             // 
             // button19
             // 
-            this.button19.Location = new System.Drawing.Point(621, 42);
-            this.button19.Name = "button19";
-            this.button19.Size = new System.Drawing.Size(270, 80);
-            this.button19.TabIndex = 6;
-            this.button19.Text = "MiniExcel(Fast) ";
-            this.button19.UseVisualStyleBackColor = true;
-            this.button19.Click += new System.EventHandler(this.button19_Click);
+            button19.Location = new System.Drawing.Point(525, 32);
+            button19.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            button19.Name = "button19";
+            button19.Size = new System.Drawing.Size(228, 60);
+            button19.TabIndex = 6;
+            button19.Text = "MiniExcel(Fast) ";
+            button19.UseVisualStyleBackColor = true;
+            button19.Click += button19_Click;
             // 
             // button11
             // 
-            this.button11.Location = new System.Drawing.Point(954, 42);
-            this.button11.Margin = new System.Windows.Forms.Padding(5);
-            this.button11.Name = "button11";
-            this.button11.Size = new System.Drawing.Size(192, 80);
-            this.button11.TabIndex = 5;
-            this.button11.Text = "Export CSV";
-            this.button11.UseVisualStyleBackColor = true;
-            this.button11.Click += new System.EventHandler(this.button11_Click);
+            button11.Location = new System.Drawing.Point(807, 32);
+            button11.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button11.Name = "button11";
+            button11.Size = new System.Drawing.Size(162, 60);
+            button11.TabIndex = 5;
+            button11.Text = "Export CSV";
+            button11.UseVisualStyleBackColor = true;
+            button11.Click += button11_Click;
             // 
             // button10
             // 
-            this.button10.Location = new System.Drawing.Point(1188, 42);
-            this.button10.Margin = new System.Windows.Forms.Padding(5);
-            this.button10.Name = "button10";
-            this.button10.Size = new System.Drawing.Size(182, 80);
-            this.button10.TabIndex = 4;
-            this.button10.Text = "Export Excel";
-            this.button10.UseVisualStyleBackColor = true;
-            this.button10.Click += new System.EventHandler(this.button10_Click);
+            button10.Location = new System.Drawing.Point(1005, 32);
+            button10.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button10.Name = "button10";
+            button10.Size = new System.Drawing.Size(154, 60);
+            button10.TabIndex = 4;
+            button10.Text = "Export Excel";
+            button10.UseVisualStyleBackColor = true;
+            button10.Click += button10_Click;
             // 
             // tabPage3
             // 
-            this.tabPage3.Controls.Add(this.richTextBox1);
-            this.tabPage3.Controls.Add(this.groupBox7);
-            this.tabPage3.Controls.Add(this.dataGridView1);
-            this.tabPage3.Controls.Add(this.groupBox3);
-            this.tabPage3.Location = new System.Drawing.Point(8, 46);
-            this.tabPage3.Margin = new System.Windows.Forms.Padding(5);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(5);
-            this.tabPage3.Size = new System.Drawing.Size(1486, 911);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "DataView";
-            this.tabPage3.UseVisualStyleBackColor = true;
+            tabPage3.Controls.Add(richTextBox1);
+            tabPage3.Controls.Add(groupBox7);
+            tabPage3.Controls.Add(dataGridView1);
+            tabPage3.Controls.Add(groupBox3);
+            tabPage3.Location = new System.Drawing.Point(4, 33);
+            tabPage3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage3.Name = "tabPage3";
+            tabPage3.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage3.Size = new System.Drawing.Size(1263, 687);
+            tabPage3.TabIndex = 2;
+            tabPage3.Text = "DataView";
+            tabPage3.UseVisualStyleBackColor = true;
             // 
             // richTextBox1
             // 
-            this.richTextBox1.Location = new System.Drawing.Point(60, 254);
-            this.richTextBox1.Margin = new System.Windows.Forms.Padding(5);
-            this.richTextBox1.Name = "richTextBox1";
-            this.richTextBox1.Size = new System.Drawing.Size(1418, 215);
-            this.richTextBox1.TabIndex = 2;
-            this.richTextBox1.Text = "";
+            richTextBox1.Location = new System.Drawing.Point(51, 190);
+            richTextBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            richTextBox1.Name = "richTextBox1";
+            richTextBox1.Size = new System.Drawing.Size(1200, 162);
+            richTextBox1.TabIndex = 2;
+            richTextBox1.Text = "";
             // 
             // groupBox7
             // 
-            this.groupBox7.Controls.Add(this.button13);
-            this.groupBox7.Controls.Add(this.button14);
-            this.groupBox7.Controls.Add(this.button6);
-            this.groupBox7.Location = new System.Drawing.Point(1185, 5);
-            this.groupBox7.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox7.Name = "groupBox7";
-            this.groupBox7.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox7.Size = new System.Drawing.Size(294, 246);
-            this.groupBox7.TabIndex = 3;
-            this.groupBox7.TabStop = false;
-            this.groupBox7.Text = "Excute SQL";
+            groupBox7.Controls.Add(button13);
+            groupBox7.Controls.Add(button14);
+            groupBox7.Controls.Add(button6);
+            groupBox7.Location = new System.Drawing.Point(1003, 4);
+            groupBox7.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox7.Name = "groupBox7";
+            groupBox7.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox7.Size = new System.Drawing.Size(249, 184);
+            groupBox7.TabIndex = 3;
+            groupBox7.TabStop = false;
+            groupBox7.Text = "Excute SQL";
             // 
             // button13
             // 
-            this.button13.Location = new System.Drawing.Point(54, 29);
-            this.button13.Margin = new System.Windows.Forms.Padding(5);
-            this.button13.Name = "button13";
-            this.button13.Size = new System.Drawing.Size(223, 66);
-            this.button13.TabIndex = 7;
-            this.button13.Text = "Generate Delete";
-            this.button13.UseVisualStyleBackColor = true;
-            this.button13.Click += new System.EventHandler(this.button13_Click);
+            button13.Location = new System.Drawing.Point(46, 22);
+            button13.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button13.Name = "button13";
+            button13.Size = new System.Drawing.Size(189, 50);
+            button13.TabIndex = 7;
+            button13.Text = "Generate Delete";
+            button13.UseVisualStyleBackColor = true;
+            button13.Click += button13_Click;
             // 
             // button14
             // 
-            this.button14.Location = new System.Drawing.Point(54, 99);
-            this.button14.Margin = new System.Windows.Forms.Padding(5);
-            this.button14.Name = "button14";
-            this.button14.Size = new System.Drawing.Size(223, 67);
-            this.button14.TabIndex = 8;
-            this.button14.Text = " Generate Update";
-            this.button14.UseVisualStyleBackColor = true;
-            this.button14.Click += new System.EventHandler(this.button14_Click);
+            button14.Location = new System.Drawing.Point(46, 74);
+            button14.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button14.Name = "button14";
+            button14.Size = new System.Drawing.Size(189, 50);
+            button14.TabIndex = 8;
+            button14.Text = " Generate Update";
+            button14.UseVisualStyleBackColor = true;
+            button14.Click += button14_Click;
             // 
             // button6
             // 
-            this.button6.Location = new System.Drawing.Point(54, 174);
-            this.button6.Margin = new System.Windows.Forms.Padding(5);
-            this.button6.Name = "button6";
-            this.button6.Size = new System.Drawing.Size(223, 66);
-            this.button6.TabIndex = 9;
-            this.button6.Text = "Execute Sql";
-            this.button6.UseVisualStyleBackColor = true;
-            this.button6.Click += new System.EventHandler(this.button6_Click);
+            button6.Location = new System.Drawing.Point(46, 130);
+            button6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button6.Name = "button6";
+            button6.Size = new System.Drawing.Size(189, 50);
+            button6.TabIndex = 9;
+            button6.Text = "Execute Sql";
+            button6.UseVisualStyleBackColor = true;
+            button6.Click += button6_Click;
             // 
             // dataGridView1
             // 
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Location = new System.Drawing.Point(60, 482);
-            this.dataGridView1.Margin = new System.Windows.Forms.Padding(5);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.RowHeadersWidth = 51;
-            this.dataGridView1.RowTemplate.Height = 29;
-            this.dataGridView1.Size = new System.Drawing.Size(1420, 426);
-            this.dataGridView1.TabIndex = 0;
+            dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView1.Location = new System.Drawing.Point(51, 362);
+            dataGridView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.RowHeadersWidth = 51;
+            dataGridView1.RowTemplate.Height = 29;
+            dataGridView1.Size = new System.Drawing.Size(1202, 320);
+            dataGridView1.TabIndex = 0;
             // 
             // groupBox3
             // 
-            this.groupBox3.Controls.Add(this.button16);
-            this.groupBox3.Controls.Add(this.button9);
-            this.groupBox3.Controls.Add(this.button7);
-            this.groupBox3.Controls.Add(this.button5);
-            this.groupBox3.Controls.Add(this.button4);
-            this.groupBox3.Controls.Add(this.label2);
-            this.groupBox3.Controls.Add(this.comboBox2);
-            this.groupBox3.Location = new System.Drawing.Point(60, 5);
-            this.groupBox3.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox3.Size = new System.Drawing.Size(1115, 246);
-            this.groupBox3.TabIndex = 1;
-            this.groupBox3.TabStop = false;
-            this.groupBox3.Text = "Data View";
+            groupBox3.Controls.Add(button16);
+            groupBox3.Controls.Add(button9);
+            groupBox3.Controls.Add(button7);
+            groupBox3.Controls.Add(button5);
+            groupBox3.Controls.Add(button4);
+            groupBox3.Controls.Add(label2);
+            groupBox3.Controls.Add(comboBox2);
+            groupBox3.Location = new System.Drawing.Point(51, 4);
+            groupBox3.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox3.Name = "groupBox3";
+            groupBox3.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox3.Size = new System.Drawing.Size(943, 184);
+            groupBox3.TabIndex = 1;
+            groupBox3.TabStop = false;
+            groupBox3.Text = "Data View";
             // 
             // button16
             // 
-            this.button16.Location = new System.Drawing.Point(540, 120);
-            this.button16.Name = "button16";
-            this.button16.Size = new System.Drawing.Size(245, 82);
-            this.button16.TabIndex = 7;
-            this.button16.Text = "Export Excel By Table";
-            this.button16.UseVisualStyleBackColor = true;
-            this.button16.Click += new System.EventHandler(this.button16_Click);
+            button16.Location = new System.Drawing.Point(457, 90);
+            button16.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            button16.Name = "button16";
+            button16.Size = new System.Drawing.Size(207, 62);
+            button16.TabIndex = 7;
+            button16.Text = "Export Excel By Table";
+            button16.UseVisualStyleBackColor = true;
+            button16.Click += button16_Click;
             // 
             // button9
             // 
-            this.button9.Location = new System.Drawing.Point(540, 42);
-            this.button9.Margin = new System.Windows.Forms.Padding(5);
-            this.button9.Name = "button9";
-            this.button9.Size = new System.Drawing.Size(245, 66);
-            this.button9.TabIndex = 6;
-            this.button9.Text = "Generate Select";
-            this.button9.UseVisualStyleBackColor = true;
-            this.button9.Click += new System.EventHandler(this.button9_Click);
+            button9.Location = new System.Drawing.Point(457, 32);
+            button9.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button9.Name = "button9";
+            button9.Size = new System.Drawing.Size(207, 50);
+            button9.TabIndex = 6;
+            button9.Text = "Generate Select";
+            button9.UseVisualStyleBackColor = true;
+            button9.Click += button9_Click;
             // 
             // button7
             // 
-            this.button7.Location = new System.Drawing.Point(809, 120);
-            this.button7.Margin = new System.Windows.Forms.Padding(5);
-            this.button7.Name = "button7";
-            this.button7.Size = new System.Drawing.Size(258, 82);
-            this.button7.TabIndex = 5;
-            this.button7.Text = "Export Csv By Table";
-            this.button7.UseVisualStyleBackColor = true;
-            this.button7.Click += new System.EventHandler(this.button7_Click);
+            button7.Location = new System.Drawing.Point(685, 90);
+            button7.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button7.Name = "button7";
+            button7.Size = new System.Drawing.Size(218, 62);
+            button7.TabIndex = 5;
+            button7.Text = "Export Csv By Table";
+            button7.UseVisualStyleBackColor = true;
+            button7.Click += button7_Click;
             // 
             // button5
             // 
-            this.button5.Location = new System.Drawing.Point(809, 42);
-            this.button5.Margin = new System.Windows.Forms.Padding(5);
-            this.button5.Name = "button5";
-            this.button5.Size = new System.Drawing.Size(258, 69);
-            this.button5.TabIndex = 3;
-            this.button5.Text = "View Data";
-            this.button5.UseVisualStyleBackColor = true;
-            this.button5.Click += new System.EventHandler(this.button5_Click);
+            button5.Location = new System.Drawing.Point(685, 32);
+            button5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button5.Name = "button5";
+            button5.Size = new System.Drawing.Size(218, 52);
+            button5.TabIndex = 3;
+            button5.Text = "View Data";
+            button5.UseVisualStyleBackColor = true;
+            button5.Click += button5_Click;
             // 
             // button4
             // 
-            this.button4.Location = new System.Drawing.Point(226, 123);
-            this.button4.Margin = new System.Windows.Forms.Padding(5);
-            this.button4.Name = "button4";
-            this.button4.Size = new System.Drawing.Size(257, 78);
-            this.button4.TabIndex = 2;
-            this.button4.Text = "Export Excel By SQL";
-            this.button4.UseVisualStyleBackColor = true;
-            this.button4.Click += new System.EventHandler(this.button4_Click);
+            button4.Location = new System.Drawing.Point(191, 92);
+            button4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button4.Name = "button4";
+            button4.Size = new System.Drawing.Size(217, 58);
+            button4.TabIndex = 2;
+            button4.Text = "Export Excel By SQL";
+            button4.UseVisualStyleBackColor = true;
+            button4.Click += button4_Click;
             // 
             // label2
             // 
-            this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(37, 66);
-            this.label2.Margin = new System.Windows.Forms.Padding(5, 0, 5, 0);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(176, 32);
-            this.label2.TabIndex = 1;
-            this.label2.Text = "Please choose：";
+            label2.AutoSize = true;
+            label2.Location = new System.Drawing.Point(31, 50);
+            label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            label2.Name = "label2";
+            label2.Size = new System.Drawing.Size(147, 24);
+            label2.TabIndex = 1;
+            label2.Text = "Please choose：";
             // 
             // comboBox2
             // 
-            this.comboBox2.FormattingEnabled = true;
-            this.comboBox2.Location = new System.Drawing.Point(226, 53);
-            this.comboBox2.Margin = new System.Windows.Forms.Padding(5);
-            this.comboBox2.Name = "comboBox2";
-            this.comboBox2.Size = new System.Drawing.Size(254, 40);
-            this.comboBox2.TabIndex = 0;
-            this.comboBox2.SelectedIndexChanged += new System.EventHandler(this.comboBox2_SelectedIndexChanged);
+            comboBox2.FormattingEnabled = true;
+            comboBox2.Location = new System.Drawing.Point(191, 40);
+            comboBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            comboBox2.Name = "comboBox2";
+            comboBox2.Size = new System.Drawing.Size(216, 32);
+            comboBox2.TabIndex = 0;
+            comboBox2.SelectedIndexChanged += comboBox2_SelectedIndexChanged;
             // 
             // tabPage4
             // 
-            this.tabPage4.Controls.Add(this.groupBox6);
-            this.tabPage4.Location = new System.Drawing.Point(8, 46);
-            this.tabPage4.Margin = new System.Windows.Forms.Padding(5);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(5);
-            this.tabPage4.Size = new System.Drawing.Size(1486, 911);
-            this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "Stored procedure";
-            this.tabPage4.UseVisualStyleBackColor = true;
+            tabPage4.Controls.Add(groupBox6);
+            tabPage4.Location = new System.Drawing.Point(4, 33);
+            tabPage4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage4.Name = "tabPage4";
+            tabPage4.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage4.Size = new System.Drawing.Size(1263, 687);
+            tabPage4.TabIndex = 3;
+            tabPage4.Text = "Stored procedure";
+            tabPage4.UseVisualStyleBackColor = true;
             // 
             // groupBox6
             // 
-            this.groupBox6.Controls.Add(this.btnDeleteProc);
-            this.groupBox6.Controls.Add(this.btnAddProce);
-            this.groupBox6.Controls.Add(this.listBox2);
-            this.groupBox6.Controls.Add(this.button12);
-            this.groupBox6.Controls.Add(this.treeView2);
-            this.groupBox6.Location = new System.Drawing.Point(29, 10);
-            this.groupBox6.Margin = new System.Windows.Forms.Padding(5);
-            this.groupBox6.Name = "groupBox6";
-            this.groupBox6.Padding = new System.Windows.Forms.Padding(5);
-            this.groupBox6.Size = new System.Drawing.Size(1388, 826);
-            this.groupBox6.TabIndex = 3;
-            this.groupBox6.TabStop = false;
-            this.groupBox6.Text = "Click to choose";
+            groupBox6.Controls.Add(btnDeleteProc);
+            groupBox6.Controls.Add(btnAddProce);
+            groupBox6.Controls.Add(listBox2);
+            groupBox6.Controls.Add(button12);
+            groupBox6.Controls.Add(treeView2);
+            groupBox6.Location = new System.Drawing.Point(25, 8);
+            groupBox6.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox6.Name = "groupBox6";
+            groupBox6.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            groupBox6.Size = new System.Drawing.Size(1174, 620);
+            groupBox6.TabIndex = 3;
+            groupBox6.TabStop = false;
+            groupBox6.Text = "Click to choose";
             // 
             // btnDeleteProc
             // 
-            this.btnDeleteProc.Location = new System.Drawing.Point(582, 249);
-            this.btnDeleteProc.Name = "btnDeleteProc";
-            this.btnDeleteProc.Size = new System.Drawing.Size(252, 78);
-            this.btnDeleteProc.TabIndex = 4;
-            this.btnDeleteProc.Text = "Remove a procedure";
-            this.btnDeleteProc.UseVisualStyleBackColor = true;
-            this.btnDeleteProc.Click += new System.EventHandler(this.btnDeleteProc_Click);
+            btnDeleteProc.Location = new System.Drawing.Point(492, 187);
+            btnDeleteProc.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            btnDeleteProc.Name = "btnDeleteProc";
+            btnDeleteProc.Size = new System.Drawing.Size(213, 58);
+            btnDeleteProc.TabIndex = 4;
+            btnDeleteProc.Text = "Remove a procedure";
+            btnDeleteProc.UseVisualStyleBackColor = true;
+            btnDeleteProc.Click += btnDeleteProc_Click;
             // 
             // btnAddProce
             // 
-            this.btnAddProce.Location = new System.Drawing.Point(582, 135);
-            this.btnAddProce.Name = "btnAddProce";
-            this.btnAddProce.Size = new System.Drawing.Size(252, 86);
-            this.btnAddProce.TabIndex = 3;
-            this.btnAddProce.Text = "Add a procedure";
-            this.btnAddProce.UseVisualStyleBackColor = true;
-            this.btnAddProce.Click += new System.EventHandler(this.btnAddProce_Click);
+            btnAddProce.Location = new System.Drawing.Point(492, 101);
+            btnAddProce.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            btnAddProce.Name = "btnAddProce";
+            btnAddProce.Size = new System.Drawing.Size(213, 64);
+            btnAddProce.TabIndex = 3;
+            btnAddProce.Text = "Add a procedure";
+            btnAddProce.UseVisualStyleBackColor = true;
+            btnAddProce.Click += btnAddProce_Click;
             // 
             // listBox2
             // 
-            this.listBox2.FormattingEnabled = true;
-            this.listBox2.ItemHeight = 32;
-            this.listBox2.Location = new System.Drawing.Point(882, 58);
-            this.listBox2.Margin = new System.Windows.Forms.Padding(5);
-            this.listBox2.Name = "listBox2";
-            this.listBox2.Size = new System.Drawing.Size(487, 644);
-            this.listBox2.TabIndex = 1;
-            this.listBox2.DoubleClick += new System.EventHandler(this.listBox2_DoubleClick);
+            listBox2.FormattingEnabled = true;
+            listBox2.Location = new System.Drawing.Point(746, 44);
+            listBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            listBox2.Name = "listBox2";
+            listBox2.Size = new System.Drawing.Size(413, 484);
+            listBox2.TabIndex = 1;
+            listBox2.DoubleClick += listBox2_DoubleClick;
             // 
             // button12
             // 
-            this.button12.Location = new System.Drawing.Point(864, 733);
-            this.button12.Margin = new System.Windows.Forms.Padding(5);
-            this.button12.Name = "button12";
-            this.button12.Size = new System.Drawing.Size(205, 64);
-            this.button12.TabIndex = 2;
-            this.button12.Text = "Run";
-            this.button12.UseVisualStyleBackColor = true;
-            this.button12.Click += new System.EventHandler(this.button12_Click);
+            button12.Location = new System.Drawing.Point(731, 550);
+            button12.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button12.Name = "button12";
+            button12.Size = new System.Drawing.Size(173, 48);
+            button12.TabIndex = 2;
+            button12.Text = "Run";
+            button12.UseVisualStyleBackColor = true;
+            button12.Click += button12_Click;
             // 
             // treeView2
             // 
-            this.treeView2.Location = new System.Drawing.Point(63, 58);
-            this.treeView2.Margin = new System.Windows.Forms.Padding(5);
-            this.treeView2.Name = "treeView2";
-            this.treeView2.Size = new System.Drawing.Size(495, 638);
-            this.treeView2.TabIndex = 0;
-            this.treeView2.DoubleClick += new System.EventHandler(this.treeView2_DoubleClick);
-            this.treeView2.MouseDown += new System.Windows.Forms.MouseEventHandler(this.treeView2_MouseDown);
+            treeView2.Location = new System.Drawing.Point(53, 44);
+            treeView2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            treeView2.Name = "treeView2";
+            treeView2.Size = new System.Drawing.Size(419, 480);
+            treeView2.TabIndex = 0;
+            treeView2.DoubleClick += treeView2_DoubleClick;
+            treeView2.MouseDown += treeView2_MouseDown;
             // 
             // tabPage5
             // 
-            this.tabPage5.Controls.Add(this.button18);
-            this.tabPage5.Controls.Add(this.button17);
-            this.tabPage5.Controls.Add(this.textBox2);
-            this.tabPage5.Controls.Add(this.button15);
-            this.tabPage5.Location = new System.Drawing.Point(8, 46);
-            this.tabPage5.Margin = new System.Windows.Forms.Padding(5);
-            this.tabPage5.Name = "tabPage5";
-            this.tabPage5.Padding = new System.Windows.Forms.Padding(5);
-            this.tabPage5.Size = new System.Drawing.Size(1486, 911);
-            this.tabPage5.TabIndex = 4;
-            this.tabPage5.Text = "Tools";
-            this.tabPage5.UseVisualStyleBackColor = true;
+            tabPage5.Controls.Add(button18);
+            tabPage5.Controls.Add(button17);
+            tabPage5.Controls.Add(textBox2);
+            tabPage5.Controls.Add(button15);
+            tabPage5.Location = new System.Drawing.Point(4, 33);
+            tabPage5.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage5.Name = "tabPage5";
+            tabPage5.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            tabPage5.Size = new System.Drawing.Size(1263, 687);
+            tabPage5.TabIndex = 4;
+            tabPage5.Text = "Tools";
+            tabPage5.UseVisualStyleBackColor = true;
             // 
             // button18
             // 
-            this.button18.Location = new System.Drawing.Point(978, 355);
-            this.button18.Margin = new System.Windows.Forms.Padding(5);
-            this.button18.Name = "button18";
-            this.button18.Size = new System.Drawing.Size(299, 74);
-            this.button18.TabIndex = 4;
-            this.button18.Text = "Progress Check";
-            this.button18.UseVisualStyleBackColor = true;
-            this.button18.Click += new System.EventHandler(this.button18_Click);
+            button18.Location = new System.Drawing.Point(828, 266);
+            button18.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button18.Name = "button18";
+            button18.Size = new System.Drawing.Size(253, 56);
+            button18.TabIndex = 4;
+            button18.Text = "Progress Check";
+            button18.UseVisualStyleBackColor = true;
+            button18.Click += button18_Click;
             // 
             // button17
             // 
-            this.button17.Location = new System.Drawing.Point(978, 488);
-            this.button17.Margin = new System.Windows.Forms.Padding(5);
-            this.button17.Name = "button17";
-            this.button17.Size = new System.Drawing.Size(299, 74);
-            this.button17.TabIndex = 3;
-            this.button17.Text = "Stop";
-            this.button17.UseVisualStyleBackColor = true;
-            this.button17.Click += new System.EventHandler(this.button17_Click);
+            button17.Location = new System.Drawing.Point(828, 366);
+            button17.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button17.Name = "button17";
+            button17.Size = new System.Drawing.Size(253, 56);
+            button17.TabIndex = 3;
+            button17.Text = "Stop";
+            button17.UseVisualStyleBackColor = true;
+            button17.Click += button17_Click;
             // 
             // textBox2
             // 
-            this.textBox2.Location = new System.Drawing.Point(486, 139);
-            this.textBox2.Margin = new System.Windows.Forms.Padding(5);
-            this.textBox2.Name = "textBox2";
-            this.textBox2.Size = new System.Drawing.Size(652, 39);
-            this.textBox2.TabIndex = 1;
+            textBox2.Location = new System.Drawing.Point(411, 104);
+            textBox2.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            textBox2.Name = "textBox2";
+            textBox2.Size = new System.Drawing.Size(552, 30);
+            textBox2.TabIndex = 1;
             // 
             // button15
             // 
-            this.button15.Location = new System.Drawing.Point(120, 123);
-            this.button15.Margin = new System.Windows.Forms.Padding(5);
-            this.button15.Name = "button15";
-            this.button15.Size = new System.Drawing.Size(299, 74);
-            this.button15.TabIndex = 0;
-            this.button15.Text = "Sqlserver_To_Sqlite";
-            this.button15.UseVisualStyleBackColor = true;
-            this.button15.Click += new System.EventHandler(this.button15_Click);
+            button15.Location = new System.Drawing.Point(102, 92);
+            button15.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            button15.Name = "button15";
+            button15.Size = new System.Drawing.Size(253, 56);
+            button15.TabIndex = 0;
+            button15.Text = "Sqlserver_To_Sqlite";
+            button15.UseVisualStyleBackColor = true;
+            button15.Click += button15_Click;
             // 
             // toolStrip1
             // 
-            this.toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripButton1,
-            this.toolStripSeparator2,
-            this.toolStripButton2,
-            this.toolStripSeparator3,
-            this.toolStripButton3});
-            this.toolStrip1.Location = new System.Drawing.Point(0, 0);
-            this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
-            this.toolStrip1.Size = new System.Drawing.Size(1537, 42);
-            this.toolStrip1.TabIndex = 2;
+            toolStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
+            toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripButton1, toolStripSeparator2, toolStripButton2, toolStripSeparator3, toolStripButton3 });
+            toolStrip1.Location = new System.Drawing.Point(0, 0);
+            toolStrip1.Name = "toolStrip1";
+            toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 3, 0);
+            toolStrip1.Size = new System.Drawing.Size(1301, 33);
+            toolStrip1.TabIndex = 2;
             // 
             // toolStripButton1
             // 
-            this.toolStripButton1.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton1.Image")));
-            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton1.Name = "toolStripButton1";
-            this.toolStripButton1.Size = new System.Drawing.Size(97, 36);
-            this.toolStripButton1.Text = "Login";
-            this.toolStripButton1.ToolTipText = "Login";
-            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            toolStripButton1.Image = (System.Drawing.Image)resources.GetObject("toolStripButton1.Image");
+            toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            toolStripButton1.Name = "toolStripButton1";
+            toolStripButton1.Size = new System.Drawing.Size(82, 28);
+            toolStripButton1.Text = "Login";
+            toolStripButton1.ToolTipText = "Login";
+            toolStripButton1.Click += toolStripButton1_Click;
             // 
             // toolStripSeparator2
             // 
-            this.toolStripSeparator2.Name = "toolStripSeparator2";
-            this.toolStripSeparator2.Size = new System.Drawing.Size(6, 42);
+            toolStripSeparator2.Name = "toolStripSeparator2";
+            toolStripSeparator2.Size = new System.Drawing.Size(6, 33);
             // 
             // toolStripButton2
             // 
-            this.toolStripButton2.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton2.Image")));
-            this.toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton2.Name = "toolStripButton2";
-            this.toolStripButton2.Size = new System.Drawing.Size(96, 36);
-            this.toolStripButton2.Text = "Close";
-            this.toolStripButton2.Click += new System.EventHandler(this.toolStripButton2_Click);
+            toolStripButton2.Image = (System.Drawing.Image)resources.GetObject("toolStripButton2.Image");
+            toolStripButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
+            toolStripButton2.Name = "toolStripButton2";
+            toolStripButton2.Size = new System.Drawing.Size(80, 28);
+            toolStripButton2.Text = "Close";
+            toolStripButton2.Click += toolStripButton2_Click;
             // 
             // toolStripSeparator3
             // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(6, 42);
+            toolStripSeparator3.Name = "toolStripSeparator3";
+            toolStripSeparator3.Size = new System.Drawing.Size(6, 33);
             // 
             // toolStripButton3
             // 
-            this.toolStripButton3.Image = ((System.Drawing.Image)(resources.GetObject("toolStripButton3.Image")));
-            this.toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
-            this.toolStripButton3.Name = "toolStripButton3";
-            this.toolStripButton3.Size = new System.Drawing.Size(103, 36);
-            this.toolStripButton3.Text = "About";
-            this.toolStripButton3.Click += new System.EventHandler(this.toolStripButton3_Click);
+            toolStripButton3.Image = (System.Drawing.Image)resources.GetObject("toolStripButton3.Image");
+            toolStripButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
+            toolStripButton3.Name = "toolStripButton3";
+            toolStripButton3.Size = new System.Drawing.Size(88, 28);
+            toolStripButton3.Text = "About";
+            toolStripButton3.Click += toolStripButton3_Click;
             // 
             // statusStrip1
             // 
-            this.statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
-            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.toolStripStatusLabel1,
-            this.toolStripStatusLabel2});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 1048);
-            this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Padding = new System.Windows.Forms.Padding(2, 0, 23, 0);
-            this.statusStrip1.Size = new System.Drawing.Size(1537, 42);
-            this.statusStrip1.TabIndex = 3;
-            this.statusStrip1.Text = "statusStrip1";
+            statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
+            statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2 });
+            statusStrip1.Location = new System.Drawing.Point(0, 776);
+            statusStrip1.Name = "statusStrip1";
+            statusStrip1.Padding = new System.Windows.Forms.Padding(2, 0, 19, 0);
+            statusStrip1.Size = new System.Drawing.Size(1301, 42);
+            statusStrip1.TabIndex = 3;
+            statusStrip1.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
-            this.toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            this.toolStripStatusLabel1.Size = new System.Drawing.Size(61, 32);
-            this.toolStripStatusLabel1.Text = "Info:";
-            this.toolStripStatusLabel1.ToolTipText = "Info";
+            toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Size = new System.Drawing.Size(47, 35);
+            toolStripStatusLabel1.Text = "Info:";
+            toolStripStatusLabel1.ToolTipText = "Info";
             // 
             // toolStripStatusLabel2
             // 
-            this.toolStripStatusLabel2.AutoSize = false;
-            this.toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            this.toolStripStatusLabel2.Size = new System.Drawing.Size(1120, 32);
-            this.toolStripStatusLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            toolStripStatusLabel2.AutoSize = false;
+            toolStripStatusLabel2.Name = "toolStripStatusLabel2";
+            toolStripStatusLabel2.Size = new System.Drawing.Size(1120, 35);
+            toolStripStatusLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // Main
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(13F, 32F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1537, 1090);
-            this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.toolStrip1);
-            this.Controls.Add(this.tabControl1);
-            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(5);
-            this.Name = "Main";
-            this.Text = "DataPie V2021.11（杨福来）";
-            this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.Main_FormClosed);
-            this.Load += new System.EventHandler(this.Main_Load);
-            this.tabControl1.ResumeLayout(false);
-            this.tabPage1.ResumeLayout(false);
-            this.groupBox8.ResumeLayout(false);
-            this.groupBox8.PerformLayout();
-            this.groupBox2.ResumeLayout(false);
-            this.groupBox2.PerformLayout();
-            this.groupBox1.ResumeLayout(false);
-            this.groupBox1.PerformLayout();
-            this.tabPage2.ResumeLayout(false);
-            this.groupBox5.ResumeLayout(false);
-            this.groupBox4.ResumeLayout(false);
-            this.tabPage3.ResumeLayout(false);
-            this.groupBox7.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
-            this.groupBox3.ResumeLayout(false);
-            this.groupBox3.PerformLayout();
-            this.tabPage4.ResumeLayout(false);
-            this.groupBox6.ResumeLayout(false);
-            this.tabPage5.ResumeLayout(false);
-            this.tabPage5.PerformLayout();
-            this.toolStrip1.ResumeLayout(false);
-            this.toolStrip1.PerformLayout();
-            this.statusStrip1.ResumeLayout(false);
-            this.statusStrip1.PerformLayout();
-            this.ResumeLayout(false);
-            this.PerformLayout();
+            AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
+            AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            ClientSize = new System.Drawing.Size(1301, 818);
+            Controls.Add(statusStrip1);
+            Controls.Add(toolStrip1);
+            Controls.Add(tabControl1);
+            Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
+            Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            Name = "Main";
+            Text = "DataPie V2025.12（杨福来）";
+            FormClosed += Main_FormClosed;
+            Load += Main_Load;
+            tabControl1.ResumeLayout(false);
+            tabPage1.ResumeLayout(false);
+            groupBox8.ResumeLayout(false);
+            groupBox8.PerformLayout();
+            groupBox2.ResumeLayout(false);
+            groupBox2.PerformLayout();
+            groupBox1.ResumeLayout(false);
+            groupBox1.PerformLayout();
+            tabPage2.ResumeLayout(false);
+            groupBox5.ResumeLayout(false);
+            groupBox4.ResumeLayout(false);
+            tabPage3.ResumeLayout(false);
+            groupBox7.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            groupBox3.ResumeLayout(false);
+            groupBox3.PerformLayout();
+            tabPage4.ResumeLayout(false);
+            groupBox6.ResumeLayout(false);
+            tabPage5.ResumeLayout(false);
+            tabPage5.PerformLayout();
+            toolStrip1.ResumeLayout(false);
+            toolStrip1.PerformLayout();
+            statusStrip1.ResumeLayout(false);
+            statusStrip1.PerformLayout();
+            ResumeLayout(false);
+            PerformLayout();
 
         }
 
