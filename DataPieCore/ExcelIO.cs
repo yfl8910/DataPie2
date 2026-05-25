@@ -19,36 +19,12 @@ namespace DataPieCore
             if (filePath is null) throw new ArgumentNullException(nameof(filePath));
             if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
-            try
+            var reader = CreateExcelReader(filePath, tableName, out var stream);
+            using (stream)
+            using (reader)
+            using (var headerReader = new HeaderRowDataReader(reader))
             {
-                var reader = CreateExcelReader(filePath, tableName, out var stream);
-                using (stream)
-                using (reader)
-                using (var headerReader = new HeaderRowDataReader(reader))
-                {
-                    dbAccess.BulkInsert(tableName, headerReader);
-                }
-            }
-            catch (NotImplementedException)
-            {
-                using var stream = OpenReadStream(filePath);
-                using var reader = ExcelReaderFactory.CreateReader(stream);
-                var result = reader.AsDataSet(new ExcelDataSetConfiguration
-                {
-                    ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
-                });
-
-                DataTable dt;
-                if (result.Tables.Count == 1)
-                {
-                    dt = result.Tables[0];
-                }
-                else
-                {
-                    dt = result.Tables.Contains(tableName) ? result.Tables[tableName] : result.Tables[0];
-                }
-
-                dbAccess.BulkInsert(tableName, dt);
+                dbAccess.BulkInsert(tableName, headerReader);
             }
         }
 
@@ -86,39 +62,10 @@ namespace DataPieCore
             if (filePath is null) throw new ArgumentNullException(nameof(filePath));
             if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
-            try
-            {
-                using var stream = OpenReadStream(filePath);
-                using var reader = CreateCsvReader(stream);
-                using var headerReader = new HeaderRowDataReader(reader);
-                dbAccess.BulkInsert(tableName, headerReader);
-            }
-            catch (NotImplementedException)
-            {
-                using var stream = OpenReadStream(filePath);
-                using var reader = CreateCsvReader(stream);
-                var result = reader.AsDataSet(new ExcelDataSetConfiguration
-                {
-                    ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
-                });
-
-                dbAccess.BulkInsert(tableName, result.Tables[0]);
-            }
-        }
-
-        public static DataTable GetDataTable(string filePath)
-        {
-            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
-
-            using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
-            using var reader = ExcelReaderFactory.CreateReader(stream);
-
-            var result = reader.AsDataSet(new ExcelDataSetConfiguration
-            {
-                ConfigureDataTable = _ => new ExcelDataTableConfiguration { UseHeaderRow = true }
-            });
-
-            return result.Tables[0];
+            using var stream = OpenReadStream(filePath);
+            using var reader = CreateCsvReader(stream);
+            using var headerReader = new HeaderRowDataReader(reader);
+            dbAccess.BulkInsert(tableName, headerReader);
         }
 
         public static void DataTableImport(DataTable dt, string tableName, IDbAccess dbAccess)
