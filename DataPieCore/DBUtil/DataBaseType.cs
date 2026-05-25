@@ -3,7 +3,6 @@
     public enum DataBaseType
     {
         SQLSERVER = 1,
-        MYSQL = 2,
-        SQLITE = 3
+        SQLITE = 2
     }
 }

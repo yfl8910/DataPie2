@@ -18,10 +18,9 @@ namespace DBUtil
         /// <param name="connStr">
         /// <para>连接字符串:</para>
         /// <para>SQLSERVER:   Data Source=.;Initial Catalog=test;User ID=sa;Password=xx;</para>
-        /// <para>MYSQL:   Data Source=localhost;Initial Catalog=test;User ID=root;Password=xxxx;</para>
         /// <para>SQLITE:   Data Source=D:\demo.db;</para>
         /// </param>
-        /// <param name="DBType">数据库类型:SQLSERVER、MYSQL、SQLITE</param>
+        /// <param name="DBType">数据库类型:SQLSERVER、SQLITE</param>
         /// <returns></returns>
         public static IDbAccess CreateIDB(string connStr, string DBType)
         {
@@ -36,11 +35,6 @@ namespace DBUtil
                     DataBaseType = DataBaseType.SQLSERVER
                 };
                 return iDb;
-            }
-            else if (DBType == "MYSQL")
-            {
-                //使用单独一个方法,防止在下面代码访问不到的情况下仍会因没有mysql组件而报错
-                return CreateMySql(connStr);
             }
             else if (DBType == "SQLITE")
             {
@@ -64,18 +58,6 @@ namespace DBUtil
         {
             string dbtype = DBType.ToString();
             return CreateIDB(connStr, dbtype);
-        }
-
-        private static IDbAccess CreateMySql(string connStr)
-        {
-            MySql.Data.MySqlClient.MySqlConnection conn = new MySql.Data.MySqlClient.MySqlConnection(connStr);
-            IDbAccess iDb = new MySqlDbAccess()
-            {
-                conn = conn,
-                ConnectionString = connStr,
-                DataBaseType = DataBaseType.MYSQL
-            };
-            return iDb;
         }
 
         /// <summary>

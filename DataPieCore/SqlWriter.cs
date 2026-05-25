@@ -62,7 +62,7 @@ namespace DataPieCore
 
             writer.WriteLine();
             writer.Write("FROM {0}", MakeSqlFriendly(tableOrView.Name));
-            if (DBtype == "MYSQL" || DBtype == "SQLITE") { writer.Write(" LIMIT " + top + "  ;"); }
+            if (DBtype == "SQLITE") { writer.Write(" LIMIT " + top + "  ;"); }
 
             writer.WriteLine();
 
@@ -187,10 +187,6 @@ namespace DataPieCore
                     case "SQLSERVER":
 
                         return string.Concat("[", name, "]");
-
-                    case "MYSQL":
-
-                        return string.Concat("`", name, "`");
 
                     default:
                         return string.Concat("`", name, "`");

@@ -16,11 +16,6 @@ namespace DataPieCore
                     s2 = "]";
                     break;
 
-                case "MYSQL":
-                    s1 = "`";
-                    s2 = "`";
-                    break;
-
                 default:
                     s1 = "`";
                     s2 = "`";
@@ -54,11 +49,6 @@ namespace DataPieCore
                     sb.Append("TOP  " + top + "  ");
                     break;
 
-                case "MYSQL":
-                    s1 = "`";
-                    s2 = "`";
-                    break;
-
                 default:
                     s1 = "`";
                     s2 = "`";
@@ -77,7 +67,7 @@ namespace DataPieCore
 
             sb.Append(" FROM " + s1 + tablename + s2);
 
-            if (DBtype == "MYSQL"|| DBtype == "SQLITE") { sb.Append(" LIMIT " + top + "  ;"); }
+            if (DBtype == "SQLITE") { sb.Append(" LIMIT " + top + "  ;"); }
 
             return sb.ToString();
         }
@@ -93,11 +83,6 @@ namespace DataPieCore
                 case "SQLSERVER":
                     s1 = "[";
                     s2 = "]";
-                    break;
-
-                case "MYSQL":
-                    s1 = "`";
-                    s2 = "`";
                     break;
 
                 default:

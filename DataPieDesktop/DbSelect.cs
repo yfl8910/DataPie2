@@ -84,9 +84,9 @@ namespace DataPieDesktop
               dbaccess = IDBFactory.CreateIDB(sqlcon, Dbtype);
 
 
-            _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo").ToList<Dbinfo>();
+            _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo where UPPER(Dbtype) <> 'MYSQL'").ToList<Dbinfo>();
 
-            string[] dbtypes = { "SQLSERVER", "MYSQL", "SQLITE" };
+            string[] dbtypes = { "SQLSERVER", "SQLITE" };
 
             if (_DataBaseList.Count > 0)
             {
@@ -210,7 +210,7 @@ namespace DataPieDesktop
         //Display Data in DataGridView  
         private void DisplayData()
         {
-            _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo").ToList<Dbinfo>();
+            _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo where UPPER(Dbtype) <> 'MYSQL'").ToList<Dbinfo>();
 
             dataGridView1.DataSource = _DataBaseList;
 
