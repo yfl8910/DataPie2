@@ -18,7 +18,7 @@ DataPie is a general purpose database import, export, data query, stored procedu
  
 -  Supports calls of stored procedures without arguments;
 
--  Supports Database schema read（SQL Server，SQLITE，MYSQL,POSTGRESQL）;
+-  Supports Database schema read（SQL Server，SQLITE，MYSQL）;
  
 -  Export all data from SQL Server to SQLITE database.
 
