@@ -23,11 +23,6 @@ DataPie is a general purpose database import, export, data query, stored procedu
 -  Export all data from SQL Server to SQLITE database.
 
 
----
-.NET Framework version：https://github.com/yfl8910/DataPie  
-
-.NET 10 version：https://github.com/yfl8910/DataPie2
-
 
 
 ---
