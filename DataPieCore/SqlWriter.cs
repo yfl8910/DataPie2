@@ -1,204 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using DBUtil;
-using System.IO;
 
 namespace DataPieCore
 {
-  public class SqlWriter
+    public static class SqlWriter
     {
-        public static string DBtype { get; set; } = "SQLSERVER";
+        public static string WriteSelect(TableStruct table, string databaseType, int? rowLimit = null)
+            => SqlQueryBuilder.BuildQuery(table.Columns.Select(column => column.Name).ToArray(),
+                table.Name, databaseType, rowLimit);
 
-    
-        public static string WriteSelect(TableStruct tableOrView)
+        public static string WriteSelectCount(TableStruct table, string databaseType)
+            => $"SELECT COUNT(*) FROM {SqlQueryBuilder.QuoteIdentifier(table.Name, databaseType)}";
+
+        public static string WriteUpdate(TableStruct table, string databaseType)
         {
-            StringWriter writer = new StringWriter();
-
-            writer.Write("SELECT");
-            writer.WriteLine();
-            for (int i = 0; i < tableOrView.Columns.Count; i++)
-            {
-                writer.Write("\t");
-                writer.Write(MakeSqlFriendly(tableOrView.Columns[i].Name));
-                if (i < tableOrView.Columns.Count - 1)
-                {
-                    writer.Write(",");
-                    writer.WriteLine();
-                }
-            }
-
-            writer.WriteLine();
-            writer.Write("FROM {0}", MakeSqlFriendly(tableOrView.Name));
-            writer.WriteLine();
-
-            return writer.ToString();
+            string assignments = string.Join("," + Environment.NewLine, table.Columns
+                .Where(column => !column.IsPrimaryKey)
+                .Select(column => $"\t{SqlQueryBuilder.QuoteIdentifier(column.Name, databaseType)} = {column.FinalType}"));
+            return $"UPDATE {SqlQueryBuilder.QuoteIdentifier(table.Name, databaseType)}{Environment.NewLine}SET{Environment.NewLine}{assignments}{Environment.NewLine}WHERE{Environment.NewLine}{BuildKeyPredicate(table, databaseType)}";
         }
 
-  
-        public static string WriteSelect(TableStruct tableOrView, int top)
-        {
-            StringWriter writer = new StringWriter();
-            if (DBtype == "SQLSERVER")
-            {
-                writer.Write("SELECT TOP " + top + "  ");
-            }
-            else {
-                writer.Write("SELECT " );
-            }
-            writer.WriteLine();
-            for (int i = 0; i < tableOrView.Columns.Count; i++)
-            {
-                //writer.Write("\t");
-                writer.Write(MakeSqlFriendly(tableOrView.Columns[i].Name));
-                if (i < tableOrView.Columns.Count - 1)
-                {
-                    writer.Write(",");
-                    //writer.WriteLine();
-                }
-            }
+        public static string WriteDelete(TableStruct table, string databaseType)
+            => $"DELETE FROM {SqlQueryBuilder.QuoteIdentifier(table.Name, databaseType)}{Environment.NewLine}WHERE{Environment.NewLine}{BuildKeyPredicate(table, databaseType)}";
 
-            writer.WriteLine();
-            writer.Write("FROM {0}", MakeSqlFriendly(tableOrView.Name));
-            if (DBtype == "SQLITE") { writer.Write(" LIMIT " + top + "  ;"); }
+        private static string BuildKeyPredicate(TableStruct table, string databaseType)
+            => string.Join(Environment.NewLine + "AND ", table.Columns
+                .Where(column => column.IsPrimaryKey)
+                .Select(column => $"{SqlQueryBuilder.QuoteIdentifier(column.Name, databaseType)} = /*value:{column.Name}*/"));
 
-            writer.WriteLine();
-
-            return writer.ToString();
-        }
-
-
-        public static string WriteSelectCount(TableStruct tableOrView)
-        {
-            StringWriter writer = new StringWriter();
-
-            writer.Write("SELECT COUNT(*) FROM {0}", MakeSqlFriendly(tableOrView.Name));
-            writer.WriteLine();
-
-            return writer.ToString();
-        }
-
-        public static string WriteUpdate( TableStruct tableOrView)
-        {
-            StringWriter writer = new StringWriter();
-
-            writer.Write("UPDATE ");
-            writer.WriteLine(MakeSqlFriendly(tableOrView.Name));
-            writer.WriteLine("SET");
-
-            // get all columns that are "writable" excluding keys that are not auto generated
-            var writableColumns = tableOrView.Columns.FindAll(c =>  !c.IsPrimaryKey);
-            for (int i = 0; i < writableColumns.Count; i++)
-            {
-                var column = writableColumns[i];
-                writer.Write("\t{0} = {1}", MakeSqlFriendly(column.Name), column.FinalType);
-                if (i < writableColumns.Count - 1)
-                {
-                    writer.Write(",");
-                    writer.WriteLine();
-                }
-            }
-
-            writer.WriteLine();
-            writer.WriteLine("WHERE");
-
-            for (int i = 0; i < tableOrView.Columns.Count; i++)
-            {
-                var column = tableOrView.Columns[i];
-                if (column.IsPrimaryKey == true )
-                {
-                    writer.Write("\t{0} = ", MakeSqlFriendly(column.Name));
-                    writer.Write(" /*value:{0}*/ ", column.Name);
-                    writer.WriteLine();
-                }
-
-            }
-
-
-            writer.WriteLine();
-
-            return writer.ToString();
-
-        }
-
-
-        public static string WriteDelete(TableStruct tableOrView)
-        {
-            StringWriter writer = new StringWriter();
-
-            writer.WriteLine("DELETE FROM");
-            writer.Write("\t");
-            writer.WriteLine(MakeSqlFriendly(tableOrView.Name));
-            writer.WriteLine("WHERE");
-
-            for (int i = 0; i < tableOrView.Columns.Count; i++)
-            {
-                var column = tableOrView.Columns[i];
-                if (column.IsPrimaryKey==true )
-                {
-                    writer.Write("\t{0} = ", MakeSqlFriendly(column.Name));
-                    writer.Write(" /*value:{0}*/", column.Name);
-                    writer.WriteLine();
-                }
-
-            }
-
-            writer.WriteLine();
-
-            return writer.ToString();
-
-        }
-
-        public static string WriteSummary(Column column)
-        {
-            StringWriter writer = new StringWriter();
-
-            writer.Write("{0} ({1} ", MakeSqlFriendly(column.Name), column.FinalType);
-
-            if (!column.IsNullable)
-            {
-                writer.Write("not ");
-            }
-
-            writer.Write("null)");
-
-            return writer.ToString();
-
-        }
-
-        /// <summary>
-        /// 	Attempts to convert a database object name to it's "bracketed for", e.g. "Name" -> "[Name]".
-        /// </summary>
-        /// <param name = "name">The name of the object.</param>
-        /// <returns>The SQL friendly conversion.</returns>
-        public static string MakeSqlFriendly(string name)
-        {
-            if (name == null)
-            {
-                return string.Empty;
-            }
-
-            if (!name.StartsWith("[") && (!name.StartsWith("`")))
-            {
-                switch (DBtype)
-                {
-                    case "SQLSERVER":
-
-                        return string.Concat("[", name, "]");
-
-                    default:
-                        return string.Concat("`", name, "`");
-
-                }
-
-
-            }
-
-            return name;
-        }
-
-
+        public static string WriteSummary(Column column, string databaseType)
+            => $"{SqlQueryBuilder.QuoteIdentifier(column.Name, databaseType)} ({column.FinalType} {(column.IsNullable ? "" : "not ")}null)";
     }
 }

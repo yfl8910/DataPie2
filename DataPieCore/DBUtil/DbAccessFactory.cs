@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Data.SqlClient;
 using System.IO;
 
@@ -7,12 +7,12 @@ namespace DBUtil
     /// <summary>
     /// 根据不同的数据库创建数据库访问对象:IDBAccess
     /// </summary>
-    public class IDBFactory
+    public static class DbAccessFactory
     {
         /// <summary>
         /// 创建IDB对象
         /// <para>
-        /// 示例：DBUtil.IDbAccess iDb = DBUtil.IDBFactory.CreateIDB("Data Source=.;Initial Catalog=;User ID=sa;Password=sa;","SQLSERVER");
+        /// 示例：DBUtil.IDbAccess iDb = DBUtil.DbAccessFactory.Create("Data Source=.;Initial Catalog=;User ID=sa;Password=sa;","SQLSERVER");
         /// </para>
         /// </summary>
         /// <param name="connStr">
@@ -22,9 +22,9 @@ namespace DBUtil
         /// </param>
         /// <param name="DBType">数据库类型:SQLSERVER、SQLITE</param>
         /// <returns></returns>
-        public static IDbAccess CreateIDB(string connStr, string DBType)
+        public static IDbAccess Create(string connStr, string DBType)
         {
-            DBType = (DBType ?? "").ToUpper();
+            DBType = (DBType ?? "").ToUpperInvariant();
             if (DBType == "SQLSERVER")
             {
                 SqlConnection conn = new SqlConnection(connStr);
@@ -50,20 +50,20 @@ namespace DBUtil
         /// <summary>
         /// 创建IDB对象,注意.netcore中不支持oledb，这里也不再支持oledb、access
         /// <para>
-        /// 示例：DBUtil.IDbAccess iDb = DBUtil.IDBFactory.CreateIDB("Data Source=.;Initial Catalog=test;User ID=sa;Password=sa;","SQLSERVER");
+        /// 示例：DBUtil.IDbAccess iDb = DBUtil.DbAccessFactory.Create("Data Source=.;Initial Catalog=test;User ID=sa;Password=sa;","SQLSERVER");
         /// </para>
         /// </summary>
         /// <returns></returns>
-        public static IDbAccess CreateIDB(string connStr, DataBaseType DBType)
+        public static IDbAccess Create(string connStr, DataBaseType DBType)
         {
             string dbtype = DBType.ToString();
-            return CreateIDB(connStr, dbtype);
+            return Create(connStr, dbtype);
         }
 
         /// <summary>
         /// 创建Sqlite数据库文件,如果已存在就报错
         /// <para>
-        /// 示例:IDBFactory.CreateSQLiteDB(@"D:\demo.db");
+        /// 示例:DbAccessFactory.CreateSQLiteDB(@"D:\demo.db");
         /// </para>
         /// </summary>
         /// <param name="absPath">文件绝对路径</param>
@@ -79,7 +79,7 @@ namespace DBUtil
         /// <summary>
         /// 获取Sqlite数据库连接方式
         /// <para>
-        /// 示例：IDBFactory.GetSQLiteConnectionString(@"D:\demo.db");//返回"Data Source=D:\demo.db"
+        /// 示例：DbAccessFactory.GetSQLiteConnectionString(@"D:\demo.db");//返回"Data Source=D:\demo.db"
         /// </para>
         /// </summary>
         /// <param name="absPath">文件绝对路径</param>
@@ -92,7 +92,7 @@ namespace DBUtil
         /// <summary>
         /// 获取Sqlite数据库连接方式
         /// <para>
-        /// 示例：IDBFactory.GetSQLiteConnectionString(@"D:\demo.db","123456");//返回"Data Source=D:\demo.db;Password=123456"
+        /// 示例：DbAccessFactory.GetSQLiteConnectionString(@"D:\demo.db","123456");//返回"Data Source=D:\demo.db;Password=123456"
         /// </para>
         /// </summary>
         /// <param name="absPath">文件绝对路径</param>
@@ -116,22 +116,12 @@ namespace DBUtil
         {
             System.Data.SQLite.SQLiteConnection conn = new System.Data.SQLite.SQLiteConnection(connStr);
 
-            if (File.Exists("data.db") == false)
-            {
-                System.Data.SQLite.SQLiteConnection.CreateFile("data.db");
-            }
-
             IDbAccess iDb = new SQLiteDbAccess()
             {
                 conn = conn,
                 ConnectionString = connStr,
                 DataBaseType = DataBaseType.SQLITE
             };
-
-            if (iDb.ShowTables().Count == 0)
-            {
-                iDb.ExecuteSql(" CREATE TABLE Dbinfo(Id INTEGER PRIMARY KEY AUTOINCREMENT, Dbname  varchar (50) NOT NULL, ConnectionStrings varchar (255)  NOT NULL, Dbtype varchar (20)  NOT NULL); ");
-            }
 
             return iDb;
         }

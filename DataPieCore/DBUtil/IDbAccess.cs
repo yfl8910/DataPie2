@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
@@ -227,7 +227,7 @@ namespace DBUtil
         /// 根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
         /// </summary>
         /// <returns></returns>
-        IDbAccess CreateNewIDB();
+        IDbAccess CreateNewAccess();
 
         int TruncateTable(string TableName);
 

@@ -1,7 +1,7 @@
-﻿
+
 namespace DataPieDesktop
 {
-    partial class Form1
+    partial class DatabaseConnectionForm
     {
         /// <summary>
         ///  Required designer variable.
@@ -29,7 +29,7 @@ namespace DataPieDesktop
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DatabaseConnectionForm));
             Login = new System.Windows.Forms.Button();
             comboBox1 = new System.Windows.Forms.ComboBox();
             tabControl1 = new System.Windows.Forms.TabControl();
@@ -490,7 +490,7 @@ namespace DataPieDesktop
             label3.TabIndex = 19;
             label3.Text = "ConnectionStrings";
             // 
-            // Form1
+            // DatabaseConnectionForm
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(11F, 24F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -498,9 +498,9 @@ namespace DataPieDesktop
             Controls.Add(tabControl1);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            Name = "Form1";
+            Name = "DatabaseConnectionForm";
             Text = "DataPie V2025.12";
-            Load += Form1_Load;
+            Load += DatabaseConnectionForm_Load;
             tabControl1.ResumeLayout(false);
             tabPage3.ResumeLayout(false);
             groupBox1.ResumeLayout(false);

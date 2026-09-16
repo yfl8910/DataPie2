@@ -8,10 +8,10 @@ namespace DataPieDesktop
     static class AppState
     {
 
-        public static string Dbtype;
+        public static string DatabaseType;
 
-        public static string connStr;
+        public static string ConnectionString;
 
-        public static string DbName;
+        public static string DatabaseName;
     }
 }

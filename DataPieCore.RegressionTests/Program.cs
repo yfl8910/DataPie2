@@ -12,13 +12,19 @@ Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 string directory = Path.Combine(Path.GetTempPath(), "DataPie-regression-" + Guid.NewGuid().ToString("N"));
 Directory.CreateDirectory(directory);
 string connectionString = new SQLiteConnectionStringBuilder { DataSource = Path.Combine(directory, "test.db"), Pooling = false }.ToString();
-IDbAccess Open() => IDBFactory.CreateIDB(connectionString, "SQLITE");
+IDbAccess Open() => DbAccessFactory.Create(connectionString, "SQLITE");
 void Check(bool condition, string message) { if (!condition) throw new Exception(message); }
 void Execute(string sql) { using var db = Open(); db.ExecuteSql(sql); }
 long Count(string table) { using var db = Open(); return Convert.ToInt64(db.GetDataTable("SELECT COUNT(*) FROM " + table).Rows[0][0]); }
 
 try
 {
+    using (var db = Open())
+        Check(db.ShowTables().Count == 0, "Factory must not create configuration tables in a user database");
+    Check(SqlQueryBuilder.BuildQuery(new[] { "odd]column" }, "table", "SQLSERVER", 5) == "SELECT TOP 5 [odd]]column] FROM [table]", "SQL Server quoting and limit");
+    Check(SqlQueryBuilder.BuildQuery(new[] { "odd`column" }, "table", "SQLITE", 5) == "SELECT `odd``column` FROM `table` LIMIT 5", "SQLite quoting and limit");
+    Console.WriteLine("PASS: factory has no configuration-table side effects; SQL dialect limits and escaping.");
+
     Execute("CREATE TABLE typed (id INTEGER PRIMARY KEY, text TEXT, amount REAL, bytes BLOB, nullable TEXT)");
     var rows = new DataTable();
     rows.Columns.Add("id", typeof(long));
@@ -97,6 +103,34 @@ try
     using (var db = Open()) ExcelIO.CsvImport(csv, "csv_target", db);
     Check(Count("csv_target") == 2, "CSV Reader import");
 
+    var csvRows = new DataTable();
+    csvRows.Columns.Add("name,\"quoted\"");
+    csvRows.Rows.Add("中文,\"value\"\nline");
+    csvRows.Rows.Add("second");
+    csvRows.Rows.Add("third");
+    string csvOutput = Path.Combine(directory, "output.csv");
+    using (var reader = csvRows.CreateDataReader())
+    {
+        CsvExporter.SaveCsv(reader, csvOutput);
+        Check(!reader.IsClosed, "CSV caller owns reader");
+    }
+    using (var stream = File.OpenRead(csvOutput))
+    using (var reader = ExcelReaderFactory.CreateCsvReader(stream, new ExcelReaderConfiguration { FallbackEncoding = Encoding.GetEncoding("gb2312") }))
+    {
+        Check(reader.Read() && reader.GetString(0) == csvRows.Columns[0].ColumnName, "CSV header escaping");
+        Check(reader.Read() && reader.GetString(0) == (string)csvRows.Rows[0][0], "CSV value escaping");
+    }
+    using (var reader = csvRows.CreateDataReader()) CsvExporter.SaveCsv(reader, csvOutput, 2);
+    for (int part = 1; part <= 2; part++)
+    {
+        using var stream = File.OpenRead(Path.Combine(directory, $"output{part}.csv"));
+        using var reader = ExcelReaderFactory.CreateCsvReader(stream, new ExcelReaderConfiguration { FallbackEncoding = Encoding.GetEncoding("gb2312") });
+        int rowCount = 0;
+        while (reader.Read()) rowCount++;
+        Check(rowCount == (part == 1 ? 3 : 2), "CSV split includes one header and bounded data rows");
+    }
+    Console.WriteLine("PASS: CSV header/value escaping, split boundaries and caller-owned reader.");
+
     var tables = new List<string>();
     for (int i = 0; i < 120; i++)
     {
@@ -113,7 +147,7 @@ try
         Check(schema.DbTables.Single(t => t.Name == "typed").Columns.Count == 5, "Typed table schema");
     }
     using (var tracked = TrackingAccess.Wrap(Open(), tracker))
-        ExcelIO.SaveMutiMiniExcel(tables, Path.Combine(directory, "many.xlsx"), tracked, "SQLITE");
+        ExcelIO.ExportSheetsWithMiniExcel(tables, Path.Combine(directory, "many.xlsx"), tracked, "SQLITE");
     Check(tracker.Peak == 1 && tracker.Active == 0, $"Connections must be bounded: peak {tracker.Peak}, active {tracker.Active}");
     using (var stream = File.OpenRead(Path.Combine(directory, "many.xlsx")))
     using (var reader = ExcelReaderFactory.CreateReader(stream))
@@ -131,15 +165,30 @@ try
     }
     Console.WriteLine("PASS: 120-sheet XLSX roundtrip, empty headers preserved; peak active connections = 1.");
 
-    using (var db = Open()) ExcelIO.SaveMutiExcel(new[] { "csv_target" }, Path.Combine(directory, "legacy.xlsx"), db, "SQLITE");
+    using (var db = Open()) ExcelIO.ExportSheetsWithEpplus(new[] { "csv_target" }, Path.Combine(directory, "legacy.xlsx"), db, "SQLITE");
     Execute("CREATE TABLE xlsx_target (id INTEGER, text TEXT)");
+    foreach (var import in new Action<string, string, IDbAccess>[] { ExcelIO.MiniExcelReaderImport, ExcelIO.ExcelDataReaderImport })
+    {
+        failed = false;
+        try { using var db = Open(); import(Path.Combine(directory, "legacy.xlsx"), "xlsx_target", db); }
+        catch { failed = true; }
+        Check(failed && Count("xlsx_target") == 0, "Missing worksheet must fail without importing another sheet");
+    }
+    using (var db = Open())
+    using (var reader = db.GetDataReader("SELECT * FROM csv_target"))
+    {
+        ExcelIO.SaveExcel(Path.Combine(directory, "legacy.xlsx"), reader, "xlsx_target");
+        Check(!reader.IsClosed, "Excel caller owns reader");
+    }
     using (var db = Open()) ExcelIO.MiniExcelReaderImport(Path.Combine(directory, "legacy.xlsx"), "xlsx_target", db);
     Check(Count("xlsx_target") == 2, "XLSX Reader import and legacy export entry point");
+    using (var db = Open()) ExcelIO.ExcelDataReaderImport(Path.Combine(directory, "legacy.xlsx"), "xlsx_target", db);
+    Check(Count("xlsx_target") == 4, "ExcelDataReader imports the requested worksheet");
     failed = false;
     try
     {
         using var tracked = TrackingAccess.Wrap(Open(), tracker);
-        ExcelIO.SaveMutiMiniExcel(new[] { "sheet1", "missing" }, Path.Combine(directory, "failed.xlsx"), tracked, "SQLITE");
+        ExcelIO.ExportSheetsWithMiniExcel(new[] { "sheet1", "missing" }, Path.Combine(directory, "failed.xlsx"), tracked, "SQLITE");
     }
     catch { failed = true; }
     Check(failed && tracker.Active == 0, "Export failure must release connections");
@@ -171,7 +220,7 @@ public class TrackingAccess : DispatchProxy
     }
     protected override object Invoke(MethodInfo method, object[] args)
     {
-        if (method.Name == "CreateNewIDB") return Wrap(inner.CreateNewIDB(), tracker);
+        if (method.Name == "CreateNewAccess") return Wrap(inner.CreateNewAccess(), tracker);
         if (method.Name == "GetDataReader" && !counted)
         {
             counted = true;

@@ -13,49 +13,25 @@ using System.Text;
 
 namespace DataPieCore
 {
-    public class ExcelIO
+    public static class ExcelIO
     {
         public static void ExcelDataReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
-            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
-
-            var reader = CreateExcelReader(filePath, tableName, out var stream);
-            using (stream)
-            using (reader)
-            using (var headerReader = new HeaderRowDataReader(reader))
-            {
-                dbAccess.BulkInsert(tableName, headerReader);
-            }
+            ArgumentNullException.ThrowIfNull(filePath);
+            ArgumentNullException.ThrowIfNull(dbAccess);
+            using var stream = OpenReadStream(filePath);
+            using var reader = ExcelReaderFactory.CreateReader(stream);
+            SelectWorksheet(reader, tableName);
+            using var headerReader = new HeaderRowDataReader(reader);
+            dbAccess.BulkInsert(tableName, headerReader);
         }
 
         public static void MiniExcelReaderImport(string filePath, string tableName, IDbAccess dbAccess)
         {
-            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
-            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
-
-            // Try to open a reader for the requested sheet first; if not found, fall back to first sheet.
-            IDataReader reader = null;
-            try
-            {
-                try
-                {
-                    reader = MiniExcel.GetReader(filePath, true, sheetName: tableName);
-                }
-                catch
-                {
-                    reader = MiniExcel.GetReader(filePath, true);
-                }
-
-                using (reader)
-                {
-                    dbAccess.BulkInsert(tableName, reader);
-                }
-            }
-            finally
-            {
-                // ensured disposal via using above
-            }
+            ArgumentNullException.ThrowIfNull(filePath);
+            ArgumentNullException.ThrowIfNull(dbAccess);
+            using var reader = MiniExcel.GetReader(filePath, true, sheetName: tableName);
+            dbAccess.BulkInsert(tableName, reader);
         }
 
         public static void CsvImport(string filePath, string tableName, IDbAccess dbAccess)
@@ -77,29 +53,21 @@ namespace DataPieCore
             dbAccess.BulkInsert(tableName, dt);
         }
 
-        public static int SaveExcel(string FileName, IDataReader reader, string SheetName)
+        public static int SaveExcel(string filePath, IDataReader reader, string sheetName)
         {
-            if (FileName is null) throw new ArgumentNullException(nameof(FileName));
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
             if (reader is null) throw new ArgumentNullException(nameof(reader));
 
             var watch = Stopwatch.StartNew();
 
-            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            ExcelPackage.License.SetNonCommercialOrganization("<DataPie>");
 
-            var newFile = new FileInfo(FileName);
-            if (newFile.Exists)
-            {
-                newFile.Delete();
-                newFile = new FileInfo(FileName);
-            }
+            PrepareOutputFile(filePath);
 
-            using (var package = new ExcelPackage(newFile))
+            using (var package = new ExcelPackage(new FileInfo(filePath)))
             {
-                using (reader)
-                {
-                    var ws = package.Workbook.Worksheets.Add(SheetName);
-                    ws.Cells["A1"].LoadFromDataReader(reader, true);
-                }
+                var ws = package.Workbook.Worksheets.Add(sheetName);
+                ws.Cells["A1"].LoadFromDataReader(reader, true);
                 package.Save();
             }
 
@@ -107,9 +75,9 @@ namespace DataPieCore
             return (int)watch.Elapsed.TotalSeconds;
         }
 
-        public static int SaveMutiExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
+        public static int ExportSheetsWithEpplus(IList<string> tableNames, string filePath, IDbAccess dbAccess, string databaseType)
         {
-            if (filename is null) throw new ArgumentNullException(nameof(filename));
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
             if (tableNames is null || tableNames.Count == 0) throw new ArgumentException("tableNames required", nameof(tableNames));
             if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
@@ -118,18 +86,13 @@ namespace DataPieCore
             // Keep EPPlus licensing call if required by your usage
             ExcelPackage.License.SetNonCommercialOrganization("<DataPie>");
 
-            var newFile = new FileInfo(filename);
-            if (newFile.Exists)
-            {
-                newFile.Delete();
-                newFile = new FileInfo(filename);
-            }
+            PrepareOutputFile(filePath);
 
-            using (var package = new ExcelPackage(newFile))
+            using (var package = new ExcelPackage(new FileInfo(filePath)))
             {
                 foreach (var table in tableNames)
                 {
-                    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
+                    string sql = SqlQueryBuilder.BuildSelectAll(table, databaseType);
                     using (var reader = dbAccess.GetDataReader(sql))
                     {
                         var ws = package.Workbook.Worksheets.Add(table);
@@ -143,20 +106,15 @@ namespace DataPieCore
             watch.Stop();
             return (int)watch.Elapsed.TotalSeconds;
         }
-        public static int SaveMutiMiniExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
+        public static int ExportSheetsWithMiniExcel(IList<string> tableNames, string filePath, IDbAccess dbAccess, string databaseType)
         {
-            if (filename is null) throw new ArgumentNullException(nameof(filename));
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
             if (tableNames is null || tableNames.Count == 0) throw new ArgumentException("tableNames required", nameof(tableNames));
             if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
 
             var watch = Stopwatch.StartNew();
 
-            var newFile = new FileInfo(filename);
-            if (newFile.Exists)
-            {
-                newFile.Delete();
-                newFile = new FileInfo(filename);
-            }
+            PrepareOutputFile(filePath);
 
             var sheets = new Dictionary<string, object>();
 
@@ -166,18 +124,13 @@ namespace DataPieCore
             {
                 foreach (var table in tableNames)
                 {
-                    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
-                    var reader = new DeferredDataReader(dbAccess.CreateNewIDB, sql);
+                    string sql = SqlQueryBuilder.BuildSelectAll(table, databaseType);
+                    var reader = new DeferredDataReader(dbAccess.CreateNewAccess, sql);
                     readers.Add(reader);
                     sheets.Add(table, reader);
                 }
 
-                var config = new OpenXmlConfiguration()
-                {
-                    TableStyles = TableStyles.None
-                };
-
-                MiniExcel.SaveAs(newFile.ToString(), sheets, configuration: config);
+                MiniExcel.SaveAs(filePath, sheets, printHeader: true, configuration: CreateExportConfiguration());
             }
             finally
             {
@@ -191,76 +144,58 @@ namespace DataPieCore
             return (int)watch.Elapsed.TotalSeconds;
         }
 
-        public static int SaveMiniExcel(string FileName, DataTable table, string SheetName)
+        public static int SaveMiniExcel(string filePath, DataTable table, string sheetName)
         {
-            if (FileName is null) throw new ArgumentNullException(nameof(FileName));
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
             if (table is null) throw new ArgumentNullException(nameof(table));
 
             var watch = Stopwatch.StartNew();
 
-            var newFile = new FileInfo(FileName);
-            if (newFile.Exists)
-            {
-                newFile.Delete();
-                newFile = new FileInfo(FileName);
-            }
+            PrepareOutputFile(filePath);
 
-            MiniExcel.SaveAs(newFile.ToString(), table, printHeader: true, sheetName: SheetName);
+            MiniExcel.SaveAs(filePath, table, printHeader: true, sheetName: sheetName, configuration: CreateExportConfiguration());
 
             watch.Stop();
             return (int)watch.Elapsed.TotalSeconds;
         }
 
-        public static int SaveMiniExcel(string FileName, IDataReader reader, string SheetName)
+        public static int SaveMiniExcel(string filePath, IDataReader reader, string sheetName)
         {
-            if (FileName is null) throw new ArgumentNullException(nameof(FileName));
+            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
             if (reader is null) throw new ArgumentNullException(nameof(reader));
 
             var watch = Stopwatch.StartNew();
 
-            var newFile = new FileInfo(FileName);
-            if (newFile.Exists)
-            {
-                newFile.Delete();
-                newFile = new FileInfo(FileName);
-            }
+            PrepareOutputFile(filePath);
 
-            using (reader)
-            {
-                MiniExcel.SaveAs(newFile.ToString(), reader, printHeader: true, sheetName: SheetName);
-            }
+            MiniExcel.SaveAs(filePath, reader, printHeader: true, sheetName: sheetName, configuration: CreateExportConfiguration());
 
             watch.Stop();
             return (int)watch.Elapsed.TotalSeconds;
         }
+
+        private static void PrepareOutputFile(string filePath)
+        {
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+
+        private static OpenXmlConfiguration CreateExportConfiguration()
+            => new OpenXmlConfiguration { TableStyles = TableStyles.None };
 
         private static FileStream OpenReadStream(string filePath)
         {
             return new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.Read, 4096, FileOptions.SequentialScan);
         }
 
-        private static IExcelDataReader CreateExcelReader(string filePath, string sheetName, out FileStream stream)
+        private static void SelectWorksheet(IExcelDataReader reader, string sheetName)
         {
-            stream = OpenReadStream(filePath);
-            var reader = ExcelReaderFactory.CreateReader(stream);
-            if (string.IsNullOrWhiteSpace(sheetName) || reader.Name == sheetName)
+            if (string.IsNullOrWhiteSpace(sheetName)) return;
+            do
             {
-                return reader;
+                if (reader.Name == sheetName) return;
             }
-
-            while (reader.NextResult())
-            {
-                if (reader.Name == sheetName)
-                {
-                    return reader;
-                }
-            }
-
-            reader.Dispose();
-            stream.Dispose();
-
-            stream = OpenReadStream(filePath);
-            return ExcelReaderFactory.CreateReader(stream);
+            while (reader.NextResult());
+            throw new ArgumentException($"Worksheet '{sheetName}' was not found.", nameof(sheetName));
         }
 
         private static IExcelDataReader CreateCsvReader(Stream stream)

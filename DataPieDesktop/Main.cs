@@ -20,7 +20,7 @@ namespace DataPieDesktop
 {
     public partial class Main : Form
     {
-        public static Form1 loginform = null;
+        public static DatabaseConnectionForm loginform = null;
 
 
 
@@ -72,6 +72,22 @@ namespace DataPieDesktop
 
 
 
+        private async Task RunExportAsync(Action<IDbAccess, string> export)
+        {
+            string connectionString = AppState.ConnectionString;
+            string databaseType = AppState.DatabaseType;
+            var watch = new Stopwatch();
+            await RunOperationAsync(() =>
+            {
+                using var access = DbAccessFactory.Create(connectionString, databaseType);
+                BeginInvoke(new Action(() => ShowMessage("Processing...", EventArgs.Empty)));
+                watch.Start();
+
+                export(access, databaseType);
+                watch.Stop();
+            }, () => ShowMessage($"Export successful! Time: {watch.Elapsed.TotalSeconds:F1} seconds", EventArgs.Empty));
+        }
+
         private static IEnumerable<Control> Descendants(Control parent)
         {
             foreach (Control child in parent.Controls)
@@ -100,22 +116,22 @@ namespace DataPieDesktop
 
         private async void Main_Load(object sender, EventArgs e)
         {
-            await DataLoad();
+            await LoadDatabaseSchemaAsync();
         }
 
-        public async Task DataLoad()
+        public async Task LoadDatabaseSchemaAsync()
         {
 
             await RunOperationAsync(() =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                using var dbaccess = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 string ss = "Loading data...";
 
                 this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
                 Stopwatch watch = Stopwatch.StartNew();
 
-                watch.Start();
+
 
 
 
@@ -137,14 +153,11 @@ namespace DataPieDesktop
                     SpList.Clear();
                 }
 
-                SqlWriter.DBtype = AppState.Dbtype;
-
-
                 _syncContext.Post(SetcomboBox, tableList);//子线程中通过UI线程上下文更新UI 
 
                 watch.Stop();
 
-                ss = string.Format("DataLoad successfully! Time:{0} second.", watch.ElapsedMilliseconds / 1000);
+                ss = string.Format("LoadDatabaseSchemaAsync successfully! Time:{0} second.", watch.ElapsedMilliseconds / 1000);
 
                 this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 
@@ -245,12 +258,12 @@ namespace DataPieDesktop
         {
             string selectedTable = comboBox1.Text;
             if (string.IsNullOrWhiteSpace(selectedTable)) return;
-            string filename = Common.ShowFileDialog(selectedTable, ".xlsx");
+            string filename = FileDialogs.ShowSaveDialog(selectedTable, ".xlsx");
             if (filename == null) return;
             await RunOperationAsync(() =>
             {
-                using var access = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
-                using var reader = access.GetDataReader(BuildSQl.GetSQLfromTable(selectedTable, AppState.Dbtype) + " where 1=2");
+                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var reader = access.GetDataReader(SqlQueryBuilder.BuildSelectAll(selectedTable, AppState.DatabaseType) + " where 1=2");
                 ExcelIO.SaveMiniExcel(filename, reader, selectedTable);
             });
         }
@@ -272,14 +285,14 @@ namespace DataPieDesktop
             {
 
                 Stopwatch watch = Stopwatch.StartNew();
-                watch.Start();
+
 
                 this.BeginInvoke(new System.EventHandler(ShowMessage), "deleting…");
 
                 string selectedTable = comboBox1.Text;
                 await RunOperationAsync(() =>
                 {
-                    using var access = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                    using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                     access.TruncateTable(selectedTable);
                 });
 
@@ -309,15 +322,15 @@ namespace DataPieDesktop
                 string importPath = textBox1.Text;
                 await RunOperationAsync(() =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                using var dbaccess = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                     try
                     {
                         Stopwatch watch = Stopwatch.StartNew();
-                        watch.Start();
+        
 
                         this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
 
-                        ImportTheFile(importTable, importPath, dbaccess);
+                        ImportFile(importTable, importPath, dbaccess);
 
                         watch.Stop();
 
@@ -329,7 +342,7 @@ namespace DataPieDesktop
                     }
                     catch (Exception ex)
                     {
-                        throw new Exception(ex.Message);
+                        throw;
                     }
                 });
 
@@ -337,7 +350,7 @@ namespace DataPieDesktop
             }
         }
 
-        public void ImportTheFile(string DbTableName, string filename, IDbAccess dbaccess)
+        public void ImportFile(string DbTableName, string filename, IDbAccess dbaccess)
         {
             try
             {
@@ -391,9 +404,9 @@ namespace DataPieDesktop
 
             string sqlcon = db.GetConstring();
 
-            using var dbaccess = IDBFactory.CreateIDB(sqlcon, "SQLITE");
+            using var dbaccess = DbAccessFactory.Create(sqlcon, "SQLITE");
 
-            using var reader = dbaccess.GetDataReader(BuildSQl.GetSQLfromTable(tableName, "SQLITE"));
+            using var reader = dbaccess.GetDataReader(SqlQueryBuilder.BuildSelectAll(tableName, "SQLITE"));
 
             try
             {
@@ -447,7 +460,7 @@ namespace DataPieDesktop
         private void LoginformShow()
         {
 
-            loginform = new Form1();
+            loginform = new DatabaseConnectionForm();
             loginform.Show();
 
         }
@@ -471,27 +484,27 @@ namespace DataPieDesktop
 
             if (richTextBox1.Text.Length > 0)
             {
-                await GetViewData(richTextBox1.Text);
+                await LoadQueryPreviewAsync(richTextBox1.Text);
             }
             else
             {
-                string sql = SqlWriter.WriteSelect(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault(), 1000);
+                string sql = SqlWriter.WriteSelect(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
 
                 richTextBox1.Text = sql;
 
-                await GetViewData(sql);
+                await LoadQueryPreviewAsync(sql);
             }
 
         }
 
-        public async Task GetViewData(string sql)
+        public async Task LoadQueryPreviewAsync(string sql)
         {
             DataTable result = null;
             bool truncated = false;
             var watch = Stopwatch.StartNew();
             await RunOperationAsync(() =>
             {
-                using var access = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 result = QueryPreview.Load(access, sql, 1000, out truncated);
             }, () =>
             {
@@ -516,53 +529,31 @@ namespace DataPieDesktop
         {
             try
             {
-                string filename = Common.ShowFileDialog(tableName, ".csv");
+                string filename = FileDialogs.ShowSaveDialog(tableName, ".csv");
                 if (filename != null)
                 {
-                    await WriteCsvFromsql(tableName, filename);
+                    await ExportTableToCsvAsync(tableName, filename);
 
                 }
 
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                throw;
             }
         }
 
-        public async Task WriteCsvFromsql(string tableName, string filename)
-        {
-            await RunOperationAsync(() =>
+        public Task ExportTableToCsvAsync(string tableName, string filePath)
+            => RunExportAsync((access, databaseType) =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
-
-                try
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
-
-                    string sql = BuildSQl.GetSQLfromTable(tableName, AppState.Dbtype);
-
-                    using IDataReader reader = dbaccess.GetDataReader(sql);
-
-                    var t = DBToCsv.SaveCsv(reader, filename);
-
-                    string s = string.Format("Export successful! Time :{0} seconds", t);
-
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), s);
-                }
-                catch (System.Exception ex)
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowErr), ex);
-                }
-
+                using var reader = access.GetDataReader(SqlQueryBuilder.BuildSelectAll(tableName, databaseType));
+                CsvExporter.SaveCsv(reader, filePath);
             });
-
-        }
 
 
 
         //Export Excel by sql
-        private async void button4_Click(object sender, EventArgs e)
+        private async void exportQueryButton_Click(object sender, EventArgs e)
         {
             if (richTextBox1.Text.Length == 0)
             {
@@ -570,11 +561,11 @@ namespace DataPieDesktop
             }
             else
             {
-                string filename = Common.ShowFileDialog(tableName, ".xlsx");
+                string filename = FileDialogs.ShowSaveDialog(tableName, ".xlsx");
 
                 if (filename != null)
                 {
-                    await WriteExcelFromsql(richTextBox1.Text.ToString(), filename);
+                    await ExportQueryToExcelAsync(richTextBox1.Text.ToString(), filename);
 
                 }
 
@@ -583,7 +574,7 @@ namespace DataPieDesktop
 
 
         //Export Excel by tableName
-        private async void button16_Click(object sender, EventArgs e)
+        private async void exportTableButton_Click(object sender, EventArgs e)
         {
             if (tableName == "")
             {
@@ -591,54 +582,33 @@ namespace DataPieDesktop
             }
             else
             {
-                string filename = Common.ShowFileDialog(tableName, ".xlsx");
+                string filename = FileDialogs.ShowSaveDialog(tableName, ".xlsx");
 
                 if (filename != null)
                 {
-                    string sql = BuildSQl.GetSQLfromTable(tableName, AppState.Dbtype);
+                    string sql = SqlQueryBuilder.BuildSelectAll(tableName, AppState.DatabaseType);
 
-                    await WriteExcelFromsql(sql, filename);
+                    await ExportQueryToExcelAsync(sql, filename);
 
                 }
 
             }
         }
 
-        public async Task WriteExcelFromsql(string sql, string filename)
+        public Task ExportQueryToExcelAsync(string sql, string filePath)
         {
-            await RunOperationAsync(() =>
+            string sheetName = tableName;
+            return RunExportAsync((access, databaseType) =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
-
-                try
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
-
-                    //string sql = BuildSQl.GetSQLfromTable(tableName, AppState.Dbtype);
-
-                    using IDataReader reader = dbaccess.GetDataReader(sql);
-
-                    //int i = ExcelIO.SaveExcel(filename, reader, tableName);
-
-                    int i = ExcelIO.SaveMiniExcel(filename, reader, tableName);
-
-                    string s = string.Format("Export successful! Time :{0} seconds", i);
-
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), s);
-                }
-                catch (System.Exception ex)
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowErr), ex);
-                }
-
+                using var reader = access.GetDataReader(sql);
+                ExcelIO.SaveMiniExcel(filePath, reader, sheetName);
             });
-
         }
 
 
         private void ShowMessage(object o, System.EventArgs e)
         {
-            statusStrip1.Items[0].Text = AppState.DbName + "-" + o.ToString();
+            statusStrip1.Items[0].Text = AppState.DatabaseName + "-" + o.ToString();
             statusStrip1.Items[0].ForeColor = Color.Red;
         }
 
@@ -646,7 +616,7 @@ namespace DataPieDesktop
         {
             Exception ee = o as Exception;
 
-            statusStrip1.Items[0].Text = AppState.DbName + "-" + "Error! " + ee.Message;
+            statusStrip1.Items[0].Text = AppState.DatabaseName + "-" + "Error! " + ee.Message;
             statusStrip1.Items[0].ForeColor = Color.Red;
         }
 
@@ -719,7 +689,7 @@ namespace DataPieDesktop
 
 
         //export muti excel
-        private async void button10_Click(object sender, EventArgs e)
+        private async void exportSheetsWithEpplusButton_Click(object sender, EventArgs e)
         {
             if (listBox1.Items.Count < 1)
             {
@@ -734,67 +704,23 @@ namespace DataPieDesktop
                 SheetNames.Add(item.ToString());
             }
 
-            string filename = Common.ShowFileDialog(SheetNames[0], ".xlsx");
+            string filename = FileDialogs.ShowSaveDialog(SheetNames[0], ".xlsx");
 
             if (filename != null)
             {
-                await WriteMutiExcelFromsql(SheetNames, filename);
+                await ExportTablesWithEpplusAsync(SheetNames, filename);
 
             }
         }
 
-        public async Task WriteMutiExcelFromsql(IList<string> TableNames, string filename)
-        {
-            await RunOperationAsync(() =>
-            {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
-
-                try
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
-
-                    int i = ExcelIO.SaveMutiExcel(TableNames, filename, dbaccess, AppState.Dbtype);
-
-                    string s = string.Format("Export successful! Time :{0} seconds", i);
-
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), s);
-                }
-
-                catch (System.Exception ex)
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowErr), ex);
-                }
-
-            });
-
-        }
+        public Task ExportTablesWithEpplusAsync(IList<string> tableNames, string filePath)
+            => RunExportAsync((access, databaseType) =>
+                ExcelIO.ExportSheetsWithEpplus(tableNames, filePath, access, databaseType));
 
 
-        public async Task WriteMutiMiniExcelFromsql(IList<string> TableNames, string filename)
-        {
-            await RunOperationAsync(() =>
-            {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
-
-                try
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
-
-                    int i = ExcelIO.SaveMutiMiniExcel(TableNames, filename, dbaccess, AppState.Dbtype);
-
-                    string s = string.Format("Export successful! Time :{0} seconds", i);
-
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), s);
-                }
-
-                catch (System.Exception ex)
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowErr), ex);
-                }
-
-            });
-
-        }
+        public Task ExportTablesWithMiniExcelAsync(IList<string> tableNames, string filePath)
+            => RunExportAsync((access, databaseType) =>
+                ExcelIO.ExportSheetsWithMiniExcel(tableNames, filePath, access, databaseType));
 
 
         //export muti csv
@@ -814,67 +740,26 @@ namespace DataPieDesktop
                 SheetNames.Add(item.ToString());
             }
 
-            string filename = Common.ShowFileDialog(SheetNames[0], ".csv");
+            string filename = FileDialogs.ShowSaveDialog(SheetNames[0], ".csv");
 
             if (filename != null)
             {
-                await WriteMutiCsvFromsql(SheetNames, filename, AppState.Dbtype);
+                await ExportTablesToCsvAsync(SheetNames, filename);
 
             }
 
         }
 
-        public async Task WriteMutiCsvFromsql(IList<string> TableNames, string filename, string dbtype)
-        {
-            await RunOperationAsync(() =>
+        public Task ExportTablesToCsvAsync(IList<string> tableNames, string filePath)
+            => RunExportAsync((access, databaseType) =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
-
-                try
+                string directory = Path.GetDirectoryName(filePath) ?? "";
+                foreach (string table in tableNames)
                 {
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
-                    int time = 0;
-                    int count = TableNames.Count();
-                    string ss = filename.Substring(0, filename.LastIndexOf("\\"));
-
-                    for (int i = 0; i < count; i++)
-                    {
-                        StringBuilder newfileName = new StringBuilder(ss);
-                        newfileName.Append("\\" + TableNames[i] + ".csv");
-                        FileInfo newFile = new FileInfo(newfileName.ToString());
-                        if (newFile.Exists)
-                        {
-                            newFile.Delete();
-                            newFile = new FileInfo(newfileName.ToString());
-                        }
-
-                        //string sql = "select * from " + TableNames[i] ;
-                        string sql = BuildSQl.GetSQLfromTable(TableNames[i], dbtype);
-
-                        using IDataReader reader = dbaccess.GetDataReader(sql);
-
-                        int t = DBToCsv.SaveCsv(reader, newfileName.ToString());
-
-                        time += t;
-
-
-                        reader.Close();
-
-                    }
-
-                    string s = string.Format("Export successful! Time :{0} seconds", time);
-
-                    this.BeginInvoke(new System.EventHandler(ShowMessage), s);
+                    using var reader = access.GetDataReader(SqlQueryBuilder.BuildSelectAll(table, databaseType));
+                    CsvExporter.SaveCsv(reader, Path.Combine(directory, table + ".csv"));
                 }
-
-                catch (System.Exception ex)
-                {
-                    this.BeginInvoke(new System.EventHandler(ShowErr), ex);
-                }
-
             });
-
-        }
 
 
         // run stored procedure 
@@ -892,18 +777,18 @@ namespace DataPieDesktop
                     list.Add(item.ToString());
                 }
 
-                await ProcExeute(list);
+                await ExecuteProceduresAsync(list);
             }
         }
 
-        public async Task ProcExeute(IList<string> procs)
+        public async Task ExecuteProceduresAsync(IList<string> procs)
         {
 
             await RunOperationAsync(() =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                using var dbaccess = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 Stopwatch watch = Stopwatch.StartNew();
-                watch.Start();
+
 
                 this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
 
@@ -932,7 +817,7 @@ namespace DataPieDesktop
 
         private async void button9_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteSelect(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault(), 1000);
+            string sql = SqlWriter.WriteSelect(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
             richTextBox1.Text = sql;
             this.BeginInvoke(new System.EventHandler(ShowMessage), "Select Sql Generated");
 
@@ -940,7 +825,7 @@ namespace DataPieDesktop
 
         private async void button13_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteDelete(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault());
+            string sql = SqlWriter.WriteDelete(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
             richTextBox1.Text = sql;
             this.BeginInvoke(new System.EventHandler(ShowMessage), "Delete Sql Generated");
 
@@ -948,7 +833,7 @@ namespace DataPieDesktop
 
         private async void button14_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteUpdate(dbs.DbTables.Where(p => p.Name == tableName).FirstOrDefault());
+            string sql = SqlWriter.WriteUpdate(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
             richTextBox1.Text = sql;
             this.BeginInvoke(new System.EventHandler(ShowMessage), "Update Sql Generated");
 
@@ -969,13 +854,13 @@ namespace DataPieDesktop
         {
             await RunOperationAsync(() =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                using var dbaccess = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
 
                 try
                 {
                     Stopwatch watch = Stopwatch.StartNew();
 
-                    watch.Start();
+    
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
 
@@ -1001,9 +886,9 @@ namespace DataPieDesktop
         private async void button15_Click(object sender, EventArgs e)
         {
 
-            string filename = Common.ShowFileDialog(dbs.Name + ".db", ".db");
+            string filename = FileDialogs.ShowSaveDialog(dbs.Name + ".db", ".db");
 
-            if (filename != null && AppState.Dbtype == "SQLSERVER")
+            if (filename != null && AppState.DatabaseType == "SQLSERVER")
             {
                 textBox2.Text = filename;
 
@@ -1021,13 +906,13 @@ namespace DataPieDesktop
         {
             await RunOperationAsync(() =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                using var dbaccess = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
 
                 try
                 {
                     Stopwatch watch = Stopwatch.StartNew();
 
-                    watch.Start();
+    
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), " Processing…");
 
@@ -1056,7 +941,7 @@ namespace DataPieDesktop
 
         }
 
-        public async Task checkStatus()
+        public async Task CheckConnectionAsync()
         {
             while (operationRunning && !SqlServerToSQLite.Done)
             {
@@ -1074,7 +959,7 @@ namespace DataPieDesktop
 
         private async void button18_Click(object sender, EventArgs e)
         {
-            await checkStatus();
+            await CheckConnectionAsync();
 
         }
 
@@ -1084,7 +969,7 @@ namespace DataPieDesktop
             about.Show();
         }
 
-        private async void button19_Click(object sender, EventArgs e)
+        private async void exportSheetsWithMiniExcelButton_Click(object sender, EventArgs e)
         {
             if (listBox1.Items.Count < 1)
             {
@@ -1099,11 +984,11 @@ namespace DataPieDesktop
                 SheetNames.Add(item.ToString());
             }
 
-            string filename = Common.ShowFileDialog(SheetNames[0], ".xlsx");
+            string filename = FileDialogs.ShowSaveDialog(SheetNames[0], ".xlsx");
 
             if (filename != null)
             {
-                await WriteMutiMiniExcelFromsql(SheetNames, filename);
+                await ExportTablesWithMiniExcelAsync(SheetNames, filename);
 
             }
         }
@@ -1128,29 +1013,29 @@ namespace DataPieDesktop
             {
                 try
                 {
-                    await ImportTheFolder(tableName, textBox3.Text.ToString());
+                    await ImportFolderAsync(tableName, textBox3.Text.ToString());
                 }
                 catch (Exception ex)
                 {
-                    throw new Exception(ex.Message);
+                    throw;
                 }
             }
         }
 
-        public async Task ImportTheFolder(string DbTableName, string path)
+        public async Task ImportFolderAsync(string DbTableName, string path)
         {
             await RunOperationAsync(() =>
             {
-                using var dbaccess = IDBFactory.CreateIDB(AppState.connStr, AppState.Dbtype);
+                using var dbaccess = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
 
                 try
                 {
                     Stopwatch watch = Stopwatch.StartNew();
-                    watch.Start();
+    
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), "Process…");
 
-                    List<FileInfo> filelist = Common.FileList(path, false, "");
+                    List<FileInfo> filelist = ImportFiles.GetFiles(path, false, "");
 
                     for (int i = 0; i < filelist.Count(); i++)
                     {
@@ -1160,7 +1045,7 @@ namespace DataPieDesktop
 
                             this.BeginInvoke(new System.EventHandler(ShowMessage), m);
 
-                            ImportTheFile(DbTableName, filelist[i].ToString(), dbaccess);
+                            ImportFile(DbTableName, filelist[i].ToString(), dbaccess);
 
                         }
                         catch (Exception ee)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -16,7 +16,7 @@ using System.ServiceProcess;
 
 namespace DataPieDesktop
 {
-    public partial class Form1 : Form
+    public partial class DatabaseConnectionForm : Form
     {
         public static Main main = null;
 
@@ -33,7 +33,7 @@ namespace DataPieDesktop
         DBConfig db = new DBConfig();
 
 
-        public Form1()
+        public DatabaseConnectionForm()
         {
           
             InitializeComponent();
@@ -41,15 +41,15 @@ namespace DataPieDesktop
 
      
 
-        private void Login_Click(object sender, EventArgs e)
+        private async void Login_Click(object sender, EventArgs e)
         {
-            MainfromShow();
+            await ShowMainFormAsync();
 
             this.Hide();
         }
 
     
-        private async void MainfromShow()
+        private async Task ShowMainFormAsync()
         {
             if (main == null)
             {
@@ -61,7 +61,7 @@ namespace DataPieDesktop
             else
             {
                 main.Show();
-                await main.DataLoad();
+                await main.LoadDatabaseSchemaAsync();
 
             }
 
@@ -73,7 +73,7 @@ namespace DataPieDesktop
 
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private void DatabaseConnectionForm_Load(object sender, EventArgs e)
         {
               //sqlcon = ConfigurationManager.AppSettings["Sqlite"];
 
@@ -81,7 +81,8 @@ namespace DataPieDesktop
 
               Dbtype = "SQLITE";
 
-              dbaccess = IDBFactory.CreateIDB(sqlcon, Dbtype);
+              dbaccess = DbAccessFactory.Create(sqlcon, Dbtype);
+              InitializeConnectionStore(dbaccess);
 
 
             _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo where UPPER(Dbtype) <> 'MYSQL'").ToList<Dbinfo>();
@@ -106,11 +107,16 @@ namespace DataPieDesktop
 
         }
 
+        private static void InitializeConnectionStore(IDbAccess access)
+        {
+            access.ExecuteSql("CREATE TABLE IF NOT EXISTS Dbinfo(Id INTEGER PRIMARY KEY AUTOINCREMENT, Dbname varchar(50) NOT NULL, ConnectionStrings varchar(255) NOT NULL, Dbtype varchar(20) NOT NULL)");
+        }
+
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
-            AppState.connStr = _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.ConnectionStrings).FirstOrDefault();
-            AppState.Dbtype = _DataBaseList.Where(p=>p.Dbname == comboBox1.Text).Select(p => p.Dbtype).FirstOrDefault();
-            AppState.DbName= _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.Dbname).FirstOrDefault();
+            AppState.ConnectionString = _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.ConnectionStrings).FirstOrDefault();
+            AppState.DatabaseType = _DataBaseList.Where(p=>p.Dbname == comboBox1.Text).Select(p => p.Dbtype).FirstOrDefault();
+            AppState.DatabaseName= _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.Dbname).FirstOrDefault();
 
         }
 
@@ -126,7 +132,7 @@ namespace DataPieDesktop
         //test connection
         private void button10_Click(object sender, EventArgs e)
         {
-          var  dbaccesstest = IDBFactory.CreateIDB(textBox2.Text, comboBox2.Text);
+          var  dbaccesstest = DbAccessFactory.Create(textBox2.Text, comboBox2.Text);
 
             try
             {
@@ -289,7 +295,7 @@ namespace DataPieDesktop
 
                 sqlcon = db.GetSQLmasterConstring();
 
-                dbaccess = IDBFactory.CreateIDB(sqlcon, db.ProviderName);
+                dbaccess = DbAccessFactory.Create(sqlcon, db.ProviderName);
 
 
                 _DataBaseList = dbaccess.GetDataBaseInfo();
@@ -305,7 +311,7 @@ namespace DataPieDesktop
 
         }
 
-        private void button7_Click(object sender, EventArgs e)
+        private async void button7_Click(object sender, EventArgs e)
         {
             if (comboBox5.Text.ToString() == "")
             {
@@ -320,15 +326,15 @@ namespace DataPieDesktop
             sqlcon = db.GetConstring();
 
 
-            AppState.connStr = sqlcon;
-            AppState.Dbtype = "SQLSERVER";
-            AppState.DbName = comboBox5.Text.ToString();
+            AppState.ConnectionString = sqlcon;
+            AppState.DatabaseType = "SQLSERVER";
+            AppState.DatabaseName = comboBox5.Text.ToString();
 
-            var dbaccess1 = IDBFactory.CreateIDB("Data Source=data.db", "SQLITE");
+            var dbaccess1 = DbAccessFactory.Create("Data Source=data.db", "SQLITE");
             string sql = string.Format("insert into Dbinfo(Dbname, ConnectionStrings,Dbtype) select '{0}', '{1}', '{2}' WHERE NOT EXISTS(select 1 from Dbinfo where Dbname= '{0}')", comboBox5.Text.ToString(), sqlcon, "SQLSERVER");
             dbaccess1.ExecuteSql(sql);
 
-            MainfromShow();
+            await ShowMainFormAsync();
 
             this.Hide();
         }
@@ -366,7 +372,7 @@ namespace DataPieDesktop
             }
         }
 
-        private void button9_Click(object sender, EventArgs e)
+        private async void button9_Click(object sender, EventArgs e)
         {
             if (textBox5.Text.ToString() == "")
             {
@@ -382,15 +388,15 @@ namespace DataPieDesktop
 
             sqlcon = db.GetConstring();
 
-            AppState.connStr = sqlcon;
-            AppState.Dbtype = "SQLITE";
-            AppState.DbName  = textBox5.Text.ToString();
+            AppState.ConnectionString = sqlcon;
+            AppState.DatabaseType = "SQLITE";
+            AppState.DatabaseName  = textBox5.Text.ToString();
 
-            var dbaccess1 = IDBFactory.CreateIDB("Data Source=data.db", "SQLITE");
+            var dbaccess1 = DbAccessFactory.Create("Data Source=data.db", "SQLITE");
             string sql = string.Format("insert into Dbinfo(Dbname, ConnectionStrings,Dbtype) select '{0}', '{1}', '{2}' WHERE NOT EXISTS(select 1 from Dbinfo where Dbname= '{0}')", textBox5.Text.ToString(), sqlcon, "SQLITE");
             dbaccess1.ExecuteSql(sql);
 
-            MainfromShow();
+            await ShowMainFormAsync();
 
             this.Hide();
         }

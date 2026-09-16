@@ -1,4 +1,4 @@
-﻿
+
 namespace DataPieDesktop
 {
     partial class Main
@@ -53,9 +53,9 @@ namespace DataPieDesktop
             treeView1 = new System.Windows.Forms.TreeView();
             listBox1 = new System.Windows.Forms.ListBox();
             groupBox4 = new System.Windows.Forms.GroupBox();
-            button19 = new System.Windows.Forms.Button();
+            exportSheetsWithMiniExcelButton = new System.Windows.Forms.Button();
             button11 = new System.Windows.Forms.Button();
-            button10 = new System.Windows.Forms.Button();
+            exportSheetsWithEpplusButton = new System.Windows.Forms.Button();
             tabPage3 = new System.Windows.Forms.TabPage();
             richTextBox1 = new System.Windows.Forms.RichTextBox();
             groupBox7 = new System.Windows.Forms.GroupBox();
@@ -64,11 +64,11 @@ namespace DataPieDesktop
             button6 = new System.Windows.Forms.Button();
             dataGridView1 = new System.Windows.Forms.DataGridView();
             groupBox3 = new System.Windows.Forms.GroupBox();
-            button16 = new System.Windows.Forms.Button();
+            exportTableButton = new System.Windows.Forms.Button();
             button9 = new System.Windows.Forms.Button();
             button7 = new System.Windows.Forms.Button();
             button5 = new System.Windows.Forms.Button();
-            button4 = new System.Windows.Forms.Button();
+            exportQueryButton = new System.Windows.Forms.Button();
             label2 = new System.Windows.Forms.Label();
             comboBox2 = new System.Windows.Forms.ComboBox();
             tabPage4 = new System.Windows.Forms.TabPage();
@@ -369,9 +369,9 @@ namespace DataPieDesktop
             // 
             // groupBox4
             // 
-            groupBox4.Controls.Add(button19);
+            groupBox4.Controls.Add(exportSheetsWithMiniExcelButton);
             groupBox4.Controls.Add(button11);
-            groupBox4.Controls.Add(button10);
+            groupBox4.Controls.Add(exportSheetsWithEpplusButton);
             groupBox4.Location = new System.Drawing.Point(35, 578);
             groupBox4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
             groupBox4.Name = "groupBox4";
@@ -381,16 +381,16 @@ namespace DataPieDesktop
             groupBox4.TabStop = false;
             groupBox4.Text = "Export";
             // 
-            // button19
+            // exportSheetsWithMiniExcelButton
             // 
-            button19.Location = new System.Drawing.Point(525, 32);
-            button19.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            button19.Name = "button19";
-            button19.Size = new System.Drawing.Size(228, 60);
-            button19.TabIndex = 6;
-            button19.Text = "MiniExcel(Fast) ";
-            button19.UseVisualStyleBackColor = true;
-            button19.Click += button19_Click;
+            exportSheetsWithMiniExcelButton.Location = new System.Drawing.Point(525, 32);
+            exportSheetsWithMiniExcelButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            exportSheetsWithMiniExcelButton.Name = "exportSheetsWithMiniExcelButton";
+            exportSheetsWithMiniExcelButton.Size = new System.Drawing.Size(228, 60);
+            exportSheetsWithMiniExcelButton.TabIndex = 6;
+            exportSheetsWithMiniExcelButton.Text = "MiniExcel(Fast) ";
+            exportSheetsWithMiniExcelButton.UseVisualStyleBackColor = true;
+            exportSheetsWithMiniExcelButton.Click += exportSheetsWithMiniExcelButton_Click;
             // 
             // button11
             // 
@@ -403,16 +403,16 @@ namespace DataPieDesktop
             button11.UseVisualStyleBackColor = true;
             button11.Click += button11_Click;
             // 
-            // button10
+            // exportSheetsWithEpplusButton
             // 
-            button10.Location = new System.Drawing.Point(1005, 32);
-            button10.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            button10.Name = "button10";
-            button10.Size = new System.Drawing.Size(154, 60);
-            button10.TabIndex = 4;
-            button10.Text = "Export Excel";
-            button10.UseVisualStyleBackColor = true;
-            button10.Click += button10_Click;
+            exportSheetsWithEpplusButton.Location = new System.Drawing.Point(1005, 32);
+            exportSheetsWithEpplusButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            exportSheetsWithEpplusButton.Name = "exportSheetsWithEpplusButton";
+            exportSheetsWithEpplusButton.Size = new System.Drawing.Size(154, 60);
+            exportSheetsWithEpplusButton.TabIndex = 4;
+            exportSheetsWithEpplusButton.Text = "Export Excel";
+            exportSheetsWithEpplusButton.UseVisualStyleBackColor = true;
+            exportSheetsWithEpplusButton.Click += exportSheetsWithEpplusButton_Click;
             // 
             // tabPage3
             // 
@@ -498,11 +498,11 @@ namespace DataPieDesktop
             // 
             // groupBox3
             // 
-            groupBox3.Controls.Add(button16);
+            groupBox3.Controls.Add(exportTableButton);
             groupBox3.Controls.Add(button9);
             groupBox3.Controls.Add(button7);
             groupBox3.Controls.Add(button5);
-            groupBox3.Controls.Add(button4);
+            groupBox3.Controls.Add(exportQueryButton);
             groupBox3.Controls.Add(label2);
             groupBox3.Controls.Add(comboBox2);
             groupBox3.Location = new System.Drawing.Point(51, 4);
@@ -514,16 +514,16 @@ namespace DataPieDesktop
             groupBox3.TabStop = false;
             groupBox3.Text = "Data View";
             // 
-            // button16
+            // exportTableButton
             // 
-            button16.Location = new System.Drawing.Point(457, 90);
-            button16.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            button16.Name = "button16";
-            button16.Size = new System.Drawing.Size(207, 62);
-            button16.TabIndex = 7;
-            button16.Text = "Export Excel By Table";
-            button16.UseVisualStyleBackColor = true;
-            button16.Click += button16_Click;
+            exportTableButton.Location = new System.Drawing.Point(457, 90);
+            exportTableButton.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
+            exportTableButton.Name = "exportTableButton";
+            exportTableButton.Size = new System.Drawing.Size(207, 62);
+            exportTableButton.TabIndex = 7;
+            exportTableButton.Text = "Export Excel By Table";
+            exportTableButton.UseVisualStyleBackColor = true;
+            exportTableButton.Click += exportTableButton_Click;
             // 
             // button9
             // 
@@ -558,16 +558,16 @@ namespace DataPieDesktop
             button5.UseVisualStyleBackColor = true;
             button5.Click += button5_Click;
             // 
-            // button4
+            // exportQueryButton
             // 
-            button4.Location = new System.Drawing.Point(191, 92);
-            button4.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            button4.Name = "button4";
-            button4.Size = new System.Drawing.Size(217, 58);
-            button4.TabIndex = 2;
-            button4.Text = "Export Excel By SQL";
-            button4.UseVisualStyleBackColor = true;
-            button4.Click += button4_Click;
+            exportQueryButton.Location = new System.Drawing.Point(191, 92);
+            exportQueryButton.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            exportQueryButton.Name = "exportQueryButton";
+            exportQueryButton.Size = new System.Drawing.Size(217, 58);
+            exportQueryButton.TabIndex = 2;
+            exportQueryButton.Text = "Export Excel By SQL";
+            exportQueryButton.UseVisualStyleBackColor = true;
+            exportQueryButton.Click += exportQueryButton_Click;
             // 
             // label2
             // 
@@ -864,7 +864,7 @@ namespace DataPieDesktop
         private System.Windows.Forms.ToolStripButton toolStripButton2;
         private System.Windows.Forms.TabPage tabPage3;
         private System.Windows.Forms.GroupBox groupBox3;
-        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button exportQueryButton;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ComboBox comboBox2;
         private System.Windows.Forms.DataGridView dataGridView1;
@@ -876,7 +876,7 @@ namespace DataPieDesktop
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.Button button11;
-        private System.Windows.Forms.Button button10;
+        private System.Windows.Forms.Button exportSheetsWithEpplusButton;
         private System.Windows.Forms.ListBox listBox1;
         private System.Windows.Forms.TreeView treeView1;
         private System.Windows.Forms.TabPage tabPage4;
@@ -899,8 +899,8 @@ namespace DataPieDesktop
         private System.Windows.Forms.ToolStripButton toolStripButton3;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
-        private System.Windows.Forms.Button button16;
-        private System.Windows.Forms.Button button19;
+        private System.Windows.Forms.Button exportTableButton;
+        private System.Windows.Forms.Button exportSheetsWithMiniExcelButton;
         private System.Windows.Forms.GroupBox groupBox8;
         private System.Windows.Forms.Button button20;
         private System.Windows.Forms.TextBox textBox3;
