@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -17,13 +17,13 @@ namespace DataPieCore
 
         public static DbSchema dbs;
 
-        public static bool _cancelled = false;
+        public static volatile bool _cancelled = false;
 
-        public static bool Done = false;
+        public static volatile bool Done = false;
 
-        public static string currentProcessTable;
+        public static volatile string currentProcessTable;
 
-        public static int TotalCopyed;
+        public static volatile int TotalCopyed;
 
         /// <summary>
         /// Copies table rows from the SQL Server database to the SQLite database.
@@ -35,93 +35,67 @@ namespace DataPieCore
         public static void CopySqlServerRowsToSQLiteDB(string sqlConnString, string sqlitePath,  string password)
         {
             Done = false;
-
-            CheckCancelled();
-            using (SqlConnection ssconn = new SqlConnection(sqlConnString))
+            TotalCopyed = 0;
+            try
             {
-                ssconn.Open();
-
-                // Connect to the SQLite database next
-                string sqliteConnString = CreateSQLiteConnectionString(sqlitePath, password);
-                using (SQLiteConnection sqconn = new SQLiteConnection(sqliteConnString))
+                CheckCancelled();
+                using var source = new SqlConnection(sqlConnString);
+                source.Open();
+                using var destination = new SQLiteConnection(CreateSQLiteConnectionString(sqlitePath, password));
+                destination.Open();
+                foreach (var table in dbs.DbTables)
                 {
-                    sqconn.Open();
-
-                    int counter = 0;
-
-
-                    // Go over all tables in the schema and copy their rows
-                    for (int i = 0; i < dbs.DbTables.Count; i++)
+                    currentProcessTable = table.Name;
+                    using var query = new SqlCommand(BuildSqlServerTableQuery(table), source);
+                    using var reader = query.ExecuteReader();
+                    using var insert = BuildSQLiteInsert(table);
+                    insert.Connection = destination;
+                    var parameters = insert.Parameters.Cast<SQLiteParameter>().ToArray();
+                    var types = table.Columns.Select(GetDbTypeOfColumn).ToArray();
+                    SQLiteTransaction transaction = destination.BeginTransaction();
+                    try
                     {
-                        currentProcessTable = dbs.DbTables[i].Name;
-
-                        SQLiteTransaction tx = sqconn.BeginTransaction();
-                        try
+                        insert.Transaction = transaction;
+                        insert.Prepare();
+                        int batchRows = 0;
+                        while (reader.Read())
                         {
-                            string tableQuery = BuildSqlServerTableQuery(dbs.DbTables[i]);
-                            SqlCommand query = new SqlCommand(tableQuery, ssconn);
-                            using (SqlDataReader reader = query.ExecuteReader())
-                            {
-                                SQLiteCommand insert = BuildSQLiteInsert(dbs.DbTables[i]);
-                                //int counter = 0;
-                                while (reader.Read())
-                                {
-                                    insert.Connection = sqconn;
-                                    insert.Transaction = tx;
-                                    List<string> pnames = new List<string>();
-                                    for (int j = 0; j < dbs.DbTables[i].Columns.Count; j++)
-                                    {
-                                        string pname = "@" + GetNormalizedName(dbs.DbTables[i].Columns[j].Name, pnames);
-                                        insert.Parameters[pname].Value = CastValueForColumn(reader[j], dbs.DbTables[i].Columns[j]);
-                                        pnames.Add(pname);
-                                    }
-                                    insert.ExecuteNonQuery();
-                                    counter++;
-                                    if (counter % 1000 == 0)
-                                    {
-                                        CheckCancelled();
-                                        tx.Commit();
-
-                                        TotalCopyed = counter;
-
-                                        tx = sqconn.BeginTransaction();
-                                    }
-                                } // while
-                            } // using
-
                             CheckCancelled();
-                            tx.Commit();
-                            TotalCopyed = counter;
-
+                            for (int j = 0; j < parameters.Length; j++)
+                                parameters[j].Value = CastValueForColumn(reader[j], types[j]) ?? DBNull.Value;
+                            insert.ExecuteNonQuery();
+                            batchRows++;
+                            if (batchRows == 1000)
+                            {
+                                transaction.Commit();
+                                TotalCopyed += batchRows;
+                                batchRows = 0;
+                                transaction.Dispose();
+                                transaction = destination.BeginTransaction();
+                                insert.Transaction = transaction;
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            tx.Rollback();                            
-                            Done = true;
-                            throw;
-
-                        } // catch
+                        CheckCancelled();
+                        transaction.Commit();
+                        TotalCopyed += batchRows;
                     }
-
-                    Done = true;
-
-                } // using
-            } // using
-
+                    finally { transaction.Dispose(); }
+                }
+            }
+            finally { Done = true; }
         }
-
         /// <summary>
         /// Used in order to adjust the value received from SQL Servr for the SQLite database.
         /// </summary>
         /// <param name="val">The value object</param>
         /// <param name="columnSchema">The corresponding column schema</param>
         /// <returns>SQLite adjusted value.</returns>
-        private static object CastValueForColumn(object val, Column columnSchema)
+        private static object CastValueForColumn(object val, DbType dt)
         {
             if (val is DBNull)
                 return null;
 
-            DbType dt = GetDbTypeOfColumn(columnSchema);
+
 
             switch (dt)
             {
@@ -186,6 +160,7 @@ namespace DataPieCore
                         return ParseBlobAsGuid((byte[])val);
                     break;
 
+                case DbType.Byte:
                 case DbType.Binary:
                 case DbType.Boolean:
                 case DbType.DateTime:
@@ -274,7 +249,7 @@ namespace DataPieCore
             List<string> pnames = new List<string>();
             for (int i = 0; i < ts.Columns.Count; i++)
             {
-                string pname = "@" + GetNormalizedName(ts.Columns[i].Name, pnames);
+                string pname = "@p" + i;
                 sb.Append(pname);
                 if (i < ts.Columns.Count - 1)
                     sb.Append(", ");

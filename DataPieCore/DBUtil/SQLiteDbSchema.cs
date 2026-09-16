@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
+using System;
+using System.Linq;
 using System.Data;
 using System.Data.SQLite;
 
@@ -62,46 +64,33 @@ namespace DBUtil
         /// <returns></returns>
         public List<TableStruct> ShowTables()
         {
-            DataSet ds = GetDataSet("select tbl_name from sqlite_master where type='table'");
-            List<TableStruct> list = new List<TableStruct>();
-            for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+            using var tables = GetDataTable("select tbl_name from sqlite_master where type='table'");
+            using var columns = GetSchema("Columns");
+            var byTable = columns.AsEnumerable().ToLookup(r => r["TABLE_NAME"].ToString(), StringComparer.OrdinalIgnoreCase);
+            return tables.AsEnumerable().Select(row => new TableStruct
             {
-                TableStruct tbl = new TableStruct
-                {
-                    Name = ds.Tables[0].Rows[i][0].ToString(),
-                    Columns = ShowColumns(ds.Tables[0].Rows[i][0].ToString())
-                };
-                list.Add(tbl);
-            }
-            return list;
+                Name = row[0].ToString(),
+                Columns = byTable[row[0].ToString()].Select(ReadColumn).ToList()
+            }).ToList();
         }
 
         public List<Column> ShowColumns(string tablename)
         {
-            List<Column> list = new List<Column>();
-
-            DataTable dt = GetSchema("Columns", new string[] { null, null, tablename, null });
-            if (dt.Rows.Count > 0)
-            {
-                foreach (DataRow row in dt.Rows)
-                {
-                    Column column = new Column();
-                    column.Name = row["COLUMN_NAME"].ToString();
-                    column.Desc = string.Format("{0}.{1}", row["COLUMN_NAME"].ToString(), row["DATA_TYPE"].ToString());
-                    column.Type = row["DATA_TYPE"].ToString();
-                    column.IsNullable = bool.Parse(row["IS_NULLABLE"].ToString());
-                    column.IsPrimaryKey = bool.Parse(row["PRIMARY_Key"].ToString());
-                    column.IsUnique = bool.Parse(row["Unique"].ToString());
-                    column.IsNullable = bool.Parse(row["Is_Nullable"].ToString());
-                    column.MaxLength= int.Parse(row["CHARACTER_MAXIMUM_LENGTH"].ToString());
-                    column.IsIdentity = row["AUTOINCREMENT"].ToString()== "True";
-
-                    list.Add(column);
-                }
-            }
-            return list;
+            using var columns = GetSchema("Columns", new[] { null, null, tablename, null });
+            return columns.AsEnumerable().Select(ReadColumn).ToList();
         }
 
+        private static Column ReadColumn(DataRow row) => new Column
+        {
+            Name = row["COLUMN_NAME"].ToString(),
+            Desc = $"{row["COLUMN_NAME"]}.{row["DATA_TYPE"]}",
+            Type = row["DATA_TYPE"].ToString(),
+            IsNullable = Convert.ToBoolean(row["IS_NULLABLE"]),
+            IsPrimaryKey = Convert.ToBoolean(row["PRIMARY_KEY"]),
+            IsUnique = Convert.ToBoolean(row["UNIQUE"]),
+            MaxLength = row.IsNull("CHARACTER_MAXIMUM_LENGTH") ? 0 : Convert.ToInt32(row["CHARACTER_MAXIMUM_LENGTH"]),
+            IsIdentity = Convert.ToBoolean(row["AUTOINCREMENT"]),
+        };
         public DataTable GetSchema(string collectionName, string[] restictionValues)
         {
             using (SQLiteConnection connection = new SQLiteConnection(ConnectionString))

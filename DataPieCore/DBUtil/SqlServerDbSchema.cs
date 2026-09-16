@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
@@ -32,20 +32,22 @@ namespace DBUtil
 
         public List<TableStruct> ShowTables()
         {
-            DataSet ds = GetDataSet("select TABLE_NAME,TABLE_SCHEMA from INFORMATION_SCHEMA.TABLES t where t.TABLE_TYPE ='BASE TABLE'");
+            DataSet ds = GetDataSet("select name AS TABLE_NAME, SCHEMA_NAME(schema_id) AS TABLE_SCHEMA, object_id AS TableId from sys.tables");
             List<TableStruct> list = new List<TableStruct>();
 
             var allcolumns = AllColumns();
 
             var allForeignKeys = AllForeignKeys();
+            var columnsByTable = allcolumns.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
+            var keysByTable = allForeignKeys.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
 
             for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
             {
                 TableStruct tbl = new TableStruct();
                 tbl.Name = ds.Tables[0].Rows[i][0].ToString();
                 tbl.TableSchemaName = ds.Tables[0].Rows[i][1].ToString();
-                tbl.Columns = ShowColumns(allcolumns,ds.Tables[0].Rows[i][0].ToString());
-                tbl.ForeignKeys = ShowForeignKeys1(allForeignKeys, ds.Tables[0].Rows[i][0].ToString());
+                tbl.Columns = columnsByTable[Convert.ToInt32(ds.Tables[0].Rows[i]["TableId"])].Select(ReadColumn).ToList();
+                tbl.ForeignKeys = keysByTable[Convert.ToInt32(ds.Tables[0].Rows[i]["TableId"])].Select(ReadForeignKey).ToList();
                 tbl.PrimaryKey = tbl.Columns.Where(p => p.IsPrimaryKey == true).Select(p => p.Name).FirstOrDefault();
 
                 //tbl.Constraints = ShowConstraints(ds.Tables[0].Rows[i][0].ToString());
@@ -53,35 +55,22 @@ namespace DBUtil
             }
             return list;
         }
-        public List<Column> ShowColumns(DataTable dt,string tablename)
+        public List<Column> ShowColumns(DataTable dt, string tablename)
         {
-            List<Column> list = new List<Column>();
-
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                if (dt.Rows[i]["TableName"].ToString()==tablename) {
-
-                    Column col = new Column()
-                    { 
-                        Name = dt.Rows[i]["DbColumnName"].ToString(),
-                        Desc = dt.Rows[i]["ColumnDescription"].ToString(),
-                        IsIdentity = int.Parse(dt.Rows[i]["IsIdentity"].ToString()) == 1,
-                        IsNullable = int.Parse(dt.Rows[i]["IsNullable"].ToString()) == 1,
-                        Type = dt.Rows[i]["DataType"].ToString(),
-                        Default = dt.Rows[i]["DefaultValue"].ToString(),
-                        MaxLength = int.Parse(dt.Rows[i]["Length"].ToString()),
-                        IsPrimaryKey = int.Parse(dt.Rows[i]["IsPrimaryKey"].ToString()) == 1,
-                    };
-
-                    list.Add(col);
-                }
-
-   
-            }
-
-            return list;
+            return dt.AsEnumerable().Where(r => r["TableName"].ToString() == tablename).Select(ReadColumn).ToList();
         }
 
+        private static Column ReadColumn(DataRow row) => new Column
+        {
+            Name = row["DbColumnName"].ToString(),
+            Desc = row["ColumnDescription"].ToString(),
+            IsIdentity = Convert.ToInt32(row["IsIdentity"]) == 1,
+            IsNullable = Convert.ToInt32(row["IsNullable"]) == 1,
+            Type = row["DataType"].ToString(),
+            Default = row["DefaultValue"].ToString(),
+            MaxLength = Convert.ToInt32(row["Length"]),
+            IsPrimaryKey = Convert.ToInt32(row["IsPrimaryKey"]) == 1,
+        };
         public DataTable AllColumns()
         {
 
@@ -136,7 +125,7 @@ namespace DBUtil
 
             string sql = string.Format(
                          @"SELECT 
-	OBJECT_SCHEMA_NAME(f.parent_object_id) AS TableSchemaName,
+	f.parent_object_id AS TableId, OBJECT_SCHEMA_NAME(f.parent_object_id) AS TableSchemaName,
 	OBJECT_NAME(f.parent_object_id) AS TableName,
 	COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
 	f.name AS ForeignKeyName,
@@ -156,39 +145,24 @@ FROM
 
         public List<ForeignKeySchema> ShowForeignKeys1(DataTable dt, string tablename)
         {
-            List<ForeignKeySchema> list = new List<ForeignKeySchema>();
-
-
-            for (int i = 0; i < dt.Rows.Count; i++)
-            {
-                if (dt.Rows[i]["TableName"].ToString() == tablename)
-                {
-
-                    ForeignKeySchema fkc = new ForeignKeySchema();
-
-                    fkc.ColumnName = dt.Rows[i]["ColumnName"].ToString();
-                    fkc.ForeignTableName = dt.Rows[i]["ReferenceTableName"].ToString();
-                    fkc.ForeignColumnName = dt.Rows[i]["ReferenceColumnName"].ToString();
-                    fkc.TableName = tablename;
-                    fkc.CascadeOnDelete = dt.Rows[i]["delete_referential_action_desc"].ToString() == "CASCADE";
-
-                    list.Add(fkc);
-                }
-
-
-            }
-
-            return list;
+            return dt.AsEnumerable().Where(r => r["TableName"].ToString() == tablename).Select(ReadForeignKey).ToList();
         }
 
-
+        private static ForeignKeySchema ReadForeignKey(DataRow row) => new ForeignKeySchema
+        {
+            ColumnName = row["ColumnName"].ToString(),
+            ForeignTableName = row["ReferenceTableName"].ToString(),
+            ForeignColumnName = row["ReferenceColumnName"].ToString(),
+            TableName = row["TableName"].ToString(),
+            CascadeOnDelete = row["delete_referential_action_desc"].ToString() == "CASCADE",
+        };
         public List<ForeignKeySchema> ShowForeignKeys2(string tablename)
         {
             List<ForeignKeySchema> list = new List<ForeignKeySchema>();
 
           string sql=  string.Format(
                        @"SELECT 
-	OBJECT_SCHEMA_NAME(f.parent_object_id) AS TableSchemaName,
+	f.parent_object_id AS TableId, OBJECT_SCHEMA_NAME(f.parent_object_id) AS TableSchemaName,
 	OBJECT_NAME(f.parent_object_id) AS TableName,
 	COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
 	f.name AS ForeignKeyName,

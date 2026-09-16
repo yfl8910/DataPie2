@@ -197,7 +197,7 @@ namespace DBUtil
         {
             try
             {
-                SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
+                using SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
                 cmd.CommandTimeout = 1000;
 
                 if (IsTran)
@@ -250,108 +250,42 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql)
         {
-            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn)
-            {
-                CommandTimeout = 10000
-            };
-            if (IsTran)
-            {
-                cmd.Transaction = (SqlTransaction)tran;
-            }
-            try
-            {
-                conn.Open();
-                SqlDataReader myReader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
-                return myReader;
-            }
-            catch (System.Data.SqlClient.SqlException e)
-            {
-                throw e;
-            }
+            return OwnedDataReader.Open(this, strSql, null, 10000);
         }
 
-        /// <summary>
-        /// 获取阅读器
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
         {
-            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
-            cmd.Parameters.AddRange(paraArr);
-            if (IsTran)
-            {
-                cmd.Transaction = (SqlTransaction)tran;
-            }
-            if (!IsOpen)
-            {
-                conn.Open();
-                IsOpen = true;
-            }
-            IDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection);
-            cmd.Parameters.Clear();
-            return reader;
+            return OwnedDataReader.Open(this, strSql, paraArr, 30);
         }
-
         /// <summary>
         /// 返回查询结果的数据集
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
-        public DataSet GetDataSet(string strSql)
-        {
-            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
-            if (IsTran)
-            {
-                cmd.Transaction = (SqlTransaction)tran;
-            }
-            if (!IsOpen)
-            {
-                conn.Open();
-                IsOpen = true;
-            }
-            SqlDataAdapter adp = new SqlDataAdapter(cmd);
-            DataSet set = new DataSet();
-            adp.Fill(set);
-            if (!IsTran && !IsKeepConnect)
-            {
-                conn.Close();
-                this.IsOpen = false;
-            }
-            return set;
-        }
+        public DataSet GetDataSet(string strSql) => GetDataSet(strSql, null);
 
-        /// <summary>
-        /// 返回查询结果的数据集
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">SQL语句中的参数集合</param>
-        /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
-            SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
-            cmd.Parameters.AddRange(paraArr);
-            if (IsTran)
+            using var command = new SqlCommand(strSql, (SqlConnection)conn);
+            if (IsTran) command.Transaction = (SqlTransaction)tran;
+            using var adapter = new SqlDataAdapter(command);
+            var result = new DataSet();
+            try
             {
-                cmd.Transaction = (SqlTransaction)tran;
-            }
-            if (!IsOpen)
-            {
-                conn.Open();
+                if (paraArr != null) command.Parameters.AddRange(paraArr);
+                if (conn.State != ConnectionState.Open) conn.Open();
                 IsOpen = true;
+                adapter.Fill(result);
+                return result;
             }
-            SqlDataAdapter adp = new SqlDataAdapter(cmd);
-            DataSet set = new DataSet();
-            adp.Fill(set);
-            cmd.Parameters.Clear();
-            if (!IsTran && !IsKeepConnect)
+            catch { result.Dispose(); throw; }
+            finally
             {
-                conn.Close();
-                this.IsOpen = false;
+                command.Parameters.Clear();
+                if (!IsTran && !IsKeepConnect) conn.Close();
+                IsOpen = conn.State == ConnectionState.Open;
             }
-            return set;
         }
-
         /// <summary>
         /// 返回查询结果的数据表
         /// </summary>
@@ -441,17 +375,14 @@ namespace DBUtil
         /// </summary>
         public void Dispose()
         {
-            try
+            try { tran?.Dispose(); }
+            finally
             {
-                if (this.conn != null && this.conn.State != ConnectionState.Closed)
-                {
-                    try { this.conn.Close(); } catch { }
-                    this.IsOpen = false;
-                }
+                conn?.Dispose();
+                IsOpen = false;
+                IsTran = false;
             }
-            catch { }
         }
-
         /// <summary>
         /// 根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
         /// </summary>

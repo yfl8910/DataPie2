@@ -1,4 +1,4 @@
-﻿using DBUtil;
+using DBUtil;
 using ExcelDataReader;
 using OfficeOpenXml;
 using System;
@@ -108,41 +108,9 @@ namespace DataPieCore
 
         public static int SaveMutiExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
-            if (filename is null) throw new ArgumentNullException(nameof(filename));
-            if (tableNames is null || tableNames.Count == 0) throw new ArgumentException("tableNames required", nameof(tableNames));
-            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
-
-            var watch = Stopwatch.StartNew();
-
-            // Keep EPPlus licensing call if required by your usage
-            ExcelPackage.License.SetNonCommercialOrganization("<DataPie>");
-
-            var newFile = new FileInfo(filename);
-            if (newFile.Exists)
-            {
-                newFile.Delete();
-                newFile = new FileInfo(filename);
-            }
-
-            using (var package = new ExcelPackage(newFile))
-            {
-                foreach (var table in tableNames)
-                {
-                    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
-                    using (var reader = dbAccess.GetDataReader(sql))
-                    {
-                        var ws = package.Workbook.Worksheets.Add(table);
-                        ws.Cells["A1"].LoadFromDataReader(reader, true);
-                    }
-                }
-
-                package.Save();
-            }
-
-            watch.Stop();
-            return (int)watch.Elapsed.TotalSeconds;
+            // Multi-sheet exports use the bounded, streaming writer too.
+            return SaveMutiMiniExcel(tableNames, filename, dbAccess, dbtype);
         }
-
         public static int SaveMutiMiniExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
             if (filename is null) throw new ArgumentNullException(nameof(filename));
@@ -159,7 +127,7 @@ namespace DataPieCore
             }
 
             var sheets = new Dictionary<string, object>();
-            var exportDbAccesses = new List<IDbAccess>();
+
             var readers = new List<IDataReader>();
 
             try
@@ -167,10 +135,7 @@ namespace DataPieCore
                 foreach (var table in tableNames)
                 {
                     string sql = BuildSQl.GetSQLfromTable(table, dbtype);
-                    var exportDbAccess = dbAccess.CreateNewIDB();
-                    exportDbAccesses.Add(exportDbAccess);
-
-                    var reader = exportDbAccess.GetDataReader(sql);
+                    var reader = new DeferredDataReader(dbAccess.CreateNewIDB, sql);
                     readers.Add(reader);
                     sheets.Add(table, reader);
                 }
@@ -182,11 +147,6 @@ namespace DataPieCore
                 foreach (var reader in readers)
                 {
                     reader.Dispose();
-                }
-
-                foreach (var exportDbAccess in exportDbAccesses)
-                {
-                    exportDbAccess.Dispose();
                 }
             }
 

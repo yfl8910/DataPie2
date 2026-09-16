@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Text;
+using System.Linq;
 
 namespace DBUtil
 {
@@ -77,7 +78,7 @@ namespace DBUtil
         {
             try
             {
-                SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
+                using SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
                 if (IsTran)
                 {
                     cmd.Transaction = (SQLiteTransaction)tran;
@@ -112,7 +113,7 @@ namespace DBUtil
         {
             try
             {
-                SQLiteCommand cmd = new SQLiteCommand
+                using SQLiteCommand cmd = new SQLiteCommand
                 {
                     Connection = (SQLiteConnection)conn
                 };
@@ -154,7 +155,7 @@ namespace DBUtil
         {
             try
             {
-                SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
+                using SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
                 if (IsTran)
                 {
                     cmd.Transaction = (SQLiteTransaction)tran;
@@ -203,98 +204,42 @@ namespace DBUtil
         /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql)
         {
-            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
-            if (IsTran)
-            {
-                cmd.Transaction = (SQLiteTransaction)tran;
-            }
-            if (!IsOpen)
-            {
-                conn.Open();
-                IsOpen = true;
-            }
-            return cmd.ExecuteReader();
+            return OwnedDataReader.Open(this, strSql, null, 30);
         }
 
-        /// <summary>
-        /// 获取阅读器
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <returns>返回阅读器</returns>
         public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
         {
-            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
-            cmd.Parameters.AddRange(paraArr);
-            if (IsTran)
-            {
-                cmd.Transaction = (SQLiteTransaction)tran;
-            }
-            if (!IsOpen)
-            {
-                conn.Open();
-                IsOpen = true;
-            }
-            return cmd.ExecuteReader();
+            return OwnedDataReader.Open(this, strSql, paraArr, 30);
         }
-
         /// <summary>
         /// 返回查询结果的数据集
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
-        public DataSet GetDataSet(string strSql)
-        {
-            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
-            if (IsTran)
-            {
-                cmd.Transaction = (SQLiteTransaction)tran;
-            }
-            if (!IsOpen)
-            {
-                conn.Open();
-                IsOpen = true;
-            }
-            SQLiteDataAdapter adp = new SQLiteDataAdapter(cmd);
-            DataSet set = new DataSet();
-            adp.Fill(set);
-            if (!IsTran && !IsKeepConnect)
-            {
-                conn.Close();
-                this.IsOpen = false;
-            }
-            return set;
-        }
+        public DataSet GetDataSet(string strSql) => GetDataSet(strSql, null);
 
-        /// <summary>
-        /// 返回查询结果的数据集
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">SQL语句中的参数集合</param>
-        /// <returns>返回的查询结果集</returns>
         public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
-            SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
-            cmd.Parameters.AddRange(paraArr);
-            if (IsTran)
+            using var command = new SQLiteCommand(strSql, (SQLiteConnection)conn);
+            if (IsTran) command.Transaction = (SQLiteTransaction)tran;
+            using var adapter = new SQLiteDataAdapter(command);
+            var result = new DataSet();
+            try
             {
-                cmd.Transaction = (SQLiteTransaction)tran;
-            }
-            if (!IsOpen)
-            {
-                conn.Open();
+                if (paraArr != null) command.Parameters.AddRange(paraArr);
+                if (conn.State != ConnectionState.Open) conn.Open();
                 IsOpen = true;
+                adapter.Fill(result);
+                return result;
             }
-            SQLiteDataAdapter adp = new SQLiteDataAdapter(cmd);
-            DataSet set = new DataSet();
-            adp.Fill(set);
-            if (!IsTran && !IsKeepConnect)
+            catch { result.Dispose(); throw; }
+            finally
             {
-                conn.Close();
-                this.IsOpen = false;
+                command.Parameters.Clear();
+                if (!IsTran && !IsKeepConnect) conn.Close();
+                IsOpen = conn.State == ConnectionState.Open;
             }
-            return set;
         }
-
         /// <summary>
         /// 返回查询结果的数据表
         /// </summary>
@@ -384,17 +329,14 @@ namespace DBUtil
         /// </summary>
         public void Dispose()
         {
-            try
+            try { tran?.Dispose(); }
+            finally
             {
-                if (this.conn.State != ConnectionState.Closed)
-                {
-                    this.conn.Close();
-                    this.IsOpen = false;
-                }
+                conn?.Dispose();
+                IsOpen = false;
+                IsTran = false;
             }
-            catch { }
         }
-
         /// <summary>
         /// 根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
         /// </summary>
@@ -406,116 +348,65 @@ namespace DBUtil
 
         public bool BulkInsert(string tableName, IDataReader reader)
         {
-            throw new NotImplementedException();
+            return BulkInsertReader(tableName, reader, null);
         }
 
-        List<string> IDbAccess.ShowViews()
+        List<string> IDbAccess.ShowViews() => ShowViews();
+
+        public int TruncateTable(string tableName)
         {
-            return null;
+            return ExecuteSql("DELETE FROM " + QuoteIdentifier(tableName));
         }
 
-        public int TruncateTable(string TableName)
-        {
-            return ExecuteSql("delete from [" + TableName + "]");
-        }
+        private static string QuoteIdentifier(string name) => "\"" + name.Replace("\"", "\"\"") + "\"";
 
-        private string GenerateInserSql(IList<string> maplist, string TableName, DataRow row)
+        private bool BulkInsertReader(string tableName, IDataReader reader, IList<string> columns)
         {
-            var names = new StringBuilder();
-            var values = new StringBuilder();
-            bool first = true;
-            char quote = '"';
-
-            foreach (string c in maplist)
+            if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentException(nameof(tableName));
+            if (reader == null) throw new ArgumentNullException(nameof(reader));
+            var names = columns ?? Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToArray();
+            if (names.Count == 0) throw new ArgumentException("No columns to import.");
+            var ordinals = names.Select(reader.GetOrdinal).ToArray();
+            if (ordinals.Any(i => i < 0)) throw new ArgumentException("An import column is missing.");
+            using var connection = new SQLiteConnection(ConnectionString);
+            connection.Open();
+            using var transaction = connection.BeginTransaction();
+            using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            command.CommandText = "INSERT INTO " + QuoteIdentifier(tableName) + " (" +
+                string.Join(",", names.Select(QuoteIdentifier)) + ") VALUES (" +
+                string.Join(",", Enumerable.Range(0, names.Count).Select(i => "@p" + i)) + ")";
+            var parameters = new SQLiteParameter[names.Count];
+            for (int i = 0; i < parameters.Length; i++)
             {
-                if (!first)
-                {
-                    names.Append(",");
-                    values.Append(",");
-                }
-                names.Append(c);
-                values.Append("\"" + row[c].ToString().Replace(quote.ToString(), string.Concat(quote, quote)) + "\"");
-                first = false;
+                parameters[i] = new SQLiteParameter("@p" + i);
+                command.Parameters.Add(parameters[i]);
             }
-
-            string sql = string.Format("INSERT INTO {0} ({1}) VALUES ({2})", TableName, names, values);
-            return sql;
+            command.Prepare();
+            while (reader.Read())
+            {
+                for (int i = 0; i < parameters.Length; i++)
+                    parameters[i].Value = reader.GetValue(ordinals[i]) ?? DBNull.Value;
+                command.ExecuteNonQuery();
+            }
+            transaction.Commit();
+            return true;
         }
 
         public bool BulkInsert(string tableName, DataTable dt)
         {
-            using (SQLiteConnection conn = new SQLiteConnection(ConnectionString))
-            {
-                conn.Open();
-                SQLiteCommand cmd = new SQLiteCommand
-                {
-                    Connection = conn
-                };
-                SQLiteTransaction tx = conn.BeginTransaction();
-                cmd.Transaction = tx;
-                try
-                {
-                    IList<string> maplist = new List<string>();
-
-                    foreach (var c in dt.Columns)
-                    {
-                        maplist.Add(c.ToString());
-                    }
-
-                    foreach (DataRow r in dt.Rows)
-                    {
-                        cmd.CommandText = GenerateInserSql(maplist, tableName, r);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    tx.Commit();
-                    return true;
-                }
-                catch (Exception E)
-                {
-                    tx.Rollback();
-                    throw new Exception(E.Message);
-                }
-            }
+            if (dt == null) throw new ArgumentNullException(nameof(dt));
+            using var reader = dt.CreateDataReader();
+            return BulkInsert(tableName, reader);
         }
 
         public bool BulkInsert(string tableName, DataTable dt, IList<string> maplist)
         {
-            using (SQLiteConnection conn = new SQLiteConnection(ConnectionString))
-            {
-                conn.Open();
-                SQLiteCommand cmd = new SQLiteCommand
-                {
-                    Connection = conn
-                };
-                SQLiteTransaction tx = conn.BeginTransaction();
-                cmd.Transaction = tx;
-                try
-                {
-                    //IList<string> maplist = new List<string>();
-
-                    //foreach (var c in dt.Columns)
-                    //{
-                    //    maplist.Add(c.ToString());
-                    //}
-
-                    foreach (DataRow r in dt.Rows)
-                    {
-                        cmd.CommandText = GenerateInserSql(maplist, tableName, r);
-                        cmd.ExecuteNonQuery();
-                    }
-
-                    tx.Commit();
-                    return true;
-                }
-                catch (Exception E)
-                {
-                    tx.Rollback();
-                    throw new Exception(E.Message);
-                }
-            }
+            if (dt == null) throw new ArgumentNullException(nameof(dt));
+            if (maplist == null) throw new ArgumentNullException(nameof(maplist));
+            using var reader = dt.CreateDataReader();
+            return BulkInsertReader(tableName, reader, maplist);
         }
-
         public int RunProcedure(string storedProcName)
         {
             throw new NotImplementedException();
