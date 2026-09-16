@@ -9,9 +9,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EPPlus" Version="8.5.4" />
-    <PackageReference Include="ExcelDataReader" Version="3.8.0" />
-    <PackageReference Include="MiniExcel" Version="1.44.0" />
+    <PackageReference Include="EPPlus" Version="8.7.0" />
+    <PackageReference Include="ExcelDataReader" Version="3.9.0" />
+    <PackageReference Include="MiniExcel" Version="1.46.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.9.1" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" />
   </ItemGroup>

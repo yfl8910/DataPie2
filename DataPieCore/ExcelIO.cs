@@ -1,14 +1,15 @@
 using DBUtil;
 using ExcelDataReader;
+using MiniExcelLibs;
+using MiniExcelLibs.OpenXml;
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.IO;
-using System.Text;
 using System.Diagnostics;
-using MiniExcelLibs;
+using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace DataPieCore
 {
@@ -108,8 +109,39 @@ namespace DataPieCore
 
         public static int SaveMutiExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
-            // Multi-sheet exports use the bounded, streaming writer too.
-            return SaveMutiMiniExcel(tableNames, filename, dbAccess, dbtype);
+            if (filename is null) throw new ArgumentNullException(nameof(filename));
+            if (tableNames is null || tableNames.Count == 0) throw new ArgumentException("tableNames required", nameof(tableNames));
+            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
+
+            var watch = Stopwatch.StartNew();
+
+            // Keep EPPlus licensing call if required by your usage
+            ExcelPackage.License.SetNonCommercialOrganization("<DataPie>");
+
+            var newFile = new FileInfo(filename);
+            if (newFile.Exists)
+            {
+                newFile.Delete();
+                newFile = new FileInfo(filename);
+            }
+
+            using (var package = new ExcelPackage(newFile))
+            {
+                foreach (var table in tableNames)
+                {
+                    string sql = BuildSQl.GetSQLfromTable(table, dbtype);
+                    using (var reader = dbAccess.GetDataReader(sql))
+                    {
+                        var ws = package.Workbook.Worksheets.Add(table);
+                        ws.Cells["A1"].LoadFromDataReader(reader, true);
+                    }
+                }
+
+                package.Save();
+            }
+
+            watch.Stop();
+            return (int)watch.Elapsed.TotalSeconds;
         }
         public static int SaveMutiMiniExcel(IList<string> tableNames, string filename, IDbAccess dbAccess, string dbtype)
         {
@@ -140,7 +172,12 @@ namespace DataPieCore
                     sheets.Add(table, reader);
                 }
 
-                MiniExcel.SaveAs(newFile.ToString(), sheets);
+                var config = new OpenXmlConfiguration()
+                {
+                    TableStyles = TableStyles.None
+                };
+
+                MiniExcel.SaveAs(newFile.ToString(), sheets, configuration: config);
             }
             finally
             {
