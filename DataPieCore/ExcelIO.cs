@@ -31,7 +31,13 @@ namespace DataPieCore
             ArgumentNullException.ThrowIfNull(filePath);
             ArgumentNullException.ThrowIfNull(dbAccess);
             using var stream = OpenReadStream(filePath);
-            using var reader = MiniExcel.GetReader(stream, true, sheetName: tableName);
+            var sheetNames = MiniExcel.GetSheetNames(stream);
+            string sheetName = sheetNames.Count == 1 ? sheetNames[0] : tableName;
+            if (!sheetNames.Contains(sheetName))
+                throw new ArgumentException($"Worksheet '{tableName}' was not found in the workbook.", nameof(tableName));
+
+            stream.Position = 0;
+            using var reader = MiniExcel.GetReader(stream, true, sheetName: sheetName);
             dbAccess.BulkInsert(tableName, reader);
         }
 
@@ -167,7 +173,7 @@ namespace DataPieCore
 
         private static void SelectWorksheet(IExcelDataReader reader, string sheetName)
         {
-            if (string.IsNullOrWhiteSpace(sheetName)) return;
+            if (reader.ResultsCount == 1) return;
             do
             {
                 if (reader.Name == sheetName) return;

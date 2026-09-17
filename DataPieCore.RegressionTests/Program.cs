@@ -169,11 +169,28 @@ try
     Execute("CREATE TABLE xlsx_target (id INTEGER, text TEXT)");
     foreach (var import in new Action<string, string, IDbAccess>[] { ExcelIO.MiniExcelReaderImport, ExcelIO.ExcelDataReaderImport })
     {
+        Execute("DELETE FROM xlsx_target");
+        using (var db = Open()) import(Path.Combine(directory, "legacy.xlsx"), "xlsx_target", db);
+        Check(Count("xlsx_target") == 2, "Single worksheet imports even when its name differs from the target table");
+
+        Execute("DELETE FROM xlsx_target");
         failed = false;
-        try { using var db = Open(); import(Path.Combine(directory, "legacy.xlsx"), "xlsx_target", db); }
-        catch { failed = true; }
-        Check(failed && Count("xlsx_target") == 0, "Missing worksheet must fail without importing another sheet");
+        try { using var db = Open(); import(Path.Combine(directory, "many.xlsx"), "xlsx_target", db); }
+        catch (ArgumentException) { failed = true; }
+        Check(failed && Count("xlsx_target") == 0, "Multiple worksheets require a matching name and must not import the first sheet");
+        using (var stream = File.Open(Path.Combine(directory, "many.xlsx"), FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+            Check(stream.CanRead, "Failed worksheet selection releases the input file");
+
+        Execute("DELETE FROM sheet119");
+        using (var db = Open()) import(Path.Combine(directory, "many.xlsx"), "sheet119", db);
+        using (var db = Open())
+        {
+            var actual = db.GetDataTable("SELECT id, text FROM sheet119");
+            Check(actual.Rows.Count == 1 && Convert.ToInt32(actual.Rows[0]["id"]) == 119 &&
+                (string)actual.Rows[0]["text"] == "value119", "Multiple worksheets select the matching non-first sheet");
+        }
     }
+    Console.WriteLine("PASS: both importers accept a single differently named sheet, select a matching sheet, and reject missing sheets in multi-sheet workbooks.");
     using (var db = Open())
     using (var reader = db.GetDataReader("SELECT * FROM csv_target"))
     {
