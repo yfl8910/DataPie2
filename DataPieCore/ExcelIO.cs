@@ -30,7 +30,8 @@ namespace DataPieCore
         {
             ArgumentNullException.ThrowIfNull(filePath);
             ArgumentNullException.ThrowIfNull(dbAccess);
-            using var reader = MiniExcel.GetReader(filePath, true, sheetName: tableName);
+            using var stream = OpenReadStream(filePath);
+            using var reader = MiniExcel.GetReader(stream, true, sheetName: tableName);
             dbAccess.BulkInsert(tableName, reader);
         }
 
@@ -43,14 +44,6 @@ namespace DataPieCore
             using var reader = CreateCsvReader(stream);
             using var headerReader = new HeaderRowDataReader(reader);
             dbAccess.BulkInsert(tableName, headerReader);
-        }
-
-        public static void DataTableImport(DataTable dt, string tableName, IDbAccess dbAccess)
-        {
-            if (dt is null) throw new ArgumentNullException(nameof(dt));
-            if (dbAccess is null) throw new ArgumentNullException(nameof(dbAccess));
-
-            dbAccess.BulkInsert(tableName, dt);
         }
 
         public static int SaveExcel(string filePath, IDataReader reader, string sheetName)
@@ -139,21 +132,6 @@ namespace DataPieCore
                     reader.Dispose();
                 }
             }
-
-            watch.Stop();
-            return (int)watch.Elapsed.TotalSeconds;
-        }
-
-        public static int SaveMiniExcel(string filePath, DataTable table, string sheetName)
-        {
-            if (filePath is null) throw new ArgumentNullException(nameof(filePath));
-            if (table is null) throw new ArgumentNullException(nameof(table));
-
-            var watch = Stopwatch.StartNew();
-
-            PrepareOutputFile(filePath);
-
-            MiniExcel.SaveAs(filePath, table, printHeader: true, sheetName: sheetName, configuration: CreateExportConfiguration());
 
             watch.Stop();
             return (int)watch.Elapsed.TotalSeconds;

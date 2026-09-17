@@ -104,11 +104,6 @@ namespace DataPieDesktop
 
         }
 
-        private void toolStrip1_ItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-
-        }
-
         private void tabPage1_Click(object sender, EventArgs e)
         {
 
@@ -517,13 +512,6 @@ namespace DataPieDesktop
                     (truncated ? " (limited to 1000 rows; export for all rows)" : "");
             });
         }
-        private void SetDatagrid(object collection)
-        {
-            this.dataGridView1.DataSource = collection;
-
-        }
-
-
         //OUTPUT CSV
         private async void button7_Click(object sender, EventArgs e)
         {

@@ -68,11 +68,6 @@ namespace DataPieDesktop
             
         }
 
-        private void textBox1_TextChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void DatabaseConnectionForm_Load(object sender, EventArgs e)
         {
               //sqlcon = ConfigurationManager.AppSettings["Sqlite"];
