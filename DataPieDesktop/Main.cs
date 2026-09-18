@@ -129,8 +129,6 @@ namespace DataPieDesktop
 
 
 
-
-
                 dbs = dbaccess.ShowDbSchema();
 
                 tableList = dbs.DbTables.Select(p => p.Name).ToList();
@@ -776,6 +774,7 @@ namespace DataPieDesktop
             {
                 using var dbaccess = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 Stopwatch watch = Stopwatch.StartNew();
+                var warnings = new List<string>();
 
 
                 this.BeginInvoke(new System.EventHandler(ShowMessage), "Processing…");
@@ -783,10 +782,13 @@ namespace DataPieDesktop
 
                 try
                 {
+                    var scripts = dbaccess is SQLiteDbAccess ? dbaccess.GetProcs() : new List<Proc>();
                     foreach (var item in procs)
                     {
-                        int i = dbaccess.RunProcedure(item.ToString());
-
+                        dbaccess.RunProcedure(item);
+                        var script = scripts.FirstOrDefault(proc => proc.Name.Equals(item, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrEmpty(script?.ScriptWarning))
+                            warnings.Add(item + ": " + script.ScriptWarning);
                     }
                 }
                 catch (Exception ee)
@@ -798,6 +800,12 @@ namespace DataPieDesktop
                 watch.Stop();
 
                 string ss = string.Format("Procedure Execute successfully! Time:{0} second.", watch.ElapsedMilliseconds / 1000);
+                if (warnings.Count > 0)
+                {
+                    ss = $"Procedure execution completed with skipped SQL. Time: {watch.ElapsedMilliseconds / 1000} seconds.";
+                    BeginInvoke(new Action(() => MessageBox.Show(this, string.Join(Environment.NewLine, warnings),
+                        "Partial procedure execution", MessageBoxButtons.OK, MessageBoxIcon.Warning)));
+                }
                 this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
                 return;
             });
@@ -908,7 +916,9 @@ namespace DataPieDesktop
                     SqlServerToSQLite.dbs = dbs;
 
                     dbs.DbViews2 = ((SqlServerDbAccess)dbaccess).ShowViews2();
-                    var viewErrors = SqlServerToSQLite.CreateSQLiteDatabase(filename, password, true);
+                    dbs.DbProcs = ((SqlServerDbAccess)dbaccess).ReadProcedureDefinitions();
+                    var migration = SqlServerToSQLite.CreateSQLiteDatabase(filename, password, true);
+                    var viewErrors = migration.ViewErrors;
 
                     SqlServerToSQLite.CopySqlServerRowsToSQLiteDB(dbaccess.ConnectionString, filename, password);
 
@@ -917,11 +927,12 @@ namespace DataPieDesktop
 
                     string ss = string.Format("Sqlite careate successful! Time: {0} seconds, Copy Rows: {1} ", watch.ElapsedMilliseconds / 1000, SqlServerToSQLite.TotalCopyed);
                     ss += $"Views created: {dbs.DbViews2.Count - viewErrors.Count}, failed: {viewErrors.Count}";
-                    if (viewErrors.Count > 0)
+                    ss += $"; procedures fully converted: {dbs.DbProcs.Count - migration.ProcedureErrors.Count}, partial/unsupported: {migration.ProcedureErrors.Count}";
+                    if (viewErrors.Count > 0 || migration.ProcedureErrors.Count > 0)
                     {
-                        ss = "Migration completed with view errors. " + ss;
+                        ss = "Migration completed with conversion errors. " + ss;
                         BeginInvoke(new Action(() => MessageBox.Show(this,
-                            string.Join(Environment.NewLine, viewErrors), "View migration errors",
+                            string.Join(Environment.NewLine, viewErrors.Concat(migration.ProcedureErrors)), "Migration errors",
                             MessageBoxButtons.OK, MessageBoxIcon.Warning)));
                     }
 

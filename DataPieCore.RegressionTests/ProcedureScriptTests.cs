@@ -1,0 +1,208 @@
+using System.Data;
+using System.Data.SQLite;
+using System.Reflection;
+using DataPieCore;
+using DBUtil;
+
+internal static class ProcedureScriptTests
+{
+    public static void Run(string root)
+    {
+        string directory = Path.Combine(root, "procedure-tests");
+        Directory.CreateDirectory(directory);
+        string path = Path.Combine(directory, "data.db");
+        var schema = new DbSchema();
+        schema.DbTables.Add(new TableStruct
+        {
+            Name = "items", TableSchemaName = "dbo", PrimaryKey = "id",
+            Columns = new List<Column>
+            {
+                new Column { Name = "id", Type = "int", IsPrimaryKey = true, Default = "" },
+                new Column { Name = "code", Type = "nvarchar", MaxLength = 100, IsNullable = true, Default = "" }
+            }
+        });
+        void Add(string name, string body, string parameters = "", string owner = "dbo")
+            => schema.DbProcs.Add(new Proc { Name = name, SchemaName = owner,
+                CreateSql = $"CREATE PROCEDURE [{owner}].[{name}] {parameters} AS BEGIN SET NOCOUNT ON; {body} END" });
+        Add("GetItems", "SELECT TOP (10) id, code FROM dbo.items WHERE id >= @min AND code = @code ORDER BY id;",
+            "@Min int = 1, @Code nvarchar(20) = N'EUR'");
+        Add("Required", "SELECT * FROM dbo.items WHERE id = @id;", "@id int");
+        Add("AddItem", "INSERT INTO dbo.items (id, code) VALUES (@id, @code);", "@id int, @code nvarchar(100)");
+        Add("UpdateItem", "UPDATE dbo.items SET code = @code WHERE id = @id;", "@id int, @code nvarchar(100)");
+        Add("DeleteItem", "DELETE FROM dbo.items WHERE id = @id;", "@id int");
+        Add("Atomic", "INSERT INTO dbo.items (id, code) VALUES (900, N'first'); INSERT INTO dbo.items (id, code) VALUES (900, N'duplicate');");
+        Add("MultiResult", "SELECT 1 AS id; SELECT 2 AS id;");
+        Add("same", "SELECT 1 AS id;");
+        Add("same", "SELECT 2 AS id;", owner: "sales");
+        Add("中文/过程", "SELECT N'中文' AS text;");
+        Add("UnsupportedIf", "IF @id > 0 SELECT @id;", "@id int");
+        Add("UnsupportedOutput", "SELECT @id;", "@id int OUTPUT");
+        Add("UnsupportedDynamic", "EXEC(N'SELECT 1');");
+        Add("MissingColumn", "SELECT missing FROM dbo.items;");
+        Add("Assignment", "SELECT @id = 2;", "@id int = 0");
+        Add("Defaults", "SELECT @flag AS flag, @amount AS amount, @value AS value;", "@flag bit = 1, @amount decimal(10,2) = -1.25, @value nvarchar(20) = NULL");
+        Add("DateLocals", "declare @year int = Year(getdate())\n declare @month int = MONTH(GETDATE())\n" +
+            "DECLARE @day int = DAY(GETDATE()); DECLARE @now datetime = GETDATE();" +
+            "SELECT @YEAR AS year, @month AS month, @day AS day, @now AS snapshot; SELECT @year AS year;");
+        Add("ConstantLocals", "DECLARE @code nvarchar(20) = N'O''Brien', @amount decimal(10,2) = -1.25, @empty int; " +
+            "SELECT @code AS code, @amount AS amount, @empty AS empty_value;");
+        Add("CommentedLocal", "-- declare @year int = Year(getdate())\nSELECT 1 AS id;");
+        Add("LocalSet", "DECLARE @year int = YEAR(GETDATE()); SET @year = 2000; SELECT @year;");
+        Add("LocalSelectAssignment", "DECLARE @year int = YEAR(GETDATE()); SELECT @year = 2000;");
+        Add("DuplicateLocal", "DECLARE @YEAR int = 2000; SELECT @year;", "@year int = 1999");
+        Add("ComplexLocal", "DECLARE @year int = YEAR(GETDATE()) - 1; SELECT @year;");
+        Add("LateLocal", "SELECT 1; DECLARE @year int = YEAR(GETDATE()); SELECT @year;");
+        Add("PartialWrite", "INSERT INTO dbo.items VALUES (701, N'first'); UPDATE dbo.items SET code = N'wrong' WHERE id + 1 = 702; INSERT INTO dbo.items VALUES (702, N'last');");
+        Add("PartialQuery", "SELECT 1; SELECT code COLLATE Latin1_General_CI_AS FROM dbo.items; SELECT missing FROM dbo.items; SELECT 2;");
+        Add("PartialControl", "SELECT 1; IF 1 = 0 BEGIN DELETE FROM dbo.items; END; DELETE FROM dbo.items;");
+        Add("PartialAssignment", "SELECT 1; SELECT @id = 2; DELETE FROM dbo.items WHERE id = @id;", "@id int = 1");
+        Add("PartialMultiline", "SELECT 1; SELECT N'x;\nDELETE FROM items;\n' + N'y'; SELECT 2;");
+        Add("RecoverLocal", "DECLARE @bad int = ABS(-1); SELECT @bad; SELECT 42 AS value;");
+        Add("RecoverAssignment", "DECLARE @id int = 1; SET @id = 2; SELECT @id; SELECT 42 AS value;");
+        Add("RecoverOutput", "SELECT @id; SELECT 42 AS value;", "@id int OUTPUT");
+        Add("RecoverExpression", "DECLARE @year int = YEAR(GETDATE()) - 1; SELECT @year; SELECT 42 AS value;");
+        Add("RecoverRequired", "SET @id = 2; SELECT @id; SELECT 42 AS value;", "@id int");
+        Add("PayrollStyle", "DECLARE @year int = YEAR(GETDATE()) DECLARE @month int = MONTH(GETDATE()) " +
+            "DELETE FROM dbo.items WHERE id = 801 " +
+            "INSERT INTO dbo.items (id, code) SELECT 801, @year*100+@month " +
+            "UPDATE dbo.items SET code = 'mapped' FROM (SELECT 801 AS id) a WHERE items.id = a.id " +
+            "UPDATE dbo.items SET code = 'done' WHERE id = 801 SELECT @year*100+@month AS period");
+        Add("NoSemicolonPartial", "SELECT 1 SELECT 'a' + 'b' SELECT 2");
+        Add("InsertNullUnion", "INSERT INTO dbo.items (id, code) " +
+            "SELECT 850, isnull(SUM(id), 0) FROM dbo.items WHERE id = -1 " +
+            "UNION ALL SELECT 851, ISNULL(SUM(id), 0) FROM dbo.items WHERE id = 1 GROUP BY code HAVING SUM(id) > 0.00001 " +
+            "UNION ALL SELECT 852, IsNull(SUM(id), 0) FROM dbo.items WHERE id = 1 GROUP BY code HAVING SUM(id) > 0.00001 " +
+            "UPDATE dbo.items SET code = ISNULL(NULL, 'updated') WHERE id = 852");
+        Add("NullFunctions", "SELECT ISNULL(NULL, 0) AS empty_value, ISNULL(7, 0) AS present_value, " +
+            "ISNULL(NULL, ISNULL(NULL, 'fallback')) AS nested_value, 'isnull(NULL, 0)' AS [ISNULL], NULLIF(1, 1) AS null_value, COALESCE(NULL, 3) AS coalesced;");
+        schema.DbProcs.Add(new Proc { SchemaName = "dbo", Name = "Encrypted" });
+
+        SqlServerToSQLite.dbs = schema;
+        var result = SqlServerToSQLite.CreateSQLiteDatabase(path, null, false);
+        Check(result.ProcedureErrors.Count == 21, "Partial and unsupported procedures must be explicitly reported");
+        int supportedCount = schema.DbProcs.Count - 10;
+        string folder = Path.Combine(directory, "StoredProcedures");
+        Check(Directory.GetFiles(folder, "*.txt").Length == schema.DbProcs.Count, "One text file per procedure");
+        Check(File.ReadAllText(Path.Combine(folder, "UnsupportedIf.txt")).Contains("-- UNSUPPORTED:"), "Unsupported file marker");
+        Check(File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("LIMIT 10"), "Reusable TOP conversion");
+        Check(!File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("CREATE PROCEDURE"), "Export contains executable body, not T-SQL declaration");
+
+        using var db = DbAccessFactory.Create($"Data Source={path};Pooling=False", "SQLITE");
+        Check(db.GetProcs().Count == supportedCount, "Only supported scripts appear in the procedure list");
+        Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 0, "Export validation must not execute writes");
+        IDataParameter[] Values(int id, string code) => new IDataParameter[]
+            { db.CreatePara("@id", id), db.CreatePara("@code", code) };
+        Check(db.RunProcedure("AddItem", Values(1, "EUR"), out int affected) == 1 && affected == 1, "Parameterized insert");
+        db.RunProcedure("AddItem", Values(2, "CH"), out _);
+        using (var reader = db.RunProcedure("GetItems", Array.Empty<IDataParameter>()))
+            Check(reader.Read() && reader.GetInt64(0) == 1 && !reader.Read(), "Default parameters and reader execution");
+        Check(db.conn.State == ConnectionState.Closed, "Procedure reader releases its connection");
+        using (var data = db.RunProcedure("GetItems", new IDataParameter[] { db.CreatePara("code", "CH") }, "items"))
+            Check(data.Tables[0].Rows.Count == 1 && Convert.ToInt32(data.Tables[0].Rows[0]["id"]) == 2, "Named parameter override and DataSet execution");
+        Throws<ArgumentException>(() => db.RunProcedure("Required"), "Missing required parameter");
+        Throws<ArgumentException>(() => db.RunProcedure("Required", new IDataParameter[] { db.CreatePara("@bad", 1) }, out _), "Unknown parameter");
+        Throws<NotSupportedException>(() => db.RunProcedure("UnsupportedIf"), "Unsupported scripts cannot execute");
+        Throws<ArgumentException>(() => db.RunProcedure("../outside"), "Procedure names cannot escape script directory");
+        string payload = "EUR'; DELETE FROM items; --";
+        db.RunProcedure("UpdateItem", Values(2, payload), out _);
+        using (var data = db.RunProcedure("GetItems", new IDataParameter[] { db.CreatePara("@code", payload) }, "items"))
+            Check(data.Tables[0].Rows.Count == 1 && db.GetDataTable("SELECT * FROM items").Rows.Count == 2, "Values are bound, not interpolated");
+        Throws<SQLiteException>(() => db.RunProcedure("Atomic"), "A failing write script must throw");
+        Check(db.GetDataTable("SELECT * FROM items WHERE id = 900").Rows.Count == 0, "Write script rolls back all statements");
+        using (var data = db.RunProcedure("MultiResult", Array.Empty<IDataParameter>(), "result"))
+            Check(data.Tables.Count == 2 && Convert.ToInt32(data.Tables[1].Rows[0][0]) == 2, "Multiple query results");
+        db.RunProcedure("DeleteItem", new IDataParameter[] { db.CreatePara("@id", 2) }, out _);
+        Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 1, "Parameterized delete");
+        using (var reader = db.RunProcedure("sales.same", Array.Empty<IDataParameter>()))
+            Check(reader.Read() && reader.GetInt64(0) == 2, "Same-name procedures use schema-qualified filenames");
+        using (var data = db.RunProcedure("Defaults", Array.Empty<IDataParameter>(), "defaults"))
+            Check(Convert.ToInt64(data.Tables[0].Rows[0]["flag"]) == 1 &&
+                Convert.ToDecimal(data.Tables[0].Rows[0]["amount"]) == -1.25m &&
+                data.Tables[0].Rows[0]["value"] == DBNull.Value, "Typed and null parameter defaults");
+        using (var data = db.RunProcedure("DateLocals", Array.Empty<IDataParameter>(), "dates"))
+        {
+            var row = data.Tables[0].Rows[0];
+            DateTime snapshot = Convert.ToDateTime(row["snapshot"]);
+            Check(Convert.ToInt32(row["year"]) == snapshot.Year &&
+                Convert.ToInt32(row["month"]) == snapshot.Month && Convert.ToInt32(row["day"]) == snapshot.Day &&
+                Convert.ToInt32(data.Tables[1].Rows[0]["year"]) == snapshot.Year, "Date locals share one timestamp across statements");
+        }
+        using (var data = db.RunProcedure("ConstantLocals", Array.Empty<IDataParameter>(), "locals"))
+            Check((string)data.Tables[0].Rows[0]["code"] == "O'Brien" &&
+                Convert.ToDecimal(data.Tables[0].Rows[0]["amount"]) == -1.25m &&
+                data.Tables[0].Rows[0]["empty_value"] == DBNull.Value, "Local constants, comma declarations and implicit NULL");
+        Throws<ArgumentException>(() => db.RunProcedure("DateLocals", new IDataParameter[] { db.CreatePara("@year", 2000) }, out _),
+            "Caller cannot override local variables");
+        Throws<NotSupportedException>(() => db.RunProcedure("LocalSet"), "Reassignment is unsupported");
+        string localBody = string.Join("\n", File.ReadAllLines(Path.Combine(folder, "DateLocals.txt")).Skip(1));
+        Check(!localBody.Contains("DECLARE", StringComparison.OrdinalIgnoreCase) && localBody.Contains("@year"),
+            "Export strips declarations while retaining parameter references");
+        Check(File.ReadAllLines(Path.Combine(folder, "DateLocals.txt"))[0].Contains("\"Initializer\":\"YEAR\""),
+            "Export stores date rules instead of today's year");
+        Check(!string.IsNullOrEmpty(db.GetProcs().Single(proc => proc.Name == "PartialWrite").ScriptWarning), "Partial scripts expose warnings");
+        db.RunProcedure("PartialWrite");
+        Check(db.GetDataTable("SELECT * FROM items WHERE id IN (701, 702)").Rows.Count == 2, "Statements before and after unsupported SQL execute");
+        Check(db.GetDataTable("SELECT * FROM items WHERE code = 'wrong'").Rows.Count == 0, "Unsupported WHERE skips the entire UPDATE");
+        foreach (string name in new[] { "PartialQuery", "PartialMultiline" })
+            using (var data = db.RunProcedure(name, Array.Empty<IDataParameter>(), "partial"))
+                Check(data.Tables.Count == 2 && Convert.ToInt32(data.Tables[1].Rows[0][0]) == 2, "Compatible queries survive conversion and validation failures");
+        db.RunProcedure("PartialControl");
+        db.RunProcedure("PartialAssignment");
+        Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 3, "Control flow and assignment suffixes never execute");
+        string partialSql = File.ReadAllText(Path.Combine(folder, "PartialWrite.txt"));
+        Check(partialSql.Contains("-- PARTIAL:") && partialSql.Contains("-- UNSUPPORTED:") && partialSql.Contains("-- UPDATE"), "Skipped SQL remains commented for inspection");
+        foreach (string name in new[] { "RecoverLocal", "RecoverAssignment", "RecoverOutput", "RecoverExpression", "RecoverRequired" })
+        {
+            using var data = db.RunProcedure(name, Array.Empty<IDataParameter>(), "recovered");
+            Check(data.Tables.Count == 1 && Convert.ToInt32(data.Tables[0].Rows[0][0]) == 42,
+                "Unsupported declarations and assignments preserve independent executable SQL");
+            Check(File.ReadAllText(Path.Combine(folder, name + ".txt")).Contains("-- UNSUPPORTED:"),
+                "Callable scripts retain unsupported statement markers");
+        }
+        // Exercise the same binder with deterministic timestamps on either side of a year boundary.
+        var scripts = typeof(SqlServerToSQLite).Assembly.GetType("DataPieCore.SQLiteProcedureScripts")!;
+        var load = scripts.GetMethod("Load", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var bind = scripts.GetMethod("Bind", BindingFlags.Static | BindingFlags.NonPublic)!;
+        object script = load.Invoke(null, new object[] { db.ConnectionString, "DateLocals" })!;
+        foreach (var now in new[] { new DateTime(2024, 12, 31, 23, 59, 59), new DateTime(2025, 1, 1, 0, 0, 0) })
+        {
+            var bound = (IDbDataParameter[])bind.Invoke(null, new object[] { script, Array.Empty<IDataParameter>(), now })!;
+            var values = bound.ToDictionary(parameter => parameter.ParameterName, parameter => parameter.Value);
+            Check((long)values["@year"] == now.Year && (long)values["@month"] == now.Month &&
+                (long)values["@day"] == now.Day && (DateTime)values["@now"] == now, "Locals are re-evaluated for each invocation");
+        }
+        File.Copy(Path.Combine(folder, "AddItem.txt"), Path.Combine(folder, "StaleProcedure.txt"));
+        db.RunProcedure("PayrollStyle");
+        db.RunProcedure("InsertNullUnion");
+        var inserted = db.GetDataTable("SELECT code FROM items WHERE id BETWEEN 850 AND 852 ORDER BY id");
+        Check(inserted.Rows.Count == 3 && Convert.ToString(inserted.Rows[0][0]) == "0" &&
+            Convert.ToString(inserted.Rows[1][0]) == "1" && Convert.ToString(inserted.Rows[2][0]) == "updated",
+            "INSERT SELECT UNION ALL supports ISNULL aggregates, GROUP BY/HAVING and subsequent UPDATE");
+        using (var data = db.RunProcedure("NullFunctions", Array.Empty<IDataParameter>(), "nulls"))
+        {
+            var row = data.Tables[0].Rows[0];
+            Check(Convert.ToInt32(row[0]) == 0 && Convert.ToInt32(row[1]) == 7 && (string)row[2] == "fallback" &&
+                (string)row["ISNULL"] == "isnull(NULL, 0)" && row[4] == DBNull.Value && Convert.ToInt32(row[5]) == 3,
+                "Null conversion preserves nested calls, literals, quoted identifiers and native null functions");
+        }
+        Check((string)db.GetDataTable("SELECT code FROM items WHERE id = 801").Rows[0][0] == "done",
+            "Semicolon-free DELETE, INSERT SELECT and UPDATE FROM remain separate executable statements");
+        using (var data = db.RunProcedure("NoSemicolonPartial", Array.Empty<IDataParameter>(), "result"))
+            Check(data.Tables.Count == 2, "One unsupported expression does not suppress adjacent semicolon-free queries");
+        Check(db.GetProcs().Count == supportedCount, "Unindexed scripts are not exposed");
+        Throws<FileNotFoundException>(() => db.RunProcedure("StaleProcedure"), "Stale scripts cannot execute");
+        Check(Directory.EnumerateFiles(directory, "*.txt").Count() == 0, "Unsafe filename stays inside StoredProcedures");
+        Console.WriteLine("PASS: procedure scripts, parameters/defaults, CRUD, atomic rollback, result sets, filenames and unsupported markers.");
+    }
+
+    private static void Check(bool condition, string message)
+    {
+        if (!condition) throw new Exception(message);
+    }
+    private static void Throws<T>(Action action, string message) where T : Exception
+    {
+        try { action(); }
+        catch (T) { return; }
+        throw new Exception(message);
+    }
+}

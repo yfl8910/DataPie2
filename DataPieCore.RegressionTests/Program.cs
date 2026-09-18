@@ -19,6 +19,7 @@ long Count(string table) { using var db = Open(); return Convert.ToInt64(db.GetD
 
 try
 {
+    ProcedureScriptTests.Run(directory);
     var migrationSchema = new DbSchema();
     migrationSchema.DbTables.Add(new TableStruct
     {
@@ -49,7 +50,7 @@ try
     });
     SqlServerToSQLite.dbs = migrationSchema;
     string migrationPath = Path.Combine(directory, "views.db");
-    var viewErrors = SqlServerToSQLite.CreateSQLiteDatabase(migrationPath, null, true);
+    var viewErrors = SqlServerToSQLite.CreateSQLiteDatabase(migrationPath, null, true).ViewErrors;
     Check(viewErrors.Count == 7, "Invalid definitions, unsafe TOP variants, dependencies and name conflicts are reported");
     using (var db = DbAccessFactory.Create($"Data Source={migrationPath};Pooling=False", "SQLITE"))
     {
@@ -75,7 +76,7 @@ try
             "Unicode prefix conversion preserves escapes, empty strings, ordinary literals and identifiers");
     }
     string noViewsPath = Path.Combine(directory, "no-views.db");
-    Check(SqlServerToSQLite.CreateSQLiteDatabase(noViewsPath, null, false).Count == 0, "View migration remains optional");
+    Check(SqlServerToSQLite.CreateSQLiteDatabase(noViewsPath, null, false).ViewErrors.Count == 0, "View migration remains optional");
     using (var db = DbAccessFactory.Create($"Data Source={noViewsPath};Pooling=False", "SQLITE"))
         Check(db.ShowViews().Count == 0 && db.ShowTables().Count == 1, "Disabled view migration creates only tables");
     Console.WriteLine("PASS: SQLite view migration, dependencies, live queries, unsupported SQL, conflicts and optional migration.");

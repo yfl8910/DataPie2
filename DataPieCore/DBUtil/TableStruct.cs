@@ -131,6 +131,8 @@ namespace DBUtil
 
     public class Proc
     {
+        public string ScriptWarning { get; set; }
+        public string SchemaName { get; set; }
         public string Name { set; get; }
         public string LastUpdate { set; get; }
         public string CreateSql { set; get; }

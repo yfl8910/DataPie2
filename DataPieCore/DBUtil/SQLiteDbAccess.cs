@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.Text;
 using System.Linq;
+using DataPieCore;
 
 namespace DBUtil
 {
@@ -409,22 +410,55 @@ namespace DBUtil
         }
         public int RunProcedure(string storedProcName)
         {
-            throw new NotImplementedException();
+            return RunProcedure(storedProcName, Array.Empty<IDataParameter>(), out _);
         }
 
         public int RunProcedure(string storedProcName, IDataParameter[] parameters, out int rowsAffected)
         {
-            throw new NotImplementedException();
+            var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
+            var bound = SQLiteProcedureScripts.Bind(script, parameters);
+            try
+            {
+                if (conn.State != ConnectionState.Open) conn.Open();
+                IsOpen = true;
+                using var transaction = IsTran ? null : ((SQLiteConnection)conn).BeginTransaction();
+                using var command = new SQLiteCommand(script.Sql, (SQLiteConnection)conn)
+                {
+                    Transaction = IsTran ? (SQLiteTransaction)tran : transaction,
+                    CommandTimeout = 600
+                };
+                command.Parameters.AddRange(bound.Cast<SQLiteParameter>().ToArray());
+                rowsAffected = command.ExecuteNonQuery();
+                transaction?.Commit();
+                return rowsAffected;
+            }
+            finally
+            {
+                if (!IsTran && !IsKeepConnect) conn.Close();
+                IsOpen = conn.State == ConnectionState.Open;
+            }
         }
 
         public IDataReader RunProcedure(string storedProcName, IDataParameter[] parameters)
         {
-            throw new NotImplementedException();
+            var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
+            if (!script.Metadata.ReadOnly)
+                throw new NotSupportedException("Use the non-query RunProcedure overload for scripts that modify data.");
+            return OwnedDataReader.Open(this, script.Sql, SQLiteProcedureScripts.Bind(script, parameters), 600);
         }
 
         public DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName)
         {
-            throw new NotImplementedException();
+            var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
+            if (!script.Metadata.ReadOnly)
+                throw new NotSupportedException("Use the non-query RunProcedure overload for scripts that modify data.");
+            using var command = new SQLiteCommand(script.Sql, (SQLiteConnection)conn) { CommandTimeout = 600 };
+            if (IsTran) command.Transaction = (SQLiteTransaction)tran;
+            command.Parameters.AddRange(SQLiteProcedureScripts.Bind(script, parameters).Cast<SQLiteParameter>().ToArray());
+            using var adapter = new SQLiteDataAdapter(command);
+            var result = new DataSet();
+            adapter.Fill(result, tableName);
+            return result;
         }
     }
 }

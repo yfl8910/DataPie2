@@ -73,10 +73,7 @@ namespace DataPieCore
         {
             if (string.IsNullOrWhiteSpace(view.ViewSQL))
                 throw new NotSupportedException("View definition is unavailable (permissions or encryption).");
-            var tokens = Tokens.Matches(view.ViewSQL).Cast<Match>().Select(match => match.Value)
-                .Where(token => !token.StartsWith("--") && !token.StartsWith("/*"))
-                .Select(token => token.StartsWith("N'", StringComparison.OrdinalIgnoreCase) ? token.Substring(1) : token)
-                .ToList();
+            var tokens = Tokenize(view.ViewSQL);
             int position = 0;
             bool Take(string expected)
             {
@@ -102,18 +99,41 @@ namespace DataPieCore
             }
             if (!Take("AS")) throw new NotSupportedException("View options such as SCHEMABINDING are not supported.");
             var body = tokens.Skip(position).ToList();
+            string query = ConvertQuery(body, objects);
+            string columnList = columns.Count == 0 ? "" : " (" + string.Join(" ", columns) + ")";
+            return $"CREATE VIEW {Quote(view.ViewName)}{columnList} AS {query}";
+        }
+
+        internal static List<string> Tokenize(string sql)
+            => Tokens.Matches(sql).Cast<Match>().Select(match => match.Value)
+                .Where(token => !token.StartsWith("--") && !token.StartsWith("/*"))
+                .Select(token => token.StartsWith("N'", StringComparison.OrdinalIgnoreCase) ? token.Substring(1) : token)
+                .ToList();
+
+        internal static string ConvertQuery(List<string> body, HashSet<string> objects, bool allowWrites = false,
+            HashSet<string> numericVariables = null)
+        {
             if (body.LastOrDefault() == ";") body.RemoveAt(body.Count - 1);
             if (body.Count == 0 || body.Contains(";"))
                 throw new NotSupportedException("Expected one view query.");
             ConvertTop(body);
+            ConvertPivot(body);
 
             for (int i = 0; i < body.Count; i++)
             {
+                if (body[i].Equals("ISNULL", StringComparison.OrdinalIgnoreCase) &&
+                    i + 1 < body.Count && body[i + 1] == "(" && (i == 0 || body[i - 1] != "."))
+                    body[i] = "IFNULL";
                 // '+' and COLLATE can silently change meaning between the two database engines.
-                if (body[i] == "+" || body[i].Equals("COLLATE", StringComparison.OrdinalIgnoreCase))
+                bool Numeric(string token) => decimal.TryParse(token, System.Globalization.NumberStyles.Float,
+                    System.Globalization.CultureInfo.InvariantCulture, out _) || numericVariables?.Contains(token) == true;
+                if ((body[i] == "+" && !(i > 0 && i + 1 < body.Count && Numeric(body[i - 1]) && Numeric(body[i + 1]))) ||
+                    body[i].Equals("COLLATE", StringComparison.OrdinalIgnoreCase))
                     throw new NotSupportedException("Explicit conversion is required for '+' or COLLATE.");
                 if (!body[i].Equals("FROM", StringComparison.OrdinalIgnoreCase) &&
-                    !body[i].Equals("JOIN", StringComparison.OrdinalIgnoreCase)) continue;
+                    !body[i].Equals("JOIN", StringComparison.OrdinalIgnoreCase) &&
+                    !(allowWrites && (body[i].Equals("UPDATE", StringComparison.OrdinalIgnoreCase) ||
+                        body[i].Equals("INTO", StringComparison.OrdinalIgnoreCase)))) continue;
                 if (i + 3 >= body.Count || body[i + 2] != ".") continue;
                 string name = Unquote(body[i + 1]) + "." + Unquote(body[i + 3]);
                 if (!objects.Contains(name) || (i + 4 < body.Count && body[i + 4] == "."))
@@ -121,12 +141,26 @@ namespace DataPieCore
                 body[i + 1] = Quote(Unquote(body[i + 3]));
                 body.RemoveRange(i + 2, 2);
             }
-            string columnList = columns.Count == 0 ? "" : " (" + string.Join(" ", columns) + ")";
-            return $"CREATE VIEW {Quote(view.ViewName)}{columnList} AS {string.Join(" ", body)}";
+            return string.Join(" ", body);
         }
 
         private static void ConvertTop(List<string> body)
         {
+            if (body[0].Equals("INSERT", StringComparison.OrdinalIgnoreCase))
+            {
+                int depth = 0;
+                for (int i = 1; i < body.Count; i++)
+                {
+                    if (body[i] == "(") depth++;
+                    if (body[i] == ")") depth--;
+                    if (depth != 0 || !body[i].Equals("SELECT", StringComparison.OrdinalIgnoreCase)) continue;
+                    var query = body.Skip(i).ToList();
+                    ConvertTop(query);
+                    body.RemoveRange(i, body.Count - i);
+                    body.AddRange(query);
+                    return;
+                }
+            }
             if (!body[0].Equals("SELECT", StringComparison.OrdinalIgnoreCase)) return;
             int start = 1;
             if (start < body.Count && (body[start].Equals("DISTINCT", StringComparison.OrdinalIgnoreCase) ||
@@ -161,6 +195,49 @@ namespace DataPieCore
             body.RemoveRange(start, end - start);
             body.Add("LIMIT");
             body.Add(limit);
+        }
+
+        private static void ConvertPivot(List<string> body)
+        {
+            if (!body.Any(token => token.Equals("PIVOT", StringComparison.OrdinalIgnoreCase))) return;
+            const string identifier = @"(?:\[(?:\]\]|[^\]])*\]|""(?:""""|[^""])*""|[\p{L}_][\p{L}\p{N}_$]*)";
+            string sql = string.Join(" ", body);
+            var pivot = Regex.Match(sql, @"\bFROM\s+(?<table>" + identifier + @"(?:\s*\.\s*" + identifier + @")?)\s+PIVOT\s*\(\s*SUM\s*\(\s*(?<value>" + identifier + @")\s*\)\s+FOR\s+(?<key>" + identifier + @")\s+IN\s*\(\s*(?<columns>" + identifier + @"(?:\s*,\s*" + identifier + @")*)\s*\)\s*\)\s+AS\s+" + identifier,
+                RegexOptions.IgnoreCase);
+            if (!pivot.Success || body.Count(token => token.Equals("PIVOT", StringComparison.OrdinalIgnoreCase)) != 1)
+                throw new NotSupportedException("Only a single SUM PIVOT over a table followed by outer SUM aggregation is supported.");
+            int select = body.FindIndex(token => token.Equals("SELECT", StringComparison.OrdinalIgnoreCase));
+            string prefix = string.Join(" ", body.Take(select));
+            string projection = sql.Substring(prefix.Length, pivot.Index - prefix.Length).Trim();
+            string suffix = sql.Substring(pivot.Index + pivot.Length);
+            if (!Regex.IsMatch(suffix, @"\bGROUP\s+BY\b", RegexOptions.IgnoreCase) ||
+                Regex.IsMatch(suffix, @"\b(JOIN|UNION|INTERSECT|EXCEPT)\b", RegexOptions.IgnoreCase))
+                throw new NotSupportedException("PIVOT conversion requires an outer GROUP BY without joins or compound queries.");
+            var columns = Tokenize(pivot.Groups["columns"].Value).Where(token => token != ",").ToList();
+            var expressions = new List<string>();
+            foreach (string column in columns)
+            {
+                string pattern = @"SUM\s*\(\s*(?:ISNULL|IFNULL)\s*\(\s*" + Regex.Escape(column) + @"\s*,\s*0\s*\)\s*\)";
+                string expression = "IFNULL ( SUM ( CASE WHEN " + pivot.Groups["key"].Value + " = '" +
+                    Unquote(column).Replace("'", "''") + "' THEN " + pivot.Groups["value"].Value + " END ) , 0 )";
+                string marker = "__datapie_pivot_" + expressions.Count + "__";
+                if (sql.Contains(marker, StringComparison.Ordinal)) throw new NotSupportedException("Reserved PIVOT conversion identifier.");
+                projection = Regex.Replace(projection, pattern, _ => marker, RegexOptions.IgnoreCase);
+                expressions.Add(expression);
+            }
+            // Only additive pivot aggregates can be collapsed without reproducing implicit pivot grouping.
+            var remaining = Tokenize(projection + " " + suffix);
+            int order = remaining.FindIndex(token => token.Equals("ORDER", StringComparison.OrdinalIgnoreCase));
+            for (int i = 0; i < (order < 0 ? remaining.Count : order); i++)
+            {
+                if (i > 0 && remaining[i - 1].Equals("AS", StringComparison.OrdinalIgnoreCase)) continue;
+                if (columns.Any(column => Unquote(column).Equals(Unquote(remaining[i]), StringComparison.OrdinalIgnoreCase)))
+                    throw new NotSupportedException("PIVOT columns must only occur inside SUM(ISNULL(column, 0)); filters and grouping must use source dimensions.");
+            }
+            for (int i = 0; i < expressions.Count; i++)
+                projection = projection.Replace("__datapie_pivot_" + i + "__", expressions[i]);
+            body.Clear();
+            body.AddRange(Tokenize(prefix + " " + projection + " FROM " + pivot.Groups["table"].Value + " " + suffix));
         }
 
         private static string Quote(string name) => "\"" + name.Replace("\"", "\"\"") + "\"";

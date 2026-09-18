@@ -10,6 +10,12 @@ using System.Data;
 
 namespace DataPieCore
 {
+    public sealed class SQLiteMigrationResult
+    {
+        public List<string> ViewErrors { get; } = new List<string>();
+        public List<string> ProcedureErrors { get; } = new List<string>();
+    }
+
    public class SqlServerToSQLite
     {
 
@@ -368,7 +374,7 @@ namespace DataPieCore
         /// <param name="schema">The schema of the SQL server database.</param>
         /// <param name="password">The password to use for encrypting the DB or null if non is needed.</param>
         /// <param name="handler">A handle for progress notifications.</param>
-        public static List<string> CreateSQLiteDatabase(string sqlitePath, string password, bool createViews)
+        public static SQLiteMigrationResult CreateSQLiteDatabase(string sqlitePath, string password, bool createViews)
         {
             var duplicate = dbs.DbTables.GroupBy(table => table.Name, StringComparer.OrdinalIgnoreCase)
                 .FirstOrDefault(group => group.Count() > 1);
@@ -383,7 +389,10 @@ namespace DataPieCore
                 CheckCancelled();
                 AddSQLiteTable(connection, table);
             }
-            return createViews ? SQLiteViewMigration.Create(connection, dbs) : new List<string>();
+            var result = new SQLiteMigrationResult();
+            if (createViews) result.ViewErrors.AddRange(SQLiteViewMigration.Create(connection, dbs));
+            result.ProcedureErrors.AddRange(SQLiteProcedureScripts.Export(connection, sqlitePath, dbs));
+            return result;
         }
 
 

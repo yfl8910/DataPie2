@@ -419,6 +419,25 @@ ORDER BY s.name, v.name";
         /// 获取当前数据库的用户自定义存储过程
         /// </summary>
         /// <returns></returns>
+        public List<Proc> ReadProcedureDefinitions()
+        {
+            const string sql = @"SELECT s.name, p.name, m.definition
+FROM sys.procedures p
+JOIN sys.schemas s ON s.schema_id = p.schema_id
+LEFT JOIN sys.sql_modules m ON m.object_id = p.object_id
+WHERE p.is_ms_shipped = 0 ORDER BY s.name, p.name";
+            using var reader = GetDataReader(sql);
+            var procedures = new List<Proc>();
+            while (reader.Read())
+                procedures.Add(new Proc
+                {
+                    SchemaName = reader.GetString(0),
+                    Name = reader.GetString(1),
+                    CreateSql = reader.IsDBNull(2) ? null : reader.GetString(2)
+                });
+            return procedures;
+        }
+
         public List<Proc> GetProcs()
         {
             List<Proc> res = new List<Proc>();

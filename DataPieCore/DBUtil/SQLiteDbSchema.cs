@@ -25,7 +25,7 @@ namespace DBUtil
 
         public List<Proc> GetProcs()
         {
-            return null;
+            return DataPieCore.SQLiteProcedureScripts.List(ConnectionString);
         }
 
         public List<string> GetDataBaseInfo()
