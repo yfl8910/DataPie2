@@ -170,6 +170,7 @@ namespace DBUtil
 
     public class ViewSchema
     {
+        public string SchemaName;
         public string ViewName;
 
         public string ViewSQL;

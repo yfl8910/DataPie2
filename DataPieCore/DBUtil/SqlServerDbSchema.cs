@@ -338,30 +338,24 @@ WHERE OBJECT_NAME(f.parent_object_id) = '{0}'
             return List;
         }
 
-        public List<ViewSchema> ShowViews2() 
+        public List<ViewSchema> ShowViews2()
         {
-            var List = new List<ViewSchema>();
-
-            string sql = @"SELECT TABLE_NAME, VIEW_DEFINITION  from INFORMATION_SCHEMA.VIEWS";
-
-            SqlCommand cmd = new SqlCommand(sql, (SqlConnection)conn);
-
-            conn.Open();
-
-            using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
-            {
-                while (reader.Read())
+            const string sql = @"SELECT s.name AS SchemaName, v.name AS ViewName, m.definition
+FROM sys.views v
+JOIN sys.schemas s ON s.schema_id = v.schema_id
+LEFT JOIN sys.sql_modules m ON m.object_id = v.object_id
+WHERE v.is_ms_shipped = 0
+ORDER BY s.name, v.name";
+            using var reader = GetDataReader(sql);
+            var views = new List<ViewSchema>();
+            while (reader.Read())
+                views.Add(new ViewSchema
                 {
-                    ViewSchema view = new ViewSchema();
-                    view.ViewName = (string)reader["TABLE_NAME"];
-                    view.ViewSQL = (string)reader["VIEW_DEFINITION"];
-                    List.Add(view);
-
-                }
-            }
-            return List;
-
-
+                    SchemaName = reader.GetString(0),
+                    ViewName = reader.GetString(1),
+                    ViewSQL = reader.IsDBNull(2) ? null : reader.GetString(2)
+                });
+            return views;
         }
 
         public string GetDbName()

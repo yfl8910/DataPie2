@@ -907,7 +907,8 @@ namespace DataPieDesktop
                     SqlServerToSQLite._cancelled = false;
                     SqlServerToSQLite.dbs = dbs;
 
-                    SqlServerToSQLite.CreateSQLiteDatabase(filename, null, false);
+                    dbs.DbViews2 = ((SqlServerDbAccess)dbaccess).ShowViews2();
+                    var viewErrors = SqlServerToSQLite.CreateSQLiteDatabase(filename, password, true);
 
                     SqlServerToSQLite.CopySqlServerRowsToSQLiteDB(dbaccess.ConnectionString, filename, password);
 
@@ -915,6 +916,14 @@ namespace DataPieDesktop
                     watch.Stop();
 
                     string ss = string.Format("Sqlite careate successful! Time: {0} seconds, Copy Rows: {1} ", watch.ElapsedMilliseconds / 1000, SqlServerToSQLite.TotalCopyed);
+                    ss += $"Views created: {dbs.DbViews2.Count - viewErrors.Count}, failed: {viewErrors.Count}";
+                    if (viewErrors.Count > 0)
+                    {
+                        ss = "Migration completed with view errors. " + ss;
+                        BeginInvoke(new Action(() => MessageBox.Show(this,
+                            string.Join(Environment.NewLine, viewErrors), "View migration errors",
+                            MessageBoxButtons.OK, MessageBoxIcon.Warning)));
+                    }
 
                     this.BeginInvoke(new System.EventHandler(ShowMessage), ss);
 

@@ -32,10 +32,13 @@ namespace DataPieCore
         /// <param name="sqlitePath">The path to the SQLite database file.</param>
         /// <param name="schema">The schema of the SQL Server database.</param>
         /// <param name="password">The password to use for encrypting the file</param> 
-        public static void CopySqlServerRowsToSQLiteDB(string sqlConnString, string sqlitePath,  string password)
+        /// <param name="commandTimeoutSeconds">SQL Server query timeout in seconds; zero disables the timeout.</param>
+        public static void CopySqlServerRowsToSQLiteDB(string sqlConnString, string sqlitePath, string password, int commandTimeoutSeconds = 600)
         {
+            if (commandTimeoutSeconds < 0) throw new ArgumentOutOfRangeException(nameof(commandTimeoutSeconds));
             Done = false;
             TotalCopyed = 0;
+            currentProcessTable = null;
             try
             {
                 CheckCancelled();
@@ -45,9 +48,12 @@ namespace DataPieCore
                 destination.Open();
                 foreach (var table in dbs.DbTables)
                 {
-                    currentProcessTable = table.Name;
-                    using var query = new SqlCommand(BuildSqlServerTableQuery(table), source);
-                    using var reader = query.ExecuteReader();
+                    currentProcessTable = table.TableSchemaName + "." + table.Name;
+                    using var query = new SqlCommand(BuildSqlServerTableQuery(table), source)
+                    {
+                        CommandTimeout = commandTimeoutSeconds
+                    };
+                    using var reader = query.ExecuteReader(CommandBehavior.SequentialAccess);
                     using var insert = BuildSQLiteInsert(table);
                     insert.Connection = destination;
                     var parameters = insert.Parameters.Cast<SQLiteParameter>().ToArray();
@@ -81,6 +87,15 @@ namespace DataPieCore
                     }
                     finally { transaction.Dispose(); }
                 }
+            }
+            catch (SqlException ex) when (ex.Number == -2)
+            {
+                string operation = currentProcessTable == null
+                    ? "opening the SQL Server connection"
+                    : $"reading table '{currentProcessTable}' (query timeout: {commandTimeoutSeconds}s)";
+                throw new TimeoutException($"Migration timed out while {operation}. " +
+                    $"Rows committed across all tables: {TotalCopyed}. The SQLite file is incomplete; " +
+                    "previous batches remain committed. Restart the full migration after resolving the timeout.", ex);
             }
             finally { Done = true; }
         }
@@ -353,78 +368,22 @@ namespace DataPieCore
         /// <param name="schema">The schema of the SQL server database.</param>
         /// <param name="password">The password to use for encrypting the DB or null if non is needed.</param>
         /// <param name="handler">A handle for progress notifications.</param>
-        public static void CreateSQLiteDatabase(string sqlitePath,  string password, bool createViews)
+        public static List<string> CreateSQLiteDatabase(string sqlitePath, string password, bool createViews)
         {
+            var duplicate = dbs.DbTables.GroupBy(table => table.Name, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault(group => group.Count() > 1);
+            if (duplicate != null)
+                throw new InvalidOperationException($"Multiple source tables map to SQLite table '{duplicate.Key}'.");
 
-            // Create the SQLite database file
             SQLiteConnection.CreateFile(sqlitePath);
-
-
-            // Connect to the newly created database
-            string sqliteConnString = CreateSQLiteConnectionString(sqlitePath, password);
-
-            using (SQLiteConnection conn = new SQLiteConnection(sqliteConnString))
+            using var connection = new SQLiteConnection(CreateSQLiteConnectionString(sqlitePath, password));
+            connection.Open();
+            foreach (var table in dbs.DbTables)
             {
-                conn.Open();
-
-                // Create all tables in the new database
-                int count = 0;
-                foreach (var dt in dbs.DbTables)
-                {
-                    try
-                    {
-                        AddSQLiteTable(conn, dt);
-                    }
-                    catch (Exception ex)
-                    {
-                        throw;
-                    }
-                    count++;
-
-                } // foreach
-
-                // Create all views in the new database
-                //count = 0;
-                //if (createViews)
-                //{
-                //    foreach (ViewSchema vs in dbs.DbViews2)
-                //    {
-                //        try
-                //        {
-                //            AddSQLiteView(conn, vs);
-                //        }
-                //        catch (Exception ex)
-                //        {
-                //            throw;
-                //        } // catch
-                //        count++;
-
-
-                //    } // foreach
-                //} // if
-            } // using
-
-        }
-
-        private static void AddSQLiteView(SQLiteConnection conn, ViewSchema vs)
-        {
-            // Prepare a CREATE VIEW DDL statement
-            string stmt = vs.ViewSQL;
-
-            // Execute the query in order to actually create the view.
-            SQLiteTransaction tx = conn.BeginTransaction();
-            try
-            {
-                SQLiteCommand cmd = new SQLiteCommand(stmt, conn, tx);
-                cmd.ExecuteNonQuery();
-
-                tx.Commit();
+                CheckCancelled();
+                AddSQLiteTable(connection, table);
             }
-            catch
-            {
-                tx.Rollback();
-                throw;
-            } // catch
+            return createViews ? SQLiteViewMigration.Create(connection, dbs) : new List<string>();
         }
 
 
