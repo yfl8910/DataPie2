@@ -38,22 +38,33 @@ try
         new ViewSchema { SchemaName = "dbo", ViewName = "valid", ViewSQL = "CREATE OR ALTER VIEW [dbo].[valid] (id, label) AS SELECT id, 'dbo.source; unchanged' FROM [dbo].[source];" },
         new ViewSchema { SchemaName = "dbo", ViewName = "brokenDependent", ViewSQL = "CREATE VIEW dbo.brokenDependent AS SELECT * FROM dbo.broken" },
         new ViewSchema { SchemaName = "dbo", ViewName = "broken", ViewSQL = "CREATE VIEW dbo.broken AS SELECT missing FROM dbo.source" },
-        new ViewSchema { SchemaName = "dbo", ViewName = "unsupported", ViewSQL = "CREATE VIEW dbo.unsupported AS SELECT TOP 1 id FROM dbo.source" },
+        new ViewSchema { SchemaName = "dbo", ViewName = "unsupported", ViewSQL = "CREATE VIEW dbo.unsupported AS SELECT TOP 1 PERCENT id FROM dbo.source" },
+        new ViewSchema { SchemaName = "dbo", ViewName = "top_group", ViewSQL = "CREATE VIEW dbo.top_group AS SELECT TOP (1) [Product Type], 客户 AS Customer, SUM(Qty) AS Qty FROM (SELECT id AS [Product Type], id AS 客户, id AS Qty, N'EUR' AS Remark FROM dbo.source) AS totals WHERE Remark = N'EUR' GROUP BY 客户, [Product Type] ORDER BY Qty DESC" },
+        new ViewSchema { SchemaName = "dbo", ViewName = "top_plain", ViewSQL = "CREATE VIEW dbo.top_plain AS SELECT DISTINCT TOP 1 id FROM dbo.source ORDER BY id DESC" },
+        new ViewSchema { SchemaName = "dbo", ViewName = "top_zero", ViewSQL = "CREATE VIEW dbo.top_zero AS SELECT TOP (0) id FROM dbo.source" },
+        new ViewSchema { SchemaName = "dbo", ViewName = "top_ties", ViewSQL = "CREATE VIEW dbo.top_ties AS SELECT TOP (1) WITH TIES id FROM dbo.source ORDER BY id" },
+        new ViewSchema { SchemaName = "dbo", ViewName = "top_union", ViewSQL = "CREATE VIEW dbo.top_union AS SELECT TOP (1) id FROM dbo.source UNION ALL SELECT id FROM dbo.source" },
         new ViewSchema { SchemaName = "dbo", ViewName = "unavailable", ViewSQL = null },
         new ViewSchema { SchemaName = "sales", ViewName = "source", ViewSQL = "CREATE VIEW sales.source AS SELECT 1 AS id" }
     });
     SqlServerToSQLite.dbs = migrationSchema;
     string migrationPath = Path.Combine(directory, "views.db");
     var viewErrors = SqlServerToSQLite.CreateSQLiteDatabase(migrationPath, null, true);
-    Check(viewErrors.Count == 5, "Invalid definitions, dependencies and name conflicts are reported");
+    Check(viewErrors.Count == 7, "Invalid definitions, unsafe TOP variants, dependencies and name conflicts are reported");
     using (var db = DbAccessFactory.Create($"Data Source={migrationPath};Pooling=False", "SQLITE"))
     {
-        Check(db.ShowViews().Count == 3, "Only validated views remain");
+        Check(db.ShowViews().Count == 6, "Only validated views remain");
         db.ExecuteSql("INSERT INTO source VALUES (42)");
         var actual = db.GetDataTable("SELECT * FROM dependent");
         Check(actual.Rows.Count == 1 && Convert.ToInt32(actual.Rows[0]["id"]) == 42 &&
             (string)actual.Rows[0]["label"] == "dbo.source; unchanged", "Views are live and string literals are preserved");
         db.ExecuteSql("INSERT INTO source VALUES (43)");
+        var topGroup = db.GetDataTable("SELECT * FROM top_group");
+        Check(topGroup.Rows.Count == 1 && Convert.ToInt32(topGroup.Rows[0]["Qty"]) == 43 &&
+            Convert.ToInt32(topGroup.Rows[0]["Customer"]) == 43, "TOP applies after grouping and descending aggregate order");
+        Check(Convert.ToInt32(db.GetDataTable("SELECT * FROM top_plain").Rows[0]["id"]) == 43,
+            "Unparenthesized TOP with DISTINCT");
+        Check(db.GetDataTable("SELECT * FROM top_zero").Rows.Count == 0, "TOP zero returns no rows");
         var filtered = db.GetDataTable("SELECT * FROM unicode_filter WHERE [N] = 'EUR'");
         Check(filtered.Rows.Count == 1 && Convert.ToInt32(filtered.Rows[0]["id"]) == 42,
             "Unicode-prefixed WHERE and IN literals preserve filtering");

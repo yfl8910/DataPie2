@@ -105,6 +105,7 @@ namespace DataPieCore
             if (body.LastOrDefault() == ";") body.RemoveAt(body.Count - 1);
             if (body.Count == 0 || body.Contains(";"))
                 throw new NotSupportedException("Expected one view query.");
+            ConvertTop(body);
 
             for (int i = 0; i < body.Count; i++)
             {
@@ -122,6 +123,44 @@ namespace DataPieCore
             }
             string columnList = columns.Count == 0 ? "" : " (" + string.Join(" ", columns) + ")";
             return $"CREATE VIEW {Quote(view.ViewName)}{columnList} AS {string.Join(" ", body)}";
+        }
+
+        private static void ConvertTop(List<string> body)
+        {
+            if (!body[0].Equals("SELECT", StringComparison.OrdinalIgnoreCase)) return;
+            int start = 1;
+            if (start < body.Count && (body[start].Equals("DISTINCT", StringComparison.OrdinalIgnoreCase) ||
+                body[start].Equals("ALL", StringComparison.OrdinalIgnoreCase))) start++;
+            if (start >= body.Count || !body[start].Equals("TOP", StringComparison.OrdinalIgnoreCase)) return;
+
+            int end = start + 1;
+            bool parenthesized = end < body.Count && body[end] == "(";
+            if (parenthesized) end++;
+            if (end >= body.Count || !Regex.IsMatch(body[end], @"^\d+$") || !long.TryParse(body[end], out _))
+                throw new NotSupportedException("TOP requires a nonnegative integer constant.");
+            string limit = body[end++];
+            if (parenthesized)
+            {
+                if (end >= body.Count || body[end++] != ")")
+                    throw new NotSupportedException("TOP expressions are not supported.");
+            }
+            if (end < body.Count && (body[end].Equals("PERCENT", StringComparison.OrdinalIgnoreCase) ||
+                body[end].Equals("WITH", StringComparison.OrdinalIgnoreCase)))
+                throw new NotSupportedException("TOP PERCENT and WITH TIES require explicit conversion.");
+
+            // A trailing LIMIT applies to the whole compound query, unlike TOP in its first SELECT.
+            int depth = 0;
+            for (int i = end; i < body.Count; i++)
+            {
+                if (body[i] == "(") depth++;
+                if (body[i] == ")") depth--;
+                if (depth == 0 && new[] { "UNION", "INTERSECT", "EXCEPT", "LIMIT", "OFFSET" }
+                    .Contains(body[i], StringComparer.OrdinalIgnoreCase))
+                    throw new NotSupportedException("TOP with a compound query or pagination requires explicit conversion.");
+            }
+            body.RemoveRange(start, end - start);
+            body.Add("LIMIT");
+            body.Add(limit);
         }
 
         private static string Quote(string name) => "\"" + name.Replace("\"", "\"\"") + "\"";
