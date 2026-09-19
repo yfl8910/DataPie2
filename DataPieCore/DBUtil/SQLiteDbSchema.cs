@@ -30,21 +30,9 @@ namespace DBUtil
 
         public List<string> GetDataBaseInfo()
         {
-            List<string> list = null;
-
-            DataTable databases = GetSchema("Catalogs");
-
-            if (databases != null && databases.Rows.Count > 0)
-            {
-                list = new List<string>();
-                foreach (DataRow database in databases.Rows)
-                {
-                    string name = (string)database["Catalog_name"];
-                    list.Add(name);
-                }
-            }
-
-            return list;
+            using var databases = GetSchema("Catalogs");
+            return databases.Rows.Count == 0 ? null :
+                databases.AsEnumerable().Select(row => (string)row["Catalog_name"]).ToList();
         }
 
         public string GetDbName()
@@ -64,14 +52,20 @@ namespace DBUtil
         /// <returns></returns>
         public List<TableStruct> ShowTables()
         {
-            using var tables = GetDataTable("select tbl_name from sqlite_master where type='table'");
             using var columns = GetSchema("Columns");
             var byTable = columns.AsEnumerable().ToLookup(r => r["TABLE_NAME"].ToString(), StringComparer.OrdinalIgnoreCase);
-            return tables.AsEnumerable().Select(row => new TableStruct
+            using var reader = GetDataReader("SELECT tbl_name FROM sqlite_master WHERE type = 'table'");
+            var tables = new List<TableStruct>();
+            while (reader.Read())
             {
-                Name = row[0].ToString(),
-                Columns = byTable[row[0].ToString()].Select(ReadColumn).ToList()
-            }).ToList();
+                string name = reader.GetString(0);
+                tables.Add(new TableStruct
+                {
+                    Name = name,
+                    Columns = byTable[name].Select(ReadColumn).ToList()
+                });
+            }
+            return tables;
         }
 
         public List<Column> ShowColumns(string tablename)
@@ -93,57 +87,20 @@ namespace DBUtil
         };
         public DataTable GetSchema(string collectionName, string[] restictionValues)
         {
-            using (SQLiteConnection connection = new SQLiteConnection(ConnectionString))
-            {
-                DataTable dt = new DataTable();
-                try
-                {
-                    dt.Clear();
-                    connection.Open();
-                    dt = connection.GetSchema(collectionName, restictionValues);
-                }
-                catch
-                {
-                    dt = null;
-                }
-
-                return dt;
-            }
+            using var connection = new SQLiteConnection(ConnectionString);
+            connection.Open();
+            return connection.GetSchema(collectionName, restictionValues);
         }
 
-        public DataTable GetSchema(string collectionName)
-        {
-            using (SQLiteConnection connection = new SQLiteConnection(ConnectionString))
-            {
-                DataTable dt = new DataTable();
-                try
-                {
-                    dt.Clear();
-                    connection.Open();
-                    dt = connection.GetSchema(collectionName);
-                }
-                catch
-                {
-                    dt = null;
-                }
-                return dt;
-            }
-        }
+        public DataTable GetSchema(string collectionName) => GetSchema(collectionName, null);
 
         public List<string> ShowViews()
         {
-            List<string> List = new List<string>();
-            string[] rs = new string[] { null, null, null, "BASE TABLE" };
-            DataTable dt = GetSchema("Views");
-            int num = dt.Rows.Count;
-            if (dt.Rows.Count > 0)
-            {
-                foreach (DataRow _DataRowItem in dt.Rows)
-                {
-                    List.Add(_DataRowItem["table_name"].ToString());
-                }
-            }
-            return List;
+            using var reader = GetDataReader("SELECT name FROM sqlite_master WHERE type = 'view'");
+            var views = new List<string>();
+            while (reader.Read())
+                views.Add(reader.GetString(0));
+            return views;
         }
     }
 }

@@ -32,28 +32,27 @@ namespace DBUtil
 
         public List<TableStruct> ShowTables()
         {
-            DataSet ds = GetDataSet("select name AS TABLE_NAME, SCHEMA_NAME(schema_id) AS TABLE_SCHEMA, object_id AS TableId from sys.tables");
-            List<TableStruct> list = new List<TableStruct>();
-
-            var allcolumns = AllColumns();
-
-            var allForeignKeys = AllForeignKeys();
-            var columnsByTable = allcolumns.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
+            using var allColumns = AllColumns();
+            using var allForeignKeys = AllForeignKeys();
+            var columnsByTable = allColumns.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
             var keysByTable = allForeignKeys.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
-
-            for (int i = 0; i < ds.Tables[0].Rows.Count; i++)
+            const string sql = "SELECT name, SCHEMA_NAME(schema_id), object_id FROM sys.tables";
+            using var reader = GetDataReader(sql);
+            var tables = new List<TableStruct>();
+            while (reader.Read())
             {
-                TableStruct tbl = new TableStruct();
-                tbl.Name = ds.Tables[0].Rows[i][0].ToString();
-                tbl.TableSchemaName = ds.Tables[0].Rows[i][1].ToString();
-                tbl.Columns = columnsByTable[Convert.ToInt32(ds.Tables[0].Rows[i]["TableId"])].Select(ReadColumn).ToList();
-                tbl.ForeignKeys = keysByTable[Convert.ToInt32(ds.Tables[0].Rows[i]["TableId"])].Select(ReadForeignKey).ToList();
-                tbl.PrimaryKey = tbl.Columns.Where(p => p.IsPrimaryKey == true).Select(p => p.Name).FirstOrDefault();
-
-                //tbl.Constraints = ShowConstraints(ds.Tables[0].Rows[i][0].ToString());
-                list.Add(tbl);
+                int tableId = reader.GetInt32(2);
+                var columns = columnsByTable[tableId].Select(ReadColumn).ToList();
+                tables.Add(new TableStruct
+                {
+                    Name = reader.GetString(0),
+                    TableSchemaName = reader.GetValue(1).ToString(),
+                    Columns = columns,
+                    ForeignKeys = keysByTable[tableId].Select(ReadForeignKey).ToList(),
+                    PrimaryKey = columns.FirstOrDefault(column => column.IsPrimaryKey)?.Name
+                });
             }
-            return list;
+            return tables;
         }
         public List<Column> ShowColumns(DataTable dt, string tablename)
         {
@@ -324,18 +323,12 @@ WHERE OBJECT_NAME(f.parent_object_id) = '{0}'
 
         public List<string> ShowViews()
         {
-            var List = new List<string>();
-            //string[] rs = new string[] { null, null, null, "BASE TABLE" };
-            DataTable dt = GetSchema("views");
-
-            if (dt.Rows.Count > 0)
-            {
-                foreach (DataRow _DataRowItem in dt.Rows)
-                {
-                    List.Add(_DataRowItem["table_name"].ToString());
-                }
-            }
-            return List;
+            const string sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS";
+            using var reader = GetDataReader(sql);
+            var views = new List<string>();
+            while (reader.Read())
+                views.Add(reader.GetString(0));
+            return views;
         }
 
         public List<ViewSchema> ShowViews2()

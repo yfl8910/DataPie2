@@ -20,6 +20,25 @@ long Count(string table) { using var db = Open(); return Convert.ToInt64(db.GetD
 try
 {
     ProcedureScriptTests.Run(directory);
+    using (var metadataDb = (SQLiteDbAccess)DbAccessFactory.Create($"Data Source={Path.Combine(directory, "metadata.db")};Pooling=False", "SQLITE"))
+    {
+        metadataDb.ExecuteSql("CREATE TABLE [odd table] (id INTEGER PRIMARY KEY AUTOINCREMENT, code VARCHAR(25) NOT NULL UNIQUE, note TEXT); CREATE VIEW [odd view] AS SELECT code FROM [odd table]");
+        var table = metadataDb.ShowTables().Single(item => item.Name == "odd table");
+        var columns = metadataDb.ShowColumns("odd table");
+        Check(table.Columns.Count == 3 && table.Columns.Select(column => column.Name).SequenceEqual(columns.Select(column => column.Name)),
+            "SQLite table listing retains ordered column metadata");
+        Check(table.Columns[0].IsPrimaryKey && table.Columns[0].IsIdentity && table.Columns[1].IsUnique &&
+            !table.Columns[1].IsNullable && table.Columns[1].MaxLength == 25 && table.Columns[2].IsNullable,
+            "SQLite primary key, identity, uniqueness, length and nullability metadata are preserved");
+        Check(metadataDb.ShowViews().SequenceEqual(new[] { "odd view" }) && metadataDb.conn.State == ConnectionState.Closed,
+            "SQLite view reader returns names and releases its connection");
+        Check(metadataDb.GetDataBaseInfo().Contains("main"), "SQLite catalogs remain available");
+        bool schemaFailed = false;
+        try { using var invalidSchema = metadataDb.GetSchema("NotARealCollection"); }
+        catch (Exception ex) when (ex is not NullReferenceException) { schemaFailed = true; }
+        Check(schemaFailed, "Schema errors propagate instead of returning null");
+    }
+    Console.WriteLine("PASS: SQLite metadata readers, column details, catalogs and schema error propagation.");
     var migrationSchema = new DbSchema();
     migrationSchema.DbTables.Add(new TableStruct
     {
