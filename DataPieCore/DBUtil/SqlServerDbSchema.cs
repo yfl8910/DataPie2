@@ -14,8 +14,6 @@ namespace DBUtil
             DbSchema dbs = new DbSchema
             {
                 Name = GetDbName(),
-                ConnectionStrings = ConnectionString,
-                Dbtype = "SQLSERVER",
                 DbTables = ShowTables(),
                 DbViews = ShowViews(),
                 DbProcs = GetProcs()
@@ -52,7 +50,6 @@ namespace DBUtil
         private static Column ReadColumn(DataRow row) => new Column
         {
             Name = row["DbColumnName"].ToString(),
-            Desc = row["ColumnDescription"].ToString(),
             IsIdentity = Convert.ToInt32(row["IsIdentity"]) == 1,
             IsNullable = Convert.ToInt32(row["IsNullable"]) == 1,
             Type = row["DataType"].ToString(),
@@ -68,7 +65,6 @@ namespace DBUtil
                            syscolumns.name AS DbColumnName,
                            systypes.name AS DataType,
                            syscolumns.length AS [Length],
-                           sys.extended_properties.[value] AS [ColumnDescription],
                            syscomments.text AS DefaultValue,
                            syscolumns.isnullable AS IsNullable,
 	                       columnproperty(syscolumns.id,syscolumns.name,'IsIdentity')as IsIdentity,
@@ -89,8 +85,6 @@ namespace DBUtil
                     FROM syscolumns
                     INNER JOIN systypes ON syscolumns.xtype = systypes.xtype
                     LEFT JOIN sysobjects ON syscolumns.id = sysobjects.id
-                    LEFT OUTER JOIN sys.extended_properties ON (sys.extended_properties.minor_id = syscolumns.colid
-                                                                AND sys.extended_properties.major_id = syscolumns.id)
                     LEFT OUTER JOIN syscomments ON syscolumns.cdefault = syscomments.id
                     WHERE syscolumns.id IN
                         (SELECT id
@@ -176,7 +170,7 @@ WHERE p.is_ms_shipped = 0 ORDER BY s.name, p.name";
 
         public List<Proc> GetProcs()
         {
-            const string sql = @"SELECT ROUTINE_NAME, LAST_ALTERED
+            const string sql = @"SELECT ROUTINE_NAME
 FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_TYPE = 'PROCEDURE'";
             using var reader = GetDataReader(sql);
@@ -184,8 +178,7 @@ WHERE ROUTINE_TYPE = 'PROCEDURE'";
             while (reader.Read())
                 procedures.Add(new Proc
                 {
-                    Name = reader.GetString(0),
-                    LastUpdate = reader.GetValue(1).ToString()
+                    Name = reader.GetString(0)
                 });
             return procedures;
         }

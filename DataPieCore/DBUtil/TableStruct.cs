@@ -9,8 +9,6 @@ namespace DBUtil
     public class DbSchema
     {
         public string Name { set; get; }
-        public string ConnectionStrings { set; get; }
-        public string Dbtype { set; get; }
 
         public List<TableStruct> DbTables = new List<TableStruct>();
 
@@ -20,23 +18,15 @@ namespace DBUtil
 
         public List<Proc> DbProcs = new List<Proc>();
 
-        public List<string> DbList = new List<string>();
     }
 
     public class TableStruct
     {
         public string TableSchemaName { set; get; }
         public string Name { set; get; }
-        public string Desc { set; get; }
-        public string PrimaryKey { set; get; }
 
         public List<Column> Columns = new List<Column>();
 
-        public List<Constraint> Constraints = new List<Constraint>();
-
-        public List<Trigger> Triggers = new List<Trigger>();
-
-        public List<Index> Indexs = new List<Index>();
 
         public List<ForeignKeySchema> ForeignKeys = new List<ForeignKeySchema>();
     }
@@ -72,21 +62,6 @@ namespace DBUtil
             }
         }
 
-        public string IdentityStr { set; get; }
-
-        public string FinalIdentity
-        {
-            get
-            {
-                if (!string.IsNullOrWhiteSpace(IdentityStr))
-                {
-                    return IdentityStr;
-                }
-                return IsIdentity ? "identity(" + (Start == 0 ? 1 : Start).ToString() + "," + (Incre == 0 ? 1 : Incre).ToString() + ")" : "";
-            }
-        }
-
-        public string Desc { set; get; }
 
         public bool IsIdentity { set; get; }
 
@@ -98,35 +73,8 @@ namespace DBUtil
 
         public int MaxLength { set; get; }
 
-        public int Start { set; get; }
-
-        public int Incre { set; get; }
 
         public bool IsUnique { set; get; }
-    }
-
-    public class Constraint
-    {
-        public string Name { set; get; }
-        public string Type { set; get; }
-        public string DelType { set; get; }
-        public string UpdateType { set; get; }
-        public string Keys { set; get; }
-        public string RefStr { set; get; }
-        public string Remark { set; get; }
-    }
-
-    public class Trigger
-    {
-        public string Name { set; get; }
-        public string Type { set; get; }
-    }
-
-    public class Index
-    {
-        public string Name { set; get; }
-        public string Desc { set; get; }
-        public string Keys { set; get; }
     }
 
     public class Proc
@@ -134,30 +82,12 @@ namespace DBUtil
         public string ScriptWarning { get; set; }
         public string SchemaName { get; set; }
         public string Name { set; get; }
-        public string LastUpdate { set; get; }
         public string CreateSql { set; get; }
 
-        public List<Procparam> Param { set; get; }
-    }
-
-    public class Procparam
-    {
-        public string Name { set; get; }
-        public string Type { set; get; }
-        public string Length { set; get; }
-    }
-
-    public class Func
-    {
-        public string Name { set; get; }
-        public string Type { set; get; }
-        public string LastUpdate { set; get; }
-        public string CreateSql { set; get; }
     }
 
     public class ForeignKeySchema
     {
-        public string TableName;
 
         public string ColumnName;
 
@@ -165,9 +95,6 @@ namespace DBUtil
 
         public string ForeignColumnName;
 
-        public bool CascadeOnDelete;
-
-        public bool IsNullable;
     }
 
     public class ViewSchema

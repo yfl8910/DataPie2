@@ -15,7 +15,7 @@ internal static class ProcedureScriptTests
         var schema = new DbSchema();
         schema.DbTables.Add(new TableStruct
         {
-            Name = "items", TableSchemaName = "dbo", PrimaryKey = "id",
+            Name = "items", TableSchemaName = "dbo",
             Columns = new List<Column>
             {
                 new Column { Name = "id", Type = "int", IsPrimaryKey = true, Default = "" },
@@ -28,7 +28,7 @@ internal static class ProcedureScriptTests
         foreach (string name in new[] { "SellOut", "ProductTypeModelMap" })
             schema.DbTables.Add(new TableStruct
             {
-                Name = name, TableSchemaName = "dbo", PrimaryKey = "Model",
+                Name = name, TableSchemaName = "dbo",
                 Columns = new List<Column>
                 {
                     new Column { Name = "Model", Type = "nvarchar", MaxLength = 50, IsPrimaryKey = true, Default = "" },
@@ -39,7 +39,7 @@ internal static class ProcedureScriptTests
             "from [dbo].[ProductTypeModelMap] a WHERE SellOut.Model=a.Model";
         schema.DbTables.Add(new TableStruct
         {
-            Name = "Ratios", TableSchemaName = "dbo", PrimaryKey = "id",
+            Name = "Ratios", TableSchemaName = "dbo",
             Columns = new List<Column>
             {
                 new Column { Name="id", Type="int", IsPrimaryKey=true, Default="" },

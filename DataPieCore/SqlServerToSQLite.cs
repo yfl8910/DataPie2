@@ -440,30 +440,23 @@ namespace DataPieCore
 
             sb.Append("CREATE TABLE [" + ts.Name + "] (\n");
 
+            var primaryKeys = ts.Columns.Where(column => column.IsPrimaryKey).ToList();
             bool pkey = false;
             for (int i = 0; i < ts.Columns.Count; i++)
             {
                 var col = ts.Columns[i];
-                string cline = BuildColumnStatement(col, ts, ref pkey);
+                string cline = BuildColumnStatement(col, primaryKeys.Count == 1 && col.IsPrimaryKey, ref pkey);
                 sb.Append(cline);
                 if (i < ts.Columns.Count - 1)
                     sb.Append(",\n");
             } // foreach
 
             // add primary keys...
-            if (ts.PrimaryKey != null && ts.Columns.Where(p => p.IsPrimaryKey == true).Count() > 0 & !pkey)
+            if (primaryKeys.Count > 0 && !pkey)
             {
-                List <Column> primarylist = ts.Columns.Where(p => p.IsPrimaryKey == true).ToList();
-
                 sb.Append(",\n");
                 sb.Append("    PRIMARY KEY (");
-
-                for (int i = 0; i < primarylist.Count; i++)
-                {
-                    sb.Append("[" + primarylist[i].Name + "]");
-                    if (i < primarylist.Count - 1)
-                        sb.Append(", ");
-                } // for
+                sb.Append(string.Join(", ", primaryKeys.Select(column => "[" + column.Name + "]")));
                 sb.Append(")\n");
             }
             else
@@ -508,7 +501,7 @@ namespace DataPieCore
         /// </summary>
         /// <param name="col">The column schema</param>
         /// <returns>A single column line to be inserted into the general CREATE TABLE DDL statement</returns>
-        private static string BuildColumnStatement(Column col, TableStruct ts, ref bool pkey)
+        private static string BuildColumnStatement(Column col, bool singlePrimaryKey, ref bool pkey)
         {
             StringBuilder sb = new StringBuilder();
             sb.Append("\t[" + col.Name + "]\t");
@@ -516,7 +509,7 @@ namespace DataPieCore
             // Special treatment for IDENTITY columns
             if (col.IsIdentity)
             {
-                if ((col.Type == "tinyint" || col.Type == "int" || col.Type == "smallint" ||
+                if (singlePrimaryKey && (col.Type == "tinyint" || col.Type == "int" || col.Type == "smallint" ||
                     col.Type == "bigint" || col.Type == "integer"))
                 {
                     sb.Append("integer PRIMARY KEY AUTOINCREMENT");

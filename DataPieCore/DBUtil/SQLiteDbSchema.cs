@@ -13,12 +13,9 @@ namespace DBUtil
             DbSchema dbs = new DbSchema
             {
                 Name = GetDbName(),
-                ConnectionStrings = ConnectionString,
-                Dbtype = "SQLITE",
                 DbTables = ShowTables(),
                 DbViews = ShowViews(),
-                DbProcs = GetProcs(),
-                DbList = GetDataBaseInfo()
+                DbProcs = GetProcs()
             };
             return dbs;
         }
@@ -77,7 +74,6 @@ namespace DBUtil
         private static Column ReadColumn(DataRow row) => new Column
         {
             Name = row["COLUMN_NAME"].ToString(),
-            Desc = $"{row["COLUMN_NAME"]}.{row["DATA_TYPE"]}",
             Type = row["DATA_TYPE"].ToString(),
             IsNullable = Convert.ToBoolean(row["IS_NULLABLE"]),
             IsPrimaryKey = Convert.ToBoolean(row["PRIMARY_KEY"]),
