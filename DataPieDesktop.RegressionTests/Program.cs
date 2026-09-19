@@ -14,7 +14,11 @@ internal static class Program
         Exception failure = null;
         form.BeginInvoke(new Action(async () =>
         {
-            try { await CheckOperations(form); }
+            try
+            {
+                MainBindingsTests.Run(form);
+                await CheckOperations(form);
+            }
             catch (Exception ex) { failure = ex; }
             finally { Application.ExitThread(); }
         }));
@@ -31,6 +35,7 @@ internal static class Program
         void Check(bool value, string message) { if (!value) throw new Exception(message); }
         Task Run(Action work, Action completed, bool progress = false) =>
             (Task)run.Invoke(form, new object[] { work, completed, "Working", progress });
+        Task Refresh() => (Task)typeof(DataPieDesktop.Main).GetMethod("CheckConnectionAsync", flags).Invoke(form, null);
 
         bool completed = false;
         await Run(() => throw new InvalidOperationException("expected failure"), () => completed = true, true);
@@ -45,8 +50,8 @@ internal static class Program
             Check(Field<bool>("sqliteExportRunning"), "Export progress starts automatically");
             SqlServerToSQLite.currentProcessTable = "sample";
             SqlServerToSQLite.TotalCopyed = 42;
-            Task first = form.CheckConnectionAsync();
-            Task second = form.CheckConnectionAsync();
+            Task first = Refresh();
+            Task second = Refresh();
             Check(first.IsCompleted && second.IsCompleted, "Repeated progress clicks must not start polling loops");
             Check(Field<ToolStripStatusLabel>("toolStripStatusLabel2").Text.Contains("42"), "Manual refresh shows current count");
             await Run(() => throw new Exception("Busy operation must not run"), () => throw new Exception("Busy callback must not run"));
@@ -57,7 +62,7 @@ internal static class Program
         finally { release.Set(); await active; }
         Check(completed && !Field<bool>("sqliteExportRunning"), "Successful export stops progress");
         Field<ToolStripStatusLabel>("toolStripStatusLabel2").Text = "finished";
-        await form.CheckConnectionAsync();
+        await Refresh();
         await Task.Delay(5200);
         Check(Field<ToolStripStatusLabel>("toolStripStatusLabel2").Text == "finished", "Stopped progress cannot overwrite final status");
         Check(Field<ToolStrip>("toolStrip1").Enabled, "Inputs are restored");

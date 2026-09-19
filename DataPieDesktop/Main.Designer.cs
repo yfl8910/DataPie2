@@ -137,7 +137,6 @@ namespace DataPieDesktop
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Input";
             tabPage1.UseVisualStyleBackColor = true;
-            tabPage1.Click += tabPage1_Click;
             // 
             // groupBox8
             // 
@@ -256,7 +255,6 @@ namespace DataPieDesktop
             comboBox1.Name = "comboBox1";
             comboBox1.Size = new System.Drawing.Size(389, 28);
             comboBox1.TabIndex = 0;
-            comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
             // 
             // button1
             // 
@@ -332,8 +330,7 @@ namespace DataPieDesktop
             treeView1.Name = "treeView1";
             treeView1.Size = new System.Drawing.Size(353, 421);
             treeView1.TabIndex = 0;
-            treeView1.DoubleClick += treeView1_DoubleClick;
-            treeView1.MouseDown += treeView1_MouseDown;
+            treeView1.NodeMouseDoubleClick += treeView1_NodeMouseDoubleClick;
             // 
             // listBox1
             // 
@@ -543,7 +540,6 @@ namespace DataPieDesktop
             comboBox2.Name = "comboBox2";
             comboBox2.Size = new System.Drawing.Size(177, 28);
             comboBox2.TabIndex = 0;
-            comboBox2.SelectedIndexChanged += comboBox2_SelectedIndexChanged;
             // 
             // tabPage4
             // 
@@ -617,8 +613,7 @@ namespace DataPieDesktop
             treeView2.Name = "treeView2";
             treeView2.Size = new System.Drawing.Size(344, 401);
             treeView2.TabIndex = 0;
-            treeView2.DoubleClick += treeView2_DoubleClick;
-            treeView2.MouseDown += treeView2_MouseDown;
+            treeView2.NodeMouseDoubleClick += treeView2_NodeMouseDoubleClick;
             // 
             // tabPage5
             // 

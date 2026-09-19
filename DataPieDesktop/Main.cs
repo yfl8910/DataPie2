@@ -10,29 +10,11 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
-
-
-
 namespace DataPieDesktop
 {
     public partial class Main : Form
     {
-        public static DatabaseConnectionForm loginform = null;
-
-
-
-        static DbSchema dbs;
-
-        IList<string> tableList = new List<string>();
-
-        IList<string> viewList = new List<string>();
-
-        IList<string> SpList = new List<string>();
-
-        string tableName = "";
-
-
-        private Point pi;
+        private DbSchema databaseSchema;
         private bool operationRunning;
         private bool updatingStatusLayout;
         private bool sqliteExportRunning;
@@ -53,7 +35,7 @@ namespace DataPieDesktop
             toolStrip1.Enabled = false;
             try
             {
-                if (startedMessage != null) ShowMessage(startedMessage, EventArgs.Empty);
+                if (startedMessage != null) ShowMessage(startedMessage);
                 if (reportSqliteProgress)
                 {
                     SqlServerToSQLite._cancelled = false;
@@ -76,7 +58,7 @@ namespace DataPieDesktop
             }
             catch (Exception ex)
             {
-                if (!IsDisposed && !Disposing) ShowErr(ex, EventArgs.Empty);
+                if (!IsDisposed && !Disposing) ShowError(ex);
             }
             finally
             {
@@ -98,12 +80,9 @@ namespace DataPieDesktop
             BeginInvoke(new Action(() =>
             {
                 if (operationRunning && version == operationVersion && !IsDisposed && !Disposing)
-                    ShowMessage(message, EventArgs.Empty);
+                    ShowMessage(message);
             }));
         }
-
-
-
 
         private async Task RunExportAsync(Action<IDbAccess, string> export)
         {
@@ -116,7 +95,7 @@ namespace DataPieDesktop
                 using var access = DbAccessFactory.Create(connectionString, databaseType);
                 export(access, databaseType);
                 watch.Stop();
-            }, () => ShowMessage($"Export successful! Time: {watch.Elapsed.TotalSeconds:F1} seconds", EventArgs.Empty),
+            }, () => ShowMessage($"Export successful! Time: {watch.Elapsed.TotalSeconds:F1} seconds"),
                 "Processing...");
         }
 
@@ -179,11 +158,6 @@ namespace DataPieDesktop
             finally { updatingStatusLayout = false; }
         }
 
-        private void tabPage1_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private async void Main_Load(object sender, EventArgs e)
         {
             await LoadDatabaseSchemaAsync();
@@ -201,103 +175,53 @@ namespace DataPieDesktop
                 watch.Stop();
             }, () =>
             {
-                dbs = schema;
-                tableList = dbs.Tables.Select(table => table.Name).ToList();
-                viewList = dbs.ViewNames;
-                SpList = dbs.Procedures?.Select(proc => proc.Name).ToList() ?? new List<string>();
-                SetcomboBox(tableList);
-                ShowMessage($"Database loaded successfully! Time: {watch.Elapsed.TotalSeconds:F1} seconds.", EventArgs.Empty);
+                databaseSchema = schema;
+                BindDatabaseSchema();
+                ShowMessage($"Database loaded successfully! Time: {watch.Elapsed.TotalSeconds:F1} seconds.");
             }, "Loading data...");
         }
 
-
-        private void SetcomboBox(object collection)
+        private void BindDatabaseSchema()
         {
-            this.comboBox1.DataSource = tableList;
-            this.comboBox1.SelectedIndex = tableList.Count > 0 ? 0 : -1;
-
-            this.comboBox2.DataSource = tableList;
-            this.comboBox2.SelectedIndex = tableList.Count > 0 ? 0 : -1;
-
-            statusStrip1.Items[0].Text = dbs.Name;
-
+            var tableNames = databaseSchema.Tables.Select(table => table.Name).ToArray();
+            // Separate data sources keep the import and query selections independent.
+            comboBox1.DataSource = tableNames;
+            comboBox2.DataSource = tableNames.ToArray();
+            comboBox1.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
+            comboBox2.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
+            toolStripStatusLabel1.Text = databaseSchema.Name;
 
             treeView1.BeginUpdate();
             treeView2.BeginUpdate();
             try
             {
-            treeView1.Nodes.Clear();
-
-            treeView2.Nodes.Clear();
-
-            TreeNode Node = new TreeNode();
-
-            Node.Name = "All Tables：";
-            Node.Text = "All Tables：";
-            treeView1.Nodes.Add(Node);
-
-            Node = new TreeNode();
-            Node.Name = "All Views：";
-            Node.Text = "All Views：";
-            treeView1.Nodes.Add(Node);
-
-            foreach (string s in tableList)
-            {
-                TreeNode tn = new TreeNode();
-                tn.Name = s;
-                tn.Text = s;
-                treeView1.Nodes["All Tables："].Nodes.Add(tn);
-            }
-
-            foreach (string s in viewList)
-            {
-                TreeNode tn = new TreeNode();
-                tn.Name = s;
-                tn.Text = s;
-                treeView1.Nodes["All Views："].Nodes.Add(tn);
-            }
-
-            Node = new TreeNode();
-            Node.Name = "Stored Procedure";
-            Node.Text = "Stored Procedure";
-            treeView2.Nodes.Add(Node);
-
-
-            if (SpList.Count > 0)
-            {
-
-                foreach (string s in SpList)
-                {
-                    TreeNode tn = new TreeNode();
-                    tn.Name = s;
-                    tn.Text = s;
-                    treeView2.Nodes["Stored Procedure"].Nodes.Add(tn);
-                }
-            }
-
-            treeView1.ExpandAll();
-            treeView2.ExpandAll();
+                treeView1.Nodes.Clear();
+                treeView2.Nodes.Clear();
+                treeView1.Nodes.Add(CreateNodeGroup("All Tables：", tableNames));
+                treeView1.Nodes.Add(CreateNodeGroup("All Views：", databaseSchema.ViewNames));
+                treeView2.Nodes.Add(CreateNodeGroup("Stored Procedure",
+                    databaseSchema.Procedures?.Select(proc => proc.Name) ?? Enumerable.Empty<string>()));
+                treeView1.ExpandAll();
+                treeView2.ExpandAll();
             }
             finally
             {
                 treeView1.EndUpdate();
                 treeView2.EndUpdate();
             }
-
             listBox1.Items.Clear();
-
             listBox2.Items.Clear();
-
-            textBox1.Text = "";
-
-            textBox2.Text = "";
-
-            richTextBox1.Text = "";
-
-
+            textBox1.Clear();
+            textBox2.Clear();
+            richTextBox1.Clear();
         }
 
-
+        private static TreeNode CreateNodeGroup(string title, IEnumerable<string> names)
+        {
+            var group = new TreeNode(title) { Name = title };
+            group.Nodes.AddRange(names.Select(name => new TreeNode(name) { Name = name }).ToArray());
+            return group;
+        }
 
         //Template Export
         private async void button1_Click(object sender, EventArgs e)
@@ -332,10 +256,9 @@ namespace DataPieDesktop
                 using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 access.TruncateTable(selectedTable);
                 watch.Stop();
-            }, () => ShowMessage($"Delete time: {watch.Elapsed.TotalSeconds:F1} seconds", EventArgs.Empty),
+            }, () => ShowMessage($"Delete time: {watch.Elapsed.TotalSeconds:F1} seconds"),
                 "Deleting...");
         }
-
 
         // Import Excel
         private async void button3_Click(object sender, EventArgs e)
@@ -345,7 +268,7 @@ namespace DataPieDesktop
                 MessageBox.Show("please choose table and file to import!");
                 return;
             }
-            string importTable = tableName;
+            string importTable = comboBox1.Text;
             string importPath = textBox1.Text;
             var watch = new Stopwatch();
             await RunOperationAsync(() =>
@@ -354,11 +277,11 @@ namespace DataPieDesktop
                 using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 ImportFile(importTable, importPath, access);
                 watch.Stop();
-            }, () => ShowMessage($"Import success, Time: {watch.Elapsed.TotalSeconds:F1} seconds", EventArgs.Empty),
+            }, () => ShowMessage($"Import success, Time: {watch.Elapsed.TotalSeconds:F1} seconds"),
                 "Processing...");
         }
 
-        public void ImportFile(string DbTableName, string filename, IDbAccess dbaccess)
+        private void ImportFile(string DbTableName, string filename, IDbAccess dbaccess)
         {
             string ext = Path.GetExtension(filename).ToLowerInvariant();
             switch (ext)
@@ -380,15 +303,13 @@ namespace DataPieDesktop
             }
         }
 
-        public void DbImport(string filePath, string tableName, IDbAccess dbAccess)
+        private void DbImport(string filePath, string tableName, IDbAccess dbAccess)
         {
             var db = new DBConfig { ProviderName = "SQLITE", DataBase = filePath };
             using var source = DbAccessFactory.Create(db.GetConstring(), "SQLITE");
             using var reader = source.GetDataReader(SqlQueryBuilder.BuildSelectAll(tableName, "SQLITE"));
             dbAccess.BulkInsert(tableName, reader);
         }
-
-
 
         private void BrowseBtn1_Click(object sender, EventArgs e)
         {
@@ -403,32 +324,16 @@ namespace DataPieDesktop
             }
         }
 
-
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            tableName = comboBox1.Text.ToString();
-        }
-
-        private void comboBox2_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            tableName = comboBox2.Text.ToString();
-
-        }
-
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
 
             LoginformShow();
         }
 
-
-
         private void LoginformShow()
         {
-
-            loginform = new DatabaseConnectionForm();
-            loginform.Show();
-
+            var connectionForm = new DatabaseConnectionForm();
+            connectionForm.Show();
         }
 
         private void toolStripButton2_Click(object sender, EventArgs e)
@@ -443,27 +348,16 @@ namespace DataPieDesktop
             System.Environment.Exit(0);
         }
 
-
         //View Data
         private async void button5_Click(object sender, EventArgs e)
         {
-
-            if (richTextBox1.Text.Length > 0)
-            {
-                await LoadQueryPreviewAsync(richTextBox1.Text);
-            }
-            else
-            {
-                string sql = SqlWriter.WriteSelect(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
-
-                richTextBox1.Text = sql;
-
-                await LoadQueryPreviewAsync(sql);
-            }
-
+            if (string.IsNullOrWhiteSpace(richTextBox1.Text) &&
+                !GenerateSql(table => SqlWriter.WriteSelect(table, AppState.DatabaseType, 1000), "Select SQL generated"))
+                return;
+            await LoadQueryPreviewAsync(richTextBox1.Text);
         }
 
-        public async Task LoadQueryPreviewAsync(string sql)
+        private async Task LoadQueryPreviewAsync(string sql)
         {
             DataTable result = null;
             bool truncated = false;
@@ -486,65 +380,53 @@ namespace DataPieDesktop
         //OUTPUT CSV
         private async void button7_Click(object sender, EventArgs e)
         {
+            string tableName = comboBox2.Text;
+            if (string.IsNullOrWhiteSpace(tableName))
+            {
+                MessageBox.Show(this, "Please choose a table");
+                return;
+            }
             string filename = FileDialogs.ShowSaveDialog(tableName, ".csv");
             if (filename != null) await ExportTableToCsvAsync(tableName, filename);
         }
 
-        public Task ExportTableToCsvAsync(string tableName, string filePath)
+        private Task ExportTableToCsvAsync(string tableName, string filePath)
             => RunExportAsync((access, databaseType) =>
             {
                 using var reader = access.GetDataReader(SqlQueryBuilder.BuildSelectAll(tableName, databaseType));
                 CsvExporter.SaveCsv(reader, filePath);
             });
 
-
-
         //Export Excel by sql
         private async void exportQueryButton_Click(object sender, EventArgs e)
         {
-            if (richTextBox1.Text.Length == 0)
+            string sql = richTextBox1.Text;
+            if (string.IsNullOrWhiteSpace(sql))
             {
-                MessageBox.Show("Empty SQL for Export");
+                MessageBox.Show(this, "Empty SQL for Export");
+                return;
             }
-            else
-            {
-                string filename = FileDialogs.ShowSaveDialog(tableName, ".xlsx");
-
-                if (filename != null)
-                {
-                    await ExportQueryToExcelAsync(richTextBox1.Text.ToString(), filename);
-
-                }
-
-            }
+            string sheetName = comboBox2.Text;
+            string filename = FileDialogs.ShowSaveDialog(sheetName, ".xlsx");
+            if (filename != null) await ExportQueryToExcelAsync(sql, filename, sheetName);
         }
-
 
         //Export Excel by tableName
         private async void exportTableButton_Click(object sender, EventArgs e)
         {
-            if (tableName == "")
+            string tableName = comboBox2.Text;
+            if (string.IsNullOrWhiteSpace(tableName))
             {
-                MessageBox.Show("Please choose a table");
+                MessageBox.Show(this, "Please choose a table");
+                return;
             }
-            else
-            {
-                string filename = FileDialogs.ShowSaveDialog(tableName, ".xlsx");
-
-                if (filename != null)
-                {
-                    string sql = SqlQueryBuilder.BuildSelectAll(tableName, AppState.DatabaseType);
-
-                    await ExportQueryToExcelAsync(sql, filename);
-
-                }
-
-            }
+            string filename = FileDialogs.ShowSaveDialog(tableName, ".xlsx");
+            if (filename != null)
+                await ExportQueryToExcelAsync(SqlQueryBuilder.BuildSelectAll(tableName, AppState.DatabaseType), filename, tableName);
         }
 
-        public Task ExportQueryToExcelAsync(string sql, string filePath)
+        private Task ExportQueryToExcelAsync(string sql, string filePath, string sheetName)
         {
-            string sheetName = tableName;
             return RunExportAsync((access, databaseType) =>
             {
                 using var reader = access.GetDataReader(sql);
@@ -552,153 +434,99 @@ namespace DataPieDesktop
             });
         }
 
-
-        private void ShowMessage(object o, System.EventArgs e)
+        private void ShowMessage(string message)
         {
             toolStripStatusLabel2.Text = string.Empty;
-            statusStrip1.Items[0].Text = AppState.DatabaseName + "-" + o.ToString();
+            toolStripStatusLabel1.Text = AppState.DatabaseName + "-" + message;
             toolStripStatusLabel1.ToolTipText = toolStripStatusLabel1.Text;
-            statusStrip1.Items[0].ForeColor = Color.Red;
+            toolStripStatusLabel1.ForeColor = Color.Red;
         }
 
-        private void ShowErr(object o, System.EventArgs e)
+        private void ShowError(Exception error) => ShowMessage("Error! " + error.Message);
+
+        private static void AddSelectedNode(ListBox list, TreeNode node)
         {
-            Exception ee = o as Exception;
-
-            ShowMessage("Error! " + ee.Message, e);
+            if (node?.Parent == null || node.Nodes.Count != 0 || list.Items.Contains(node.Text)) return;
+            list.Items.Add(node.Text);
         }
 
+        private static void RemoveSelectedItem(ListBox list)
+        {
+            if (list.SelectedIndex >= 0) list.Items.RemoveAt(list.SelectedIndex);
+        }
 
+        private async Task ExportSelectedTablesAsync(string extension, Func<IList<string>, string, Task> export)
+        {
+            var tableNames = listBox1.Items.Cast<string>().ToArray();
+            if (tableNames.Length == 0)
+            {
+                MessageBox.Show(this, "Please choose a table");
+                return;
+            }
+            string filename = FileDialogs.ShowSaveDialog(tableNames[0], extension);
+            if (filename != null) await export(tableNames, filename);
+        }
 
+        private bool GenerateSql(Func<TableStruct, string> buildSql, string message)
+        {
+            var table = databaseSchema?.Tables.FirstOrDefault(item => item.Name == comboBox2.Text);
+            if (table == null)
+            {
+                MessageBox.Show(this, "Please choose a table");
+                return false;
+            }
+            richTextBox1.Text = buildSql(table);
+            ShowMessage(message);
+            return true;
+        }
 
         private void ClearAllTables_Click(object sender, EventArgs e)
         {
             listBox1.Items.Clear();
         }
 
-        private void treeView1_DoubleClick(object sender, System.EventArgs e)
+        private void treeView1_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            TreeNode node = this.treeView1.GetNodeAt(pi);
-            if (pi.X < node.Bounds.Left || pi.X > node.Bounds.Right)
-            {
-                //不触发事件   
-                return;
-            }
-            else
-            {
-                int i = treeView1.SelectedNode.GetNodeCount(false);
-                if (!listBox1.Items.Contains(treeView1.SelectedNode.Text.ToString()) && i == 0)
-
-                    listBox1.Items.Add(treeView1.SelectedNode.Text.ToString());
-            }
-
-
+            if (e.Button == MouseButtons.Left) AddSelectedNode(listBox1, e.Node);
         }
 
-        private void treeView1_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
+        private void treeView2_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            pi = new Point(e.X, e.Y);
+            if (e.Button == MouseButtons.Left) AddSelectedNode(listBox2, e.Node);
         }
-
-        private void treeView2_DoubleClick(object sender, System.EventArgs e)
-        {
-            TreeNode node = this.treeView2.GetNodeAt(pi);
-            if (pi.X < node.Bounds.Left || pi.X > node.Bounds.Right)
-            {
-                return;
-            }
-            else
-            {
-                int i = treeView2.SelectedNode.GetNodeCount(false);
-                if (!listBox2.Items.Contains(treeView2.SelectedNode.Text.ToString()) && i == 0)
-                    listBox2.Items.Add(treeView2.SelectedNode.Text.ToString());
-            }
-        }
-
-        private void treeView2_MouseDown(object sender, System.Windows.Forms.MouseEventArgs e)
-        {
-            pi = new Point(e.X, e.Y);
-        }
-
-
 
         private void listBox2_DoubleClick(object sender, EventArgs e)
         {
-
-            listBox2.Items.RemoveAt(listBox2.SelectedIndex);
+            RemoveSelectedItem(listBox2);
         }
 
         private void listBox1_DoubleClick(object sender, EventArgs e)
         {
-
-            listBox1.Items.RemoveAt(listBox1.SelectedIndex);
+            RemoveSelectedItem(listBox1);
         }
-
-
 
         //export muti excel
         private async void exportSheetsWithEpplusButton_Click(object sender, EventArgs e)
         {
-            if (listBox1.Items.Count < 1)
-            {
-                MessageBox.Show("please choose a table !");
-                return;
-            }
-
-            IList<string> SheetNames = new List<string>();
-
-            foreach (var item in listBox1.Items)
-            {
-                SheetNames.Add(item.ToString());
-            }
-
-            string filename = FileDialogs.ShowSaveDialog(SheetNames[0], ".xlsx");
-
-            if (filename != null)
-            {
-                await ExportTablesWithEpplusAsync(SheetNames, filename);
-
-            }
+            await ExportSelectedTablesAsync(".xlsx", ExportTablesWithEpplusAsync);
         }
 
-        public Task ExportTablesWithEpplusAsync(IList<string> tableNames, string filePath)
+        private Task ExportTablesWithEpplusAsync(IList<string> tableNames, string filePath)
             => RunExportAsync((access, databaseType) =>
                 ExcelIO.ExportSheetsWithEpplus(tableNames, filePath, access, databaseType));
 
-
-        public Task ExportTablesWithMiniExcelAsync(IList<string> tableNames, string filePath)
+        private Task ExportTablesWithMiniExcelAsync(IList<string> tableNames, string filePath)
             => RunExportAsync((access, databaseType) =>
                 ExcelIO.ExportSheetsWithMiniExcel(tableNames, filePath, access, databaseType));
-
 
         //export muti csv
 
         private async void button11_Click(object sender, EventArgs e)
         {
-            if (listBox1.Items.Count < 1)
-            {
-                MessageBox.Show("please choose a table !");
-                return;
-            }
-
-            IList<string> SheetNames = new List<string>();
-
-            foreach (var item in listBox1.Items)
-            {
-                SheetNames.Add(item.ToString());
-            }
-
-            string filename = FileDialogs.ShowSaveDialog(SheetNames[0], ".csv");
-
-            if (filename != null)
-            {
-                await ExportTablesToCsvAsync(SheetNames, filename);
-
-            }
-
+            await ExportSelectedTablesAsync(".csv", ExportTablesToCsvAsync);
         }
 
-        public Task ExportTablesToCsvAsync(IList<string> tableNames, string filePath)
+        private Task ExportTablesToCsvAsync(IList<string> tableNames, string filePath)
             => RunExportAsync((access, databaseType) =>
             {
                 string directory = Path.GetDirectoryName(filePath) ?? "";
@@ -709,27 +537,19 @@ namespace DataPieDesktop
                 }
             });
 
-
         // run stored procedure 
         private async void button12_Click(object sender, EventArgs e)
         {
-            if (listBox2.Items.Count < 1)
+            var procedures = listBox2.Items.Cast<string>().ToArray();
+            if (procedures.Length == 0)
             {
-                MessageBox.Show("please choose a stored procedure !");
+                MessageBox.Show(this, "Please choose a stored procedure");
+                return;
             }
-            else
-            {
-                IList<string> list = new List<string>();
-                foreach (var item in listBox2.Items)
-                {
-                    list.Add(item.ToString());
-                }
-
-                await ExecuteProceduresAsync(list);
-            }
+            await ExecuteProceduresAsync(procedures);
         }
 
-        public async Task ExecuteProceduresAsync(IList<string> procs)
+        private async Task ExecuteProceduresAsync(IList<string> procs)
         {
             var watch = new Stopwatch();
             var warnings = new List<string>();
@@ -755,32 +575,23 @@ namespace DataPieDesktop
                     MessageBox.Show(this, string.Join(Environment.NewLine, warnings),
                         "Partial procedure execution", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
-                ShowMessage(message, EventArgs.Empty);
+                ShowMessage(message);
             }, "Processing...");
         }
 
-        private async void button9_Click(object sender, EventArgs e)
+        private void button9_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteSelect(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
-            richTextBox1.Text = sql;
-            this.BeginInvoke(new System.EventHandler(ShowMessage), "Select Sql Generated");
-
+            GenerateSql(table => SqlWriter.WriteSelect(table, AppState.DatabaseType, 1000), "Select SQL generated");
         }
 
-        private async void button13_Click(object sender, EventArgs e)
+        private void button13_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteDelete(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
-            richTextBox1.Text = sql;
-            this.BeginInvoke(new System.EventHandler(ShowMessage), "Delete Sql Generated");
-
+            GenerateSql(table => SqlWriter.WriteDelete(table, AppState.DatabaseType), "Delete SQL generated");
         }
 
-        private async void button14_Click(object sender, EventArgs e)
+        private void button14_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteUpdate(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
-            richTextBox1.Text = sql;
-            this.BeginInvoke(new System.EventHandler(ShowMessage), "Update Sql Generated");
-
+            GenerateSql(table => SqlWriter.WriteUpdate(table, AppState.DatabaseType), "Update SQL generated");
         }
 
         private async void button6_Click(object sender, EventArgs e)
@@ -794,7 +605,7 @@ namespace DataPieDesktop
 
         }
 
-        public async Task ExecuteSql(string Sql)
+        private async Task ExecuteSql(string Sql)
         {
             var watch = new Stopwatch();
             int affectedRows = 0;
@@ -804,8 +615,7 @@ namespace DataPieDesktop
                 using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 affectedRows = access.ExecuteSql(Sql);
                 watch.Stop();
-            }, () => ShowMessage($"Execute success, Time: {watch.Elapsed.TotalSeconds:F1} seconds, Affect {affectedRows} Rows",
-                EventArgs.Empty), "Processing...");
+            }, () => ShowMessage($"Execute success, Time: {watch.Elapsed.TotalSeconds:F1} seconds, Affect {affectedRows} Rows"), "Processing...");
         }
 
         private void button15_Click(object sender, EventArgs e)
@@ -822,7 +632,7 @@ namespace DataPieDesktop
         private async void createSqliteButton_Click(object sender, EventArgs e)
         {
             if (operationRunning) return;
-            if (AppState.DatabaseType != "SQLSERVER" || dbs == null)
+            if (AppState.DatabaseType != "SQLSERVER" || databaseSchema == null)
             {
                 MessageBox.Show(this, "Please connect to a SQL Server database first.");
                 return;
@@ -832,19 +642,19 @@ namespace DataPieDesktop
                 MessageBox.Show(this, "Please select an existing output folder.");
                 return;
             }
-            if (string.IsNullOrWhiteSpace(dbs.Name) || dbs.Name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
-                dbs.Name.EndsWith(".") || dbs.Name.EndsWith(" "))
+            if (string.IsNullOrWhiteSpace(databaseSchema.Name) || databaseSchema.Name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+                databaseSchema.Name.EndsWith(".") || databaseSchema.Name.EndsWith(" "))
             {
                 MessageBox.Show(this, "The database name cannot be used as a folder or file name.");
                 return;
             }
-            string filename = Path.Combine(textBox2.Text, dbs.Name, dbs.Name + ".db");
+            string filename = Path.Combine(textBox2.Text, databaseSchema.Name, databaseSchema.Name + ".db");
             if (File.Exists(filename) && MessageBox.Show(this, $"Replace the existing database?\n{filename}",
                 "Create SQLite", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
             await CreateSqlite(filename, null);
         }
 
-        public async Task CreateSqlite(string filename, string password)
+        private async Task CreateSqlite(string filename, string password)
         {
             var watch = new Stopwatch();
             SQLiteMigrationResult migration = null;
@@ -853,9 +663,9 @@ namespace DataPieDesktop
                 watch.Start();
                 using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(filename)));
-                SqlServerToSQLite.dbs = dbs;
-                dbs.ViewDefinitions = ((SqlServerDbAccess)access).ReadViewDefinitions();
-                dbs.Procedures = ((SqlServerDbAccess)access).ReadProcedureDefinitions();
+                SqlServerToSQLite.dbs = databaseSchema;
+                databaseSchema.ViewDefinitions = ((SqlServerDbAccess)access).ReadViewDefinitions();
+                databaseSchema.Procedures = ((SqlServerDbAccess)access).ReadProcedureDefinitions();
                 migration = SqlServerToSQLite.CreateSQLiteDatabase(filename, password, true);
                 SqlServerToSQLite.CopySqlServerRowsToSQLiteDB(access.ConnectionString, filename, password);
                 watch.Stop();
@@ -863,19 +673,19 @@ namespace DataPieDesktop
             {
                 var viewErrors = migration.ViewErrors;
                 string message = $"SQLite creation successful! Time: {watch.Elapsed.TotalSeconds:F1} seconds, Copy Rows: {SqlServerToSQLite.TotalCopyed} ";
-                message += $"Views created: {dbs.ViewDefinitions.Count - viewErrors.Count}, failed: {viewErrors.Count}";
-                message += $"; procedures fully converted: {dbs.Procedures.Count - migration.ProcedureErrors.Count}, partial/unsupported: {migration.ProcedureErrors.Count}";
+                message += $"Views created: {databaseSchema.ViewDefinitions.Count - viewErrors.Count}, failed: {viewErrors.Count}";
+                message += $"; procedures fully converted: {databaseSchema.Procedures.Count - migration.ProcedureErrors.Count}, partial/unsupported: {migration.ProcedureErrors.Count}";
                 if (viewErrors.Count > 0 || migration.ProcedureErrors.Count > 0)
                 {
                     message = "Migration completed with conversion errors. " + message;
                     MessageBox.Show(this, string.Join(Environment.NewLine, viewErrors.Concat(migration.ProcedureErrors)),
                         "Migration errors", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
-                ShowMessage(message, EventArgs.Empty);
+                ShowMessage(message);
             }, "Processing...", reportSqliteProgress: true);
         }
 
-        public Task CheckConnectionAsync()
+        private Task CheckConnectionAsync()
         {
             UpdateSqliteProgress();
             return Task.CompletedTask;
@@ -910,26 +720,7 @@ namespace DataPieDesktop
 
         private async void exportSheetsWithMiniExcelButton_Click(object sender, EventArgs e)
         {
-            if (listBox1.Items.Count < 1)
-            {
-                MessageBox.Show("please choose a table !");
-                return;
-            }
-
-            IList<string> SheetNames = new List<string>();
-
-            foreach (var item in listBox1.Items)
-            {
-                SheetNames.Add(item.ToString());
-            }
-
-            string filename = FileDialogs.ShowSaveDialog(SheetNames[0], ".xlsx");
-
-            if (filename != null)
-            {
-                await ExportTablesWithMiniExcelAsync(SheetNames, filename);
-
-            }
+            await ExportSelectedTablesAsync(".xlsx", ExportTablesWithMiniExcelAsync);
         }
 
         private void button21_Click(object sender, EventArgs e)
@@ -948,10 +739,10 @@ namespace DataPieDesktop
                 MessageBox.Show("please choose table and fold to import!");
                 return;
             }
-            await ImportFolderAsync(tableName, textBox3.Text);
+            await ImportFolderAsync(comboBox1.Text, textBox3.Text);
         }
 
-        public async Task ImportFolderAsync(string DbTableName, string path)
+        private async Task ImportFolderAsync(string DbTableName, string path)
         {
             var watch = new Stopwatch();
             await RunOperationAsync(() =>
@@ -969,57 +760,28 @@ namespace DataPieDesktop
                     }
                 }
                 watch.Stop();
-            }, () => ShowMessage($"Import success, Time: {watch.Elapsed.TotalSeconds:F1} seconds", EventArgs.Empty),
+            }, () => ShowMessage($"Import success, Time: {watch.Elapsed.TotalSeconds:F1} seconds"),
                 "Processing...");
         }
 
         private void buttonExAdd_Click(object sender, EventArgs e)
         {
-            if (listBox1.Items.Contains(treeView1.SelectedNode.Text.ToString()))
-            {
-                return;
-            }
-            else
-            {
-                listBox1.Items.Add(treeView1.SelectedNode.Text.ToString());
-            }
+            AddSelectedNode(listBox1, treeView1.SelectedNode);
         }
 
         private void buttonExRemove_Click(object sender, EventArgs e)
         {
-            if (listBox1.SelectedIndex < 0)
-            {
-                MessageBox.Show("Please Choose a Table！");
-            }
-            else
-            {
-                listBox1.Items.RemoveAt(listBox1.SelectedIndex);
-            }
+            RemoveSelectedItem(listBox1);
         }
 
         private void btnAddProce_Click(object sender, EventArgs e)
         {
-            if (listBox2.Items.Contains(treeView2.SelectedNode.Text.ToString()))
-            {
-                return;
-            }
-
-            else
-            {
-                listBox2.Items.Add(treeView2.SelectedNode.Text.ToString());
-            }
+            AddSelectedNode(listBox2, treeView2.SelectedNode);
         }
 
         private void btnDeleteProc_Click(object sender, EventArgs e)
         {
-            if (listBox2.SelectedIndex < 0)
-            {
-                MessageBox.Show("Pease Choose a procedure");
-            }
-            else
-            {
-                listBox2.Items.RemoveAt(listBox2.SelectedIndex);
-            }
+            RemoveSelectedItem(listBox2);
         }
     }
 }
