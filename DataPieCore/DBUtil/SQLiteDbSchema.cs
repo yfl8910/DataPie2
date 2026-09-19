@@ -13,9 +13,9 @@ namespace DBUtil
             DbSchema dbs = new DbSchema
             {
                 Name = GetDbName(),
-                DbTables = ShowTables(),
-                DbViews = ShowViews(),
-                DbProcs = GetProcs()
+                Tables = ShowTables(),
+                ViewNames = ShowViews(),
+                Procedures = GetProcs()
             };
             return dbs;
         }

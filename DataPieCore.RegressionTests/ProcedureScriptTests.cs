@@ -13,7 +13,7 @@ internal static class ProcedureScriptTests
         Directory.CreateDirectory(directory);
         string path = Path.Combine(directory, "data.db");
         var schema = new DbSchema();
-        schema.DbTables.Add(new TableStruct
+        schema.Tables.Add(new TableStruct
         {
             Name = "items", TableSchemaName = "dbo",
             Columns = new List<Column>
@@ -23,10 +23,10 @@ internal static class ProcedureScriptTests
             }
         });
         void Add(string name, string body, string parameters = "", string owner = "dbo")
-            => schema.DbProcs.Add(new Proc { Name = name, SchemaName = owner,
+            => schema.Procedures.Add(new Proc { Name = name, SchemaName = owner,
                 CreateSql = $"CREATE PROCEDURE [{owner}].[{name}] {parameters} AS BEGIN SET NOCOUNT ON; {body} END" });
         foreach (string name in new[] { "SellOut", "ProductTypeModelMap" })
-            schema.DbTables.Add(new TableStruct
+            schema.Tables.Add(new TableStruct
             {
                 Name = name, TableSchemaName = "dbo",
                 Columns = new List<Column>
@@ -37,7 +37,7 @@ internal static class ProcedureScriptTests
             });
         string updateFrom = "UPDATE [dbo].[SellOut] SET [ProductType] = a.ProductType " +
             "from [dbo].[ProductTypeModelMap] a WHERE SellOut.Model=a.Model";
-        schema.DbTables.Add(new TableStruct
+        schema.Tables.Add(new TableStruct
         {
             Name = "Ratios", TableSchemaName = "dbo",
             Columns = new List<Column>
@@ -114,7 +114,7 @@ internal static class ProcedureScriptTests
             "UPDATE dbo.items SET code = ISNULL(NULL, 'updated') WHERE id = 852");
         Add("NullFunctions", "SELECT ISNULL(NULL, 0) AS empty_value, ISNULL(7, 0) AS present_value, " +
             "ISNULL(NULL, ISNULL(NULL, 'fallback')) AS nested_value, 'isnull(NULL, 0)' AS [ISNULL], NULLIF(1, 1) AS null_value, COALESCE(NULL, 3) AS coalesced;");
-        schema.DbProcs.Add(new Proc { SchemaName = "dbo", Name = "Encrypted" });
+        schema.Procedures.Add(new Proc { SchemaName = "dbo", Name = "Encrypted" });
 
         SqlServerToSQLite.dbs = schema;
         string folder = Path.Combine(directory, "StoredProcedures");
@@ -125,12 +125,12 @@ internal static class ProcedureScriptTests
             "-- DataPie SQLite procedure: {\"DatabaseFile\":\"other.db\",\"Source\":\"other.AddItem\"}\nSELECT 999;");
         var result = SqlServerToSQLite.CreateSQLiteDatabase(path, null, false);
         Check(result.ProcedureErrors.Count == 20, "Partial and unsupported procedures must be explicitly reported");
-        int supportedCount = schema.DbProcs.Count - 10;
+        int supportedCount = schema.Procedures.Count - 10;
         Check(!File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("old manually edited SQL") &&
             !File.ReadAllText(Path.Combine(folder, "Required.txt")).Contains("invalid-json") &&
             !File.ReadAllText(Path.Combine(folder, "AddItem.txt")).Contains("other.db"),
             "Existing procedure files are overwritten regardless of old content or metadata");
-        Check(Directory.GetFiles(folder, "*.txt").Length == schema.DbProcs.Count, "One text file per procedure");
+        Check(Directory.GetFiles(folder, "*.txt").Length == schema.Procedures.Count, "One text file per procedure");
         Check(File.ReadAllText(Path.Combine(folder, "UnsupportedIf.txt")).Contains("-- UNSUPPORTED:"), "Unsupported file marker");
         Check(File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("LIMIT 10"), "Reusable TOP conversion");
         Check(!File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("CREATE PROCEDURE"), "Export contains executable body, not T-SQL declaration");

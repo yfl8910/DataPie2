@@ -14,9 +14,9 @@ namespace DBUtil
             DbSchema dbs = new DbSchema
             {
                 Name = GetDbName(),
-                DbTables = ShowTables(),
-                DbViews = ShowViews(),
-                DbProcs = GetProcs()
+                Tables = ShowTables(),
+                ViewNames = ShowViews(),
+                Procedures = GetProcs()
             };
             return dbs;
         }
@@ -30,6 +30,7 @@ namespace DBUtil
         {
             using var allColumns = AllColumns();
             var columnsByTable = allColumns.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
+            var foreignKeys = ReadForeignKeys();
             const string sql = "SELECT name, SCHEMA_NAME(schema_id), object_id FROM sys.tables";
             using var reader = GetDataReader(sql);
             var tables = new List<TableStruct>();
@@ -41,10 +42,46 @@ namespace DBUtil
                 {
                     Name = reader.GetString(0),
                     TableSchemaName = reader.GetValue(1).ToString(),
-                    Columns = columns
+                    Columns = columns,
+                    ForeignKeys = foreignKeys[tableId].ToList()
                 });
             }
             return tables;
+        }
+
+        private ILookup<int, ForeignKeySchema> ReadForeignKeys()
+        {
+            const string sql = @"SELECT fk.parent_object_id, fk.object_id, rt.name,
+pc.name, rc.name, fk.delete_referential_action_desc, fk.update_referential_action_desc
+FROM sys.foreign_keys fk
+JOIN sys.foreign_key_columns fc ON fc.constraint_object_id = fk.object_id
+JOIN sys.tables rt ON rt.object_id = fk.referenced_object_id
+JOIN sys.columns pc ON pc.object_id = fc.parent_object_id AND pc.column_id = fc.parent_column_id
+JOIN sys.columns rc ON rc.object_id = fc.referenced_object_id AND rc.column_id = fc.referenced_column_id
+WHERE fk.is_disabled = 0
+ORDER BY fk.object_id, fc.constraint_column_id";
+            using var reader = GetDataReader(sql);
+            var keys = new List<(int TableId, ForeignKeySchema Key)>();
+            int previousId = -1;
+            ForeignKeySchema key = null;
+            while (reader.Read())
+            {
+                int id = reader.GetInt32(1);
+                if (id != previousId)
+                {
+                    key = new ForeignKeySchema
+                    {
+                        ReferencedTableName = reader.GetString(2),
+                        OnDelete = reader.GetString(5).Replace('_', ' '),
+                        OnUpdate = reader.GetString(6).Replace('_', ' ')
+                    };
+                    keys.Add((reader.GetInt32(0), key));
+                    previousId = id;
+                }
+                key.ColumnNames.Add(reader.GetString(3));
+                key.ReferencedColumnNames.Add(reader.GetString(4));
+            }
+            return keys.ToLookup(item => item.TableId, item => item.Key);
         }
 
         private static Column ReadColumn(DataRow row) => new Column
@@ -113,7 +150,7 @@ namespace DBUtil
             return views;
         }
 
-        public List<ViewSchema> ShowViews2()
+        public List<ViewSchema> ReadViewDefinitions()
         {
             const string sql = @"SELECT s.name AS SchemaName, v.name AS ViewName, m.definition
 FROM sys.views v

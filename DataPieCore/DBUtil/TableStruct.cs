@@ -10,13 +10,13 @@ namespace DBUtil
     {
         public string Name { set; get; }
 
-        public List<TableStruct> DbTables = new List<TableStruct>();
+        public List<TableStruct> Tables { get; set; } = new();
 
-        public List<string> DbViews = new List<string>();
+        public List<string> ViewNames { get; set; } = new();
 
-        public List<ViewSchema> DbViews2 = new List<ViewSchema>();
+        public List<ViewSchema> ViewDefinitions { get; set; } = new();
 
-        public List<Proc> DbProcs = new List<Proc>();
+        public List<Proc> Procedures { get; set; } = new();
 
     }
 
@@ -25,10 +25,10 @@ namespace DBUtil
         public string TableSchemaName { set; get; }
         public string Name { set; get; }
 
-        public List<Column> Columns = new List<Column>();
+        public List<Column> Columns { get; set; } = new();
 
 
-        public List<ForeignKeySchema> ForeignKeys = new List<ForeignKeySchema>();
+        public List<ForeignKeySchema> ForeignKeys { get; set; } = new();
     }
 
     public class Column
@@ -89,11 +89,13 @@ namespace DBUtil
     public class ForeignKeySchema
     {
 
-        public string ColumnName;
+        public List<string> ColumnNames { get; set; } = new();
 
-        public string ForeignTableName;
+        public string ReferencedTableName { get; set; }
 
-        public string ForeignColumnName;
+        public List<string> ReferencedColumnNames { get; set; } = new();
+        public string OnDelete { get; set; } = "NO ACTION";
+        public string OnUpdate { get; set; } = "NO ACTION";
 
     }
 

@@ -19,6 +19,7 @@ long Count(string table) { using var db = Open(); return Convert.ToInt64(db.GetD
 
 try
 {
+    SchemaMigrationTests.Run(directory);
     ProcedureScriptTests.Run(directory);
     using (var metadataDb = (SQLiteDbAccess)DbAccessFactory.Create($"Data Source={Path.Combine(directory, "metadata.db")};Pooling=False", "SQLITE"))
     {
@@ -40,12 +41,12 @@ try
     }
     Console.WriteLine("PASS: SQLite metadata readers, column details, catalogs and schema error propagation.");
     var migrationSchema = new DbSchema();
-    migrationSchema.DbTables.Add(new TableStruct
+    migrationSchema.Tables.Add(new TableStruct
     {
         TableSchemaName = "dbo", Name = "source",
         Columns = new List<Column> { new Column { Name = "id", Type = "int", IsNullable = true, Default = "" } }
     });
-    migrationSchema.DbViews2.AddRange(new[]
+    migrationSchema.ViewDefinitions.AddRange(new[]
     {
         new ViewSchema { SchemaName = "dbo", ViewName = "dependent", ViewSQL = "CREATE VIEW dbo.dependent AS SELECT * FROM dbo.valid" },
         new ViewSchema
@@ -224,8 +225,8 @@ try
     using (var db = Open())
     {
         var schema = db.ShowDbSchema();
-        Check(schema.DbTables.Single(t => t.Name == "sheet0").Columns.Count == 2, "Batched SQLite schema");
-        Check(schema.DbTables.Single(t => t.Name == "typed").Columns.Count == 5, "Typed table schema");
+        Check(schema.Tables.Single(t => t.Name == "sheet0").Columns.Count == 2, "Batched SQLite schema");
+        Check(schema.Tables.Single(t => t.Name == "typed").Columns.Count == 5, "Typed table schema");
     }
     using (var tracked = TrackingAccess.Wrap(Open(), tracker))
         ExcelIO.ExportSheetsWithMiniExcel(tables, Path.Combine(directory, "many.xlsx"), tracked, "SQLITE");

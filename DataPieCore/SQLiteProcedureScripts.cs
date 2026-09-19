@@ -60,11 +60,11 @@ namespace DataPieCore
             string folder = Folder(sqlitePath);
             Directory.CreateDirectory(folder);
             var errors = new List<string>();
-            var procedures = schema.DbProcs ?? new List<Proc>();
+            var procedures = schema.Procedures ?? new List<Proc>();
             var counts = procedures.GroupBy(proc => proc.Name, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
-            var objects = new HashSet<string>(schema.DbTables.Select(table => table.TableSchemaName + "." + table.Name)
-                .Concat(schema.DbViews2.Select(view => view.SchemaName + "." + view.ViewName)), StringComparer.OrdinalIgnoreCase);
+            var objects = new HashSet<string>(schema.Tables.Select(table => table.TableSchemaName + "." + table.Name)
+                .Concat(schema.ViewDefinitions.Select(view => view.SchemaName + "." + view.ViewName)), StringComparer.OrdinalIgnoreCase);
             var usedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var proc in procedures)
             {
@@ -317,7 +317,7 @@ namespace DataPieCore
             int end = qualified ? 4 : 2;
             if (!statement[end].Equals("SET", StringComparison.OrdinalIgnoreCase)) return;
             string tableName = Unquote(statement[qualified ? 3 : 1]);
-            var tables = schema.DbTables.Where(table => table.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase) &&
+            var tables = schema.Tables.Where(table => table.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase) &&
                 (!qualified || table.TableSchemaName.Equals(Unquote(statement[1]), StringComparison.OrdinalIgnoreCase))).ToList();
             if (tables.Count != 1) return;
             var columns = new HashSet<string>(tables[0].Columns.Where(column => new[]

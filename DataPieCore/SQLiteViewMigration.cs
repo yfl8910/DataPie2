@@ -18,17 +18,17 @@ namespace DataPieCore
         {
             var errors = new List<string>();
             var created = new List<ViewSchema>();
-            var names = schema.DbTables.Select(table => table.Name)
-                .Concat(schema.DbViews2.Select(view => view.ViewName))
+            var names = schema.Tables.Select(table => table.Name)
+                .Concat(schema.ViewDefinitions.Select(view => view.ViewName))
                 .GroupBy(name => name, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
             var objects = new HashSet<string>(
-                schema.DbTables.Select(table => table.TableSchemaName + "." + table.Name)
-                    .Concat(schema.DbViews2.Where(view => names[view.ViewName] == 1)
+                schema.Tables.Select(table => table.TableSchemaName + "." + table.Name)
+                    .Concat(schema.ViewDefinitions.Where(view => names[view.ViewName] == 1)
                         .Select(view => view.SchemaName + "." + view.ViewName)),
                 StringComparer.OrdinalIgnoreCase);
 
-            foreach (var view in schema.DbViews2)
+            foreach (var view in schema.ViewDefinitions)
             {
                 try
                 {

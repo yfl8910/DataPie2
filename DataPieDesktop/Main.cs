@@ -176,14 +176,14 @@ namespace DataPieDesktop
 
                 dbs = dbaccess.ShowDbSchema();
 
-                tableList = dbs.DbTables.Select(p => p.Name).ToList();
+                tableList = dbs.Tables.Select(p => p.Name).ToList();
 
-                viewList = dbs.DbViews;
+                viewList = dbs.ViewNames;
 
-                if (dbs.DbProcs != null)
+                if (dbs.Procedures != null)
                 {
 
-                    SpList = dbs.DbProcs.Select(p => p.Name).ToList();
+                    SpList = dbs.Procedures.Select(p => p.Name).ToList();
                 }
                 else
                 {
@@ -526,7 +526,7 @@ namespace DataPieDesktop
             }
             else
             {
-                string sql = SqlWriter.WriteSelect(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
+                string sql = SqlWriter.WriteSelect(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
 
                 richTextBox1.Text = sql;
 
@@ -859,7 +859,7 @@ namespace DataPieDesktop
 
         private async void button9_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteSelect(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
+            string sql = SqlWriter.WriteSelect(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType, 1000);
             richTextBox1.Text = sql;
             this.BeginInvoke(new System.EventHandler(ShowMessage), "Select Sql Generated");
 
@@ -867,7 +867,7 @@ namespace DataPieDesktop
 
         private async void button13_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteDelete(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
+            string sql = SqlWriter.WriteDelete(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
             richTextBox1.Text = sql;
             this.BeginInvoke(new System.EventHandler(ShowMessage), "Delete Sql Generated");
 
@@ -875,7 +875,7 @@ namespace DataPieDesktop
 
         private async void button14_Click(object sender, EventArgs e)
         {
-            string sql = SqlWriter.WriteUpdate(dbs.DbTables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
+            string sql = SqlWriter.WriteUpdate(dbs.Tables.FirstOrDefault(p => p.Name == tableName), AppState.DatabaseType);
             richTextBox1.Text = sql;
             this.BeginInvoke(new System.EventHandler(ShowMessage), "Update Sql Generated");
 
@@ -977,8 +977,8 @@ namespace DataPieDesktop
                     SqlServerToSQLite._cancelled = false;
                     SqlServerToSQLite.dbs = dbs;
 
-                    dbs.DbViews2 = ((SqlServerDbAccess)dbaccess).ShowViews2();
-                    dbs.DbProcs = ((SqlServerDbAccess)dbaccess).ReadProcedureDefinitions();
+                    dbs.ViewDefinitions = ((SqlServerDbAccess)dbaccess).ReadViewDefinitions();
+                    dbs.Procedures = ((SqlServerDbAccess)dbaccess).ReadProcedureDefinitions();
                     var migration = SqlServerToSQLite.CreateSQLiteDatabase(filename, password, true);
                     var viewErrors = migration.ViewErrors;
 
@@ -988,8 +988,8 @@ namespace DataPieDesktop
                     watch.Stop();
 
                     string ss = string.Format("Sqlite careate successful! Time: {0} seconds, Copy Rows: {1} ", watch.ElapsedMilliseconds / 1000, SqlServerToSQLite.TotalCopyed);
-                    ss += $"Views created: {dbs.DbViews2.Count - viewErrors.Count}, failed: {viewErrors.Count}";
-                    ss += $"; procedures fully converted: {dbs.DbProcs.Count - migration.ProcedureErrors.Count}, partial/unsupported: {migration.ProcedureErrors.Count}";
+                    ss += $"Views created: {dbs.ViewDefinitions.Count - viewErrors.Count}, failed: {viewErrors.Count}";
+                    ss += $"; procedures fully converted: {dbs.Procedures.Count - migration.ProcedureErrors.Count}, partial/unsupported: {migration.ProcedureErrors.Count}";
                     if (viewErrors.Count > 0 || migration.ProcedureErrors.Count > 0)
                     {
                         ss = "Migration completed with conversion errors. " + ss;

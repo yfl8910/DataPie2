@@ -52,7 +52,7 @@ namespace DataPieCore
                 source.Open();
                 using var destination = new SQLiteConnection(CreateSQLiteConnectionString(sqlitePath, password));
                 destination.Open();
-                foreach (var table in dbs.DbTables)
+                foreach (var table in dbs.Tables)
                 {
                     currentProcessTable = table.TableSchemaName + "." + table.Name;
                     using var query = new SqlCommand(BuildSqlServerTableQuery(table), source)
@@ -376,7 +376,7 @@ namespace DataPieCore
         /// <param name="handler">A handle for progress notifications.</param>
         public static SQLiteMigrationResult CreateSQLiteDatabase(string sqlitePath, string password, bool createViews)
         {
-            var duplicate = dbs.DbTables.GroupBy(table => table.Name, StringComparer.OrdinalIgnoreCase)
+            var duplicate = dbs.Tables.GroupBy(table => table.Name, StringComparer.OrdinalIgnoreCase)
                 .FirstOrDefault(group => group.Count() > 1);
             if (duplicate != null)
                 throw new InvalidOperationException($"Multiple source tables map to SQLite table '{duplicate.Key}'.");
@@ -384,10 +384,24 @@ namespace DataPieCore
             SQLiteConnection.CreateFile(sqlitePath);
             using var connection = new SQLiteConnection(CreateSQLiteConnectionString(sqlitePath, password));
             connection.Open();
-            foreach (var table in dbs.DbTables)
+            foreach (var table in dbs.Tables)
             {
                 CheckCancelled();
                 AddSQLiteTable(connection, table);
+            }
+            // SQL Server foreign keys may reference a unique key instead of the primary key.
+            int index = 0;
+            var indexedKeys = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var key in dbs.Tables.SelectMany(table => table.ForeignKeys))
+            {
+                var parent = dbs.Tables.Single(table => string.Equals(table.Name, key.ReferencedTableName, StringComparison.OrdinalIgnoreCase));
+                if (parent.Columns.Where(column => column.IsPrimaryKey).Select(column => column.Name)
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase).SetEquals(key.ReferencedColumnNames))
+                    continue;
+                string target = QuoteSQLiteName(parent.Name) + " (" + QuoteSQLiteNames(key.ReferencedColumnNames) + ")";
+                if (!indexedKeys.Add(target)) continue;
+                using var command = new SQLiteCommand($"CREATE UNIQUE INDEX {QuoteSQLiteName("__DataPie_FK_" + index++)} ON {target}", connection);
+                command.ExecuteNonQuery();
             }
             var result = new SQLiteMigrationResult();
             if (createViews) result.ViewErrors.AddRange(SQLiteViewMigration.Create(connection, dbs));
@@ -424,7 +438,7 @@ namespace DataPieCore
             // Prepare a CREATE TABLE DDL statement
             string stmt = BuildCreateTableQuery(dt);
             // Execute the query in order to actually create the table.
-            SQLiteCommand cmd = new SQLiteCommand(stmt, conn);
+            using var cmd = new SQLiteCommand(stmt, conn);
             cmd.ExecuteNonQuery();
         }
 
@@ -462,38 +476,31 @@ namespace DataPieCore
             else
                 sb.Append("\n");
 
-            // add foreign keys...
-            if (ts.ForeignKeys.Count > 0)
+            foreach (var foreignKey in ts.ForeignKeys)
             {
-                sb.Append(",\n");
-                for (int i = 0; i < ts.ForeignKeys.Count; i++)
-                {
-                    ForeignKeySchema foreignKey = ts.ForeignKeys[i];
-                    string stmt = string.Format("    FOREIGN KEY ([{0}])\n        REFERENCES [{1}]([{2}])",
-                                foreignKey.ColumnName, foreignKey.ForeignTableName, foreignKey.ForeignColumnName);
-
-                    sb.Append(stmt);
-                    if (i < ts.ForeignKeys.Count - 1)
-                        sb.Append(",\n");
-                } // for
+                if (foreignKey.ColumnNames.Count == 0 || foreignKey.ColumnNames.Count != foreignKey.ReferencedColumnNames.Count)
+                    throw new InvalidOperationException($"Invalid foreign key on table '{ts.Name}'.");
+                sb.Append($",\n    FOREIGN KEY ({QuoteSQLiteNames(foreignKey.ColumnNames)}) REFERENCES " +
+                    $"{QuoteSQLiteName(foreignKey.ReferencedTableName)} ({QuoteSQLiteNames(foreignKey.ReferencedColumnNames)}) " +
+                    $"ON DELETE {ForeignKeyAction(foreignKey.OnDelete)} ON UPDATE {ForeignKeyAction(foreignKey.OnUpdate)}");
             }
 
             sb.Append("\n");
             sb.Append(");\n");
 
-            //// Create any relevant indexes
-            //if (ts.Indexes != null)
-            //{
-            //    for (int i = 0; i < ts.Indexes.Count; i++)
-            //    {
-            //        string stmt = BuildCreateIndex(ts.TableName, ts.Indexes[i]);
-            //        sb.Append(stmt + ";\n");
-            //    } // for
-            //} // if
-
             string query = sb.ToString();
             return query;
         }
+
+        private static string QuoteSQLiteName(string name) => SqlQueryBuilder.QuoteIdentifier(name, "SQLITE");
+
+        private static string QuoteSQLiteNames(IEnumerable<string> names) => string.Join(", ", names.Select(QuoteSQLiteName));
+
+        private static string ForeignKeyAction(string action) => action switch
+        {
+            "NO ACTION" or "RESTRICT" or "CASCADE" or "SET NULL" or "SET DEFAULT" => action,
+            _ => throw new InvalidOperationException($"Unsupported foreign key action: {action}")
+        };
 
         /// <summary>
         /// Used when creating the CREATE TABLE DDL. Creates a single row
