@@ -117,6 +117,7 @@ namespace DataPieCore
             if (body.Count == 0 || body.Contains(";"))
                 throw new NotSupportedException("Expected one view query.");
             if (allowWrites) NormalizeDelete(body);
+            if (allowWrites) NormalizeJoinedUpdate(body);
             ConvertTop(body);
             ConvertPivot(body);
             var numericExpressions = new HashSet<string>(StringComparer.Ordinal);
@@ -200,10 +201,64 @@ namespace DataPieCore
                     expression = $"CASE WHEN {args[0]} IS NULL THEN NULL WHEN {value} IS NULL THEN {invalid} ELSE CAST({value} AS INTEGER) END";
                 }
                 expression = "(" + expression + ")";
-                if (name == "LEN" || name == "YEAR" || name == "MONTH" || name == "DAY") numericExpressions.Add(expression);
+                bool NumericArgument(List<string> argument) => argument.Count == 1 &&
+                    (numericExpressions.Contains(argument[0]) || numericVariables?.Contains(argument[0]) == true ||
+                     decimal.TryParse(argument[0], System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out _));
+                if (name == "LEN" || name == "YEAR" || name == "MONTH" || name == "DAY" ||
+                    (name == "ISNULL" && arguments.All(NumericArgument))) numericExpressions.Add(expression);
                 tokens.RemoveRange(i, end - i + 1);
                 tokens.Insert(i, expression);
             }
+        }
+
+        private static void NormalizeJoinedUpdate(List<string> body)
+        {
+            if (body.Count < 3 || !body[0].Equals("UPDATE", StringComparison.OrdinalIgnoreCase) ||
+                !body[2].Equals("SET", StringComparison.OrdinalIgnoreCase)) return;
+            int from = body.FindIndex(3, token => token.Equals("FROM", StringComparison.OrdinalIgnoreCase));
+            if (from < 0) return;
+            int join = body.FindIndex(from + 1, token => token.Equals("JOIN", StringComparison.OrdinalIgnoreCase));
+            if (join < 0) return;
+            int targetEnd = join;
+            if (body[join - 1].Equals("INNER", StringComparison.OrdinalIgnoreCase)) targetEnd--;
+            string alias = body[1];
+            if (!body[targetEnd - 1].Equals(alias, StringComparison.OrdinalIgnoreCase)) return;
+            int tableEnd = targetEnd - 1;
+            if (body[tableEnd - 1].Equals("AS", StringComparison.OrdinalIgnoreCase)) tableEnd--;
+            var target = body.GetRange(from + 1, tableEnd - from - 1);
+            if (!(target.Count == 1 || (target.Count == 3 && target[1] == ".")))
+                throw new NotSupportedException("Joined UPDATE requires a simple target table.");
+            int on = body.FindIndex(join + 1, token => token.Equals("ON", StringComparison.OrdinalIgnoreCase));
+            if (on < 0 || body.Skip(join + 1).Any(token => token.Equals("JOIN", StringComparison.OrdinalIgnoreCase)))
+                throw new NotSupportedException("Only one INNER JOIN is supported for alias UPDATE.");
+            int where = body.FindIndex(on + 1, token => token.Equals("WHERE", StringComparison.OrdinalIgnoreCase));
+            var assignments = body.GetRange(3, from - 3);
+            int depth = 0;
+            for (int i = 0; i < assignments.Count; i++)
+            {
+                if (depth == 0 && (i == 0 || assignments[i - 1] == ",") && i + 3 < assignments.Count &&
+                    assignments[i].Equals(alias, StringComparison.OrdinalIgnoreCase) && assignments[i + 1] == "." && assignments[i + 3] == "=")
+                    assignments.RemoveRange(i, 2);
+                if (assignments[i] == "(") depth++;
+                if (assignments[i] == ")") depth--;
+            }
+            var rewritten = new List<string> { "UPDATE" };
+            rewritten.AddRange(target);
+            rewritten.AddRange(new[] { "AS", alias, "SET" });
+            rewritten.AddRange(assignments);
+            rewritten.Add("FROM");
+            rewritten.AddRange(body.GetRange(join + 1, on - join - 1));
+            rewritten.AddRange(new[] { "WHERE", "(" });
+            rewritten.AddRange(body.GetRange(on + 1, (where < 0 ? body.Count : where) - on - 1));
+            rewritten.Add(")");
+            if (where >= 0)
+            {
+                rewritten.AddRange(new[] { "AND", "(" });
+                rewritten.AddRange(body.Skip(where + 1));
+                rewritten.Add(")");
+            }
+            body.Clear();
+            body.AddRange(rewritten);
         }
 
         private static void NormalizeDelete(List<string> body)

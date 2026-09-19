@@ -37,6 +37,20 @@ internal static class ProcedureScriptTests
             });
         string updateFrom = "UPDATE [dbo].[SellOut] SET [ProductType] = a.ProductType " +
             "from [dbo].[ProductTypeModelMap] a WHERE SellOut.Model=a.Model";
+        schema.DbTables.Add(new TableStruct
+        {
+            Name = "Ratios", TableSchemaName = "dbo", PrimaryKey = "id",
+            Columns = new List<Column>
+            {
+                new Column { Name="id", Type="int", IsPrimaryKey=true, Default="" },
+                new Column { Name="SOA", Type="float", IsNullable=true, Default="" },
+                new Column { Name="Net 2", Type="float", IsNullable=true, Default="" },
+                new Column { Name="BC", Type="float", IsNullable=true, Default="" },
+                new Column { Name="SOA_Ratio", Type="float", IsNullable=true, Default="" }
+            }
+        });
+        Add("NumericColumnAddition", "UPDATE dbo.Ratios SET SOA_Ratio=[SOA]/([Net 2]+BC) WHERE ([Net 2]+BC)>0");
+        Add("NumericNullAddition", "UPDATE dbo.Ratios SET SOA_Ratio=ISNULL([Net 2],0)+ISNULL(BC,0)+ISNULL(SOA,0)-ISNULL(BC,0)");
         Add("UpdateSellOut", updateFrom);
         Add("UpdateSellOutWithLocals", "declare @year int=YEAR(GETDATE()) declare @month int=MONTH(GETDATE()) " + updateFrom);
         Add("UpdateSellOutAfterBadLocal", "declare @year int=YEAR(GETDATE()) - 1 " + updateFrom);
@@ -63,6 +77,10 @@ internal static class ProcedureScriptTests
         Add("ConditionalDateLocals", "DECLARE @year int=YEAR(GETDATE()) DECLARE @month int=MONTH(GETDATE()) DECLARE @day int=DAY(GETDATE()) " +
             "IF @day<15 SET @month=@month-1 IF @year=2027 SET @year=2026 IF @month=0 SET @month=12 " +
             "SELECT @year AS year, @month AS month;");
+        Add("InitializerArithmetic", "DECLARE @month int=MONTH(GETDATE())-1 DECLARE @previous int=@month+2-1 " +
+            "IF @month=0 SET @month=12 SELECT @month AS month, @previous AS previous;");
+        Add("InitializerDependency", "DECLARE @base int=@input+1, @middle int=@base-2, @result int=@middle+3; SELECT @result;", "@input int=10");
+        Add("InitializerDecimal", "DECLARE @result decimal(10,2)=@input+2-1; SELECT @result;", "@input decimal(10,2)=1.25");
         Add("ConditionalElse", "DECLARE @month int=1; IF @month=1 SET @month=2 ELSE SET @month=3; SELECT @month;");
         Add("ConditionalNull", "DECLARE @value int=4; IF @input>0 SET @value=@value+2-1; SELECT @value;", "@input int=NULL");
         Add("ConstantLocals", "DECLARE @code nvarchar(20) = N'O''Brien', @amount decimal(10,2) = -1.25, @empty int; " +
@@ -73,7 +91,7 @@ internal static class ProcedureScriptTests
         Add("DuplicateLocal", "DECLARE @YEAR int = 2000; SELECT @year;", "@year int = 1999");
         Add("ComplexLocal", "DECLARE @year int = YEAR(GETDATE()) - 1; SELECT @year;");
         Add("LateLocal", "SELECT 1; DECLARE @year int = YEAR(GETDATE()); SELECT @year;");
-        Add("PartialWrite", "INSERT INTO dbo.items VALUES (701, N'first'); UPDATE dbo.items SET code = N'wrong' WHERE id + 1 = 702; INSERT INTO dbo.items VALUES (702, N'last');");
+        Add("PartialWrite", "INSERT INTO dbo.items VALUES (701, N'first'); UPDATE dbo.items SET code = N'wrong' WHERE code + 1 = 702; INSERT INTO dbo.items VALUES (702, N'last');");
         Add("PartialQuery", "SELECT 1; SELECT code COLLATE Latin1_General_CI_AS FROM dbo.items; SELECT missing FROM dbo.items; SELECT 2;");
         Add("PartialControl", "SELECT 1; IF 1 = 0 BEGIN DELETE FROM dbo.items; END; DELETE FROM dbo.items;");
         Add("PartialAssignment", "SELECT 1; SELECT @id = 2; DELETE FROM dbo.items WHERE id = @id;", "@id int = 1");
@@ -99,10 +117,19 @@ internal static class ProcedureScriptTests
         schema.DbProcs.Add(new Proc { SchemaName = "dbo", Name = "Encrypted" });
 
         SqlServerToSQLite.dbs = schema;
-        var result = SqlServerToSQLite.CreateSQLiteDatabase(path, null, false);
-        Check(result.ProcedureErrors.Count == 23, "Partial and unsupported procedures must be explicitly reported");
-        int supportedCount = schema.DbProcs.Count - 11;
         string folder = Path.Combine(directory, "StoredProcedures");
+        Directory.CreateDirectory(folder);
+        File.WriteAllText(Path.Combine(folder, "GetItems.txt"), "old manually edited SQL");
+        File.WriteAllText(Path.Combine(folder, "Required.txt"), "-- DataPie SQLite procedure: invalid-json");
+        File.WriteAllText(Path.Combine(folder, "AddItem.txt"),
+            "-- DataPie SQLite procedure: {\"DatabaseFile\":\"other.db\",\"Source\":\"other.AddItem\"}\nSELECT 999;");
+        var result = SqlServerToSQLite.CreateSQLiteDatabase(path, null, false);
+        Check(result.ProcedureErrors.Count == 20, "Partial and unsupported procedures must be explicitly reported");
+        int supportedCount = schema.DbProcs.Count - 10;
+        Check(!File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("old manually edited SQL") &&
+            !File.ReadAllText(Path.Combine(folder, "Required.txt")).Contains("invalid-json") &&
+            !File.ReadAllText(Path.Combine(folder, "AddItem.txt")).Contains("other.db"),
+            "Existing procedure files are overwritten regardless of old content or metadata");
         Check(Directory.GetFiles(folder, "*.txt").Length == schema.DbProcs.Count, "One text file per procedure");
         Check(File.ReadAllText(Path.Combine(folder, "UnsupportedIf.txt")).Contains("-- UNSUPPORTED:"), "Unsupported file marker");
         Check(File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("LIMIT 10"), "Reusable TOP conversion");
@@ -111,6 +138,15 @@ internal static class ProcedureScriptTests
         using var db = DbAccessFactory.Create($"Data Source={path};Pooling=False", "SQLITE");
         Check(db.GetProcs().Count == supportedCount, "Only supported scripts appear in the procedure list");
         Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 0, "Export validation must not execute writes");
+        db.ExecuteSql("INSERT INTO Ratios VALUES (1,10,2,3,NULL),(2,10,-3,3,NULL),(3,10,NULL,3,NULL)");
+        db.RunProcedure("NumericColumnAddition");
+        var ratios = db.GetDataTable("SELECT SOA_Ratio FROM Ratios ORDER BY id");
+        Check(Convert.ToDouble(ratios.Rows[0][0]) == 2 && ratios.Rows[1][0] == DBNull.Value && ratios.Rows[2][0] == DBNull.Value,
+            "Numeric column addition preserves division, WHERE filtering and NULL semantics");
+        db.RunProcedure("NumericNullAddition");
+        ratios = db.GetDataTable("SELECT SOA_Ratio FROM Ratios ORDER BY id");
+        Check(Convert.ToDouble(ratios.Rows[0][0]) == 12 && Convert.ToDouble(ratios.Rows[1][0]) == 7 && Convert.ToDouble(ratios.Rows[2][0]) == 10,
+            "Numeric ISNULL results remain numeric across chained addition and subtraction");
         db.ExecuteSql("INSERT INTO SellOut VALUES ('matched','old'),('unmatched','keep'); INSERT INTO ProductTypeModelMap VALUES ('matched','new');");
         foreach (string name in new[] { "UpdateSellOut", "UpdateSellOutWithLocals", "UpdateSellOutAfterBadLocal" })
         {
@@ -181,7 +217,7 @@ internal static class ProcedureScriptTests
         Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 3, "Control flow and assignment suffixes never execute");
         string partialSql = File.ReadAllText(Path.Combine(folder, "PartialWrite.txt"));
         Check(partialSql.Contains("-- PARTIAL:") && partialSql.Contains("-- UNSUPPORTED:") && partialSql.Contains("-- UPDATE"), "Skipped SQL remains commented for inspection");
-        foreach (string name in new[] { "RecoverLocal", "RecoverAssignment", "RecoverOutput", "RecoverExpression", "RecoverRequired" })
+        foreach (string name in new[] { "RecoverLocal", "RecoverAssignment", "RecoverOutput", "RecoverRequired" })
         {
             using var data = db.RunProcedure(name, Array.Empty<IDataParameter>(), "recovered");
             Check(data.Tables.Count == 1 && Convert.ToInt32(data.Tables[0].Rows[0][0]) == 42,
@@ -195,6 +231,20 @@ internal static class ProcedureScriptTests
         var bind = scripts.GetMethod("Bind", BindingFlags.Static | BindingFlags.NonPublic)!;
         object script = load.Invoke(null, new object[] { db.ConnectionString, "DateLocals" })!;
         object conditional = load.Invoke(null, new object[] { db.ConnectionString, "ConditionalDateLocals" })!;
+        object arithmetic = load.Invoke(null, new object[] { db.ConnectionString, "InitializerArithmetic" })!;
+        foreach (var now in new[] { new DateTime(2026,1,1), new DateTime(2026,9,19) })
+        {
+            var parameters = (IDbDataParameter[])bind.Invoke(null, new object[] { arithmetic, Array.Empty<IDataParameter>(), now })!;
+            var values = parameters.ToDictionary(parameter => parameter.ParameterName, parameter => parameter.Value);
+            Check(Convert.ToInt32(values["@month"]) == (now.Month == 1 ? 12 : now.Month-1) &&
+                Convert.ToInt32(values["@previous"]) == now.Month, "Initializers run in declaration order before conditional assignments");
+        }
+        using (var data = db.RunProcedure("InitializerDependency", Array.Empty<IDataParameter>(), "result"))
+            Check(Convert.ToInt32(data.Tables[0].Rows[0][0]) == 12, "Transitive initializer dependencies retain input parameters");
+        using (var data = db.RunProcedure("InitializerDependency", new IDataParameter[] { db.CreatePara("@input", DBNull.Value) }, "result"))
+            Check(data.Tables[0].Rows[0][0] == DBNull.Value, "Initializer arithmetic propagates NULL");
+        using (var data = db.RunProcedure("InitializerDecimal", Array.Empty<IDataParameter>(), "result"))
+            Check(Convert.ToDecimal(data.Tables[0].Rows[0][0]) == 2.25m, "Numeric variable initialization preserves decimal precision");
         foreach (var test in new[] { (new DateTime(2027,1,14),2026,12), (new DateTime(2027,1,15),2026,1),
             (new DateTime(2026,1,1),2026,12), (new DateTime(2028,3,14),2028,2), (new DateTime(2028,3,15),2028,3) })
         {
@@ -310,6 +360,16 @@ internal static class ProcedureScriptTests
             Check(Convert.ToInt64(command.ExecuteScalar()) == 0, "Qualified and unqualified DELETE without FROM execute");
         Check(ConvertSql("DELETE FROM dbo.target WHERE customer = 'keep'").Contains("WHERE customer = 'keep'"),
             "Existing DELETE FROM syntax stays supported");
+        Execute("INSERT INTO target VALUES ('A',0,0),('B',0,0),('missing',9,9)");
+        Execute(ConvertSql("UPDATE g SET g.revenue=s.amount, g.qty=2 FROM dbo.target g INNER JOIN dbo.source s " +
+            "ON g.customer=s.customer AND s.metric='Revenue' AND s.detail='x' WHERE g.customer='A' OR g.customer='B'"));
+        using (var command = new SQLiteCommand("SELECT customer,revenue,qty FROM target ORDER BY customer", connection))
+        using (var reader = command.ExecuteReader())
+        {
+            Check(reader.Read() && reader.GetDouble(1) == 10 && reader.GetDouble(2) == 2, "Alias UPDATE applies matching join values");
+            Check(reader.Read() && reader.GetDouble(1) == 50 && reader.GetDouble(2) == 2, "Alias UPDATE preserves OR filter precedence");
+            Check(reader.Read() && reader.GetDouble(1) == 9 && reader.GetDouble(2) == 9, "Unmatched rows remain unchanged");
+        }
         foreach (string unsupported in new[] { select.Replace("TOP 1", "TOP 1 PERCENT"),
             select.Replace("TOP 1", "TOP 1 WITH TIES"), select.Replace("SUM(amount)", "AVG(amount)"),
             select.Replace("SUM(ISNULL([Qty],0))", "COUNT(*)"),

@@ -24,6 +24,8 @@ namespace DataPieCore
             public bool HasDefault { get; set; }
             public string DefaultValue { get; set; }
             public string Initializer { get; set; }
+            public string SourceVariable { get; set; }
+            public long Offset { get; set; }
         }
 
         internal sealed class Metadata
@@ -79,17 +81,10 @@ namespace DataPieCore
                     if (!usedNames.Add(fileName)) throw new InvalidOperationException("Duplicate procedure identity.");
                 }
                 string path = Path.Combine(folder, fileName + ".txt");
-                if (File.Exists(path))
-                {
-                    var existing = Read(path);
-                    if (existing.Metadata.DatabaseFile != metadata.DatabaseFile || existing.Metadata.Source != metadata.Source)
-                        throw new IOException($"Procedure export would overwrite an unrelated file: {path}");
-                }
-
                 string sql;
                 try
                 {
-                    var statements = ConvertProcedure(proc.CreateSql, metadata, objects);
+                    var statements = ConvertProcedure(proc.CreateSql, metadata, objects, schema);
                     // EXPLAIN compiles each statement without executing INSERT/UPDATE/DELETE.
                     for (int i = 0; i < statements.Count; i++)
                     {
@@ -116,6 +111,9 @@ namespace DataPieCore
                     foreach (var assignment in metadata.Assignments)
                         referencedVariables.UnionWith(SQLiteViewMigration.Tokenize(assignment.Left + " " + assignment.Right + " " + assignment.Target + " " + assignment.Expression)
                             .Where(token => token.StartsWith("@", StringComparison.Ordinal)));
+                    for (int i = metadata.Locals.Count - 1; i >= 0; i--)
+                        if (referencedVariables.Contains(metadata.Locals[i].Name) && metadata.Locals[i].SourceVariable != null)
+                            referencedVariables.Add(metadata.Locals[i].SourceVariable);
                     metadata.Parameters.RemoveAll(parameter => !referencedVariables.Contains(parameter.Name));
                     metadata.Locals.RemoveAll(local => !referencedVariables.Contains(local.Name));
                     metadata.ReadOnly = executable.All(statement => statement.StartsWith("SELECT ", StringComparison.OrdinalIgnoreCase));
@@ -145,7 +143,7 @@ namespace DataPieCore
             => "-- UNSUPPORTED: " + reason.Replace("\r", " ").Replace("\n", " ") + Environment.NewLine +
                 string.Join(Environment.NewLine, sql.Replace("\r\n", "\n").Replace('\r', '\n').Split('\n').Select(line => "-- " + line));
 
-        private static List<string> ConvertProcedure(string definition, Metadata metadata, HashSet<string> objects)
+        private static List<string> ConvertProcedure(string definition, Metadata metadata, HashSet<string> objects, DbSchema schema)
         {
             if (string.IsNullOrWhiteSpace(definition))
                 throw new NotSupportedException("Definition unavailable: permissions, encryption or CLR procedure.");
@@ -292,6 +290,7 @@ namespace DataPieCore
                     var numericVariables = new HashSet<string>(metadata.Parameters.Concat(metadata.Locals)
                         .Where(parameter => parameter.Type == DbType.Int64 || parameter.Type == DbType.Decimal || parameter.Type == DbType.Double)
                         .Select(parameter => parameter.Name), StringComparer.OrdinalIgnoreCase);
+                    AddNumericUpdateColumns(statement, schema, numericVariables);
                     result.Add(SQLiteViewMigration.ConvertQuery(statement, objects, allowWrites: true, numericVariables));
                 }
                 catch (NotSupportedException ex)
@@ -306,6 +305,28 @@ namespace DataPieCore
             }
             if (result.Count == 0) throw new NotSupportedException("Procedure has no supported SQL statements.");
             return result;
+        }
+
+        private static void AddNumericUpdateColumns(List<string> statement, DbSchema schema, HashSet<string> numeric)
+        {
+            if (statement.Count < 4 || !statement[0].Equals("UPDATE", StringComparison.OrdinalIgnoreCase) ||
+                statement.Any(token => new[] { "FROM", "JOIN", "SELECT" }.Contains(token, StringComparer.OrdinalIgnoreCase))) return;
+            string Unquote(string token) => token.StartsWith("[") ? token.Substring(1, token.Length - 2).Replace("]]", "]") :
+                token.StartsWith("\"") ? token.Substring(1, token.Length - 2).Replace("\"\"", "\"") : token;
+            bool qualified = statement.Count > 4 && statement[2] == ".";
+            int end = qualified ? 4 : 2;
+            if (!statement[end].Equals("SET", StringComparison.OrdinalIgnoreCase)) return;
+            string tableName = Unquote(statement[qualified ? 3 : 1]);
+            var tables = schema.DbTables.Where(table => table.Name.Equals(tableName, StringComparison.OrdinalIgnoreCase) &&
+                (!qualified || table.TableSchemaName.Equals(Unquote(statement[1]), StringComparison.OrdinalIgnoreCase))).ToList();
+            if (tables.Count != 1) return;
+            var columns = new HashSet<string>(tables[0].Columns.Where(column => new[]
+                { "tinyint", "smallint", "int", "bigint", "decimal", "numeric", "money", "smallmoney", "float", "real" }
+                .Contains(column.Type?.Split('(')[0].Trim(), StringComparer.OrdinalIgnoreCase)).Select(column => column.Name), StringComparer.OrdinalIgnoreCase);
+            for (int i = end + 1; i < statement.Count; i++)
+                if (!statement[i].StartsWith("@") && !statement[i].StartsWith("'") &&
+                    (i == 0 || statement[i - 1] != ".") && (i + 1 == statement.Count || statement[i + 1] != ".") && columns.Contains(Unquote(statement[i])))
+                    numeric.Add(statement[i]);
         }
 
         private static void ReadConditionalAssignments(List<string> body, Metadata metadata)
@@ -419,6 +440,14 @@ namespace DataPieCore
                                 throw new NotSupportedException("Date initializers require datetime/datetime2; date parts require int/bigint.");
                             local.Initializer = function;
                         }
+                        else if (value.StartsWith("@", StringComparison.Ordinal))
+                        {
+                            var source = metadata.Parameters.Concat(metadata.Locals).FirstOrDefault(parameter =>
+                                parameter.Name.Equals(value, StringComparison.OrdinalIgnoreCase));
+                            if (source == null || !IsNumeric(source.Type) || source.Type != local.Type)
+                                throw new NotSupportedException("Local initializer requires a previously declared numeric variable of the same type.");
+                            local.SourceVariable = source.Name;
+                        }
                         else
                         {
                             if (value == "-" || value == "+") value += Next();
@@ -434,6 +463,16 @@ namespace DataPieCore
                                 throw new NotSupportedException($"Unsupported initializer for {name}.", ex);
                             }
                         }
+                    }
+                    while (position < body.Count && (body[position] == "+" || body[position] == "-"))
+                    {
+                        if (!IsNumeric(local.Type)) throw new NotSupportedException("Initializer arithmetic requires a numeric type.");
+                        string operation = Next();
+                        string operand = Next();
+                        if (!long.TryParse(operand, NumberStyles.None, CultureInfo.InvariantCulture, out long amount))
+                            throw new NotSupportedException("Initializer offsets must be integer constants.");
+                        try { local.Offset = checked(local.Offset + (operation == "-" ? -amount : amount)); }
+                        catch (OverflowException ex) { throw new NotSupportedException("Initializer offset overflow.", ex); }
                     }
                     metadata.Locals.Add(local);
                 } while (Take(","));
@@ -497,10 +536,11 @@ namespace DataPieCore
                     value = DefaultValue(parameter);
                 }
                 return (IDbDataParameter)new SQLiteParameter(parameter.Name, parameter.Type) { Value = value };
-            }).Concat(script.Metadata.Locals.Select(local =>
-                (IDbDataParameter)new SQLiteParameter(local.Name, local.Type)
-                {
-                    Value = local.Initializer switch
+            }).ToList();
+            var boundValues = bound.ToDictionary(parameter => parameter.ParameterName, StringComparer.OrdinalIgnoreCase);
+            foreach (var local in script.Metadata.Locals)
+            {
+                object value = local.SourceVariable != null ? boundValues[local.SourceVariable].Value : local.Initializer switch
                     {
                         null => DefaultValue(local),
                         "GETDATE" => now,
@@ -508,9 +548,19 @@ namespace DataPieCore
                         "MONTH" => (long)now.Month,
                         "DAY" => (long)now.Day,
                         _ => throw new NotSupportedException($"Unsupported local initializer: {local.Initializer}")
-                    }
-                })).ToArray();
-            var boundValues = bound.ToDictionary(parameter => parameter.ParameterName, StringComparer.OrdinalIgnoreCase);
+                    };
+                if (value != DBNull.Value && value != null && local.Offset != 0)
+                    value = local.Type switch
+                    {
+                        DbType.Int64 => (object)checked(Convert.ToInt64(value, CultureInfo.InvariantCulture) + local.Offset),
+                        DbType.Decimal => checked(Convert.ToDecimal(value, CultureInfo.InvariantCulture) + local.Offset),
+                        DbType.Double => Convert.ToDouble(value, CultureInfo.InvariantCulture) + local.Offset,
+                        _ => throw new NotSupportedException("Initializer arithmetic requires a numeric type.")
+                    };
+                var parameter = new SQLiteParameter(local.Name, local.Type) { Value = value ?? DBNull.Value };
+                bound.Add(parameter);
+                boundValues.Add(local.Name, parameter);
+            }
             long? Evaluate(string expression)
             {
                 var tokens = SQLiteViewMigration.Tokenize(expression);
@@ -539,7 +589,7 @@ namespace DataPieCore
                 };
                 if (matches) boundValues[assignment.Target].Value = (object)Evaluate(assignment.Expression) ?? DBNull.Value;
             }
-            return bound;
+            return bound.ToArray();
         }
 
         private static Script Read(string path)
@@ -567,6 +617,8 @@ namespace DataPieCore
                 throw new IOException("Invalid procedure export index.");
             return names;
         }
+
+        private static bool IsNumeric(DbType type) => type == DbType.Int64 || type == DbType.Decimal || type == DbType.Double;
 
         private static object DefaultValue(Parameter parameter)
         {
