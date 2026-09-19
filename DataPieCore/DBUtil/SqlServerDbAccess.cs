@@ -11,10 +11,6 @@ namespace DBUtil
     /// </summary>
     public partial class SqlServerDbAccess : IDbAccess
     {
-        /// <summary>
-        /// 是否保持连接打开
-        /// </summary>
-        public bool IsKeepConnect { set; get; }
 
         /// <summary>
         /// 连接字符串
@@ -32,13 +28,6 @@ namespace DBUtil
         public DataBaseType DataBaseType { get; set; }
 
         /// <summary>
-        /// 连接是否打开
-        /// </summary>
-        public bool IsOpen { set; get; }
-
-
-
-        /// <summary>
         /// 执行sql语句
         /// </summary>
         /// <param name="strSql">要执行的sql语句</param>
@@ -51,24 +40,23 @@ namespace DBUtil
                 {
                     CommandTimeout = 1000
                 };
-                    
 
-                if (conn.State != ConnectionState.Open) conn.Open();
-                IsOpen = true;
+                if (conn.State != ConnectionState.Open)
+                    conn.Open();
 
                 return cmd.ExecuteNonQuery();
             }
             finally
             {
-                if (!IsKeepConnect)
+                try
                 {
-                    try { conn?.Close(); } catch { }
+                    conn?.Close();
                 }
-                IsOpen = conn?.State == ConnectionState.Open;
+                catch
+                {
+                }
             }
         }
-
-
 
         /// <summary>
         /// 获取阅读器
@@ -79,6 +67,7 @@ namespace DBUtil
         {
             return OwnedDataReader.Open(this, strSql, null, 10000);
         }
+
         /// <summary>
         /// 返回查询结果的数据表
         /// </summary>
@@ -89,20 +78,25 @@ namespace DBUtil
             using var command = new SqlCommand(strSql, (SqlConnection)conn);
             using var adapter = new SqlDataAdapter(command);
             var table = new DataTable("Table");
+
             try
             {
-                if (conn.State != ConnectionState.Open) conn.Open();
-                IsOpen = true;
+                if (conn.State != ConnectionState.Open)
+                    conn.Open();
                 adapter.Fill(table);
-                if (table.Columns.Count > 0) return table;
+                if (table.Columns.Count > 0)
+                    return table;
                 table.Dispose();
                 return null;
             }
-            catch { table.Dispose(); throw; }
+            catch
+            {
+                table.Dispose();
+                throw;
+            }
             finally
             {
-                if (!IsKeepConnect) conn.Close();
-                IsOpen = conn.State == ConnectionState.Open;
+                conn.Close();
             }
         }
 
@@ -112,8 +106,8 @@ namespace DBUtil
         public void Dispose()
         {
             conn?.Dispose();
-            IsOpen = false;
         }
+
         /// <summary>
         /// 根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
         /// </summary>
@@ -123,15 +117,14 @@ namespace DBUtil
             return DbAccessFactory.Create(ConnectionString, DataBaseType);
         }
 
-  
-
         #region 批量插入操作
-
 
         public bool BulkInsert(string tableName, IDataReader reader)
         {
-            if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentException(nameof(tableName));
-            if (reader == null) throw new ArgumentNullException(nameof(reader));
+            if (string.IsNullOrWhiteSpace(tableName))
+                throw new ArgumentException(nameof(tableName));
+            if (reader == null)
+                throw new ArgumentNullException(nameof(reader));
             string destination = SqlQueryBuilder.QuoteSqlServerTableName(tableName);
 
             using SqlConnection connection = new SqlConnection(ConnectionString);
@@ -161,8 +154,10 @@ namespace DBUtil
             for (int i = 0; i < reader.FieldCount; i++)
             {
                 string name = reader.GetName(i);
-                if (destinationColumns.Remove(name)) bulkCopy.ColumnMappings.Add(i, name);
+                if (destinationColumns.Remove(name))
+                    bulkCopy.ColumnMappings.Add(i, name);
             }
+
             if (bulkCopy.ColumnMappings.Count == 0)
                 throw new InvalidOperationException("No matching columns were found in the destination table.");
         }
@@ -188,7 +183,6 @@ namespace DBUtil
             connection.Open();
             return command.ExecuteNonQuery();
         }
-
 
         #endregion 存储过程操作
     }

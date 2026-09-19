@@ -9,10 +9,6 @@ namespace DBUtil
     /// </summary>
     public interface IDbAccess : IDisposable
     {
-        /// <summary>
-        /// 是否保持连接不断开
-        /// </summary>
-        bool IsKeepConnect { get; set; }
 
         /// <summary>
         /// 连接字符串
@@ -28,11 +24,6 @@ namespace DBUtil
         /// 数据库类型
         /// </summary>
         DataBaseType DataBaseType { get; set; }
-
-        /// <summary>
-        /// 记录是否打开了连接,防止多次打开连接
-        /// </summary>
-        bool IsOpen { get; set; }
 
       
 

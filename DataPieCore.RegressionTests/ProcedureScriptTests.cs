@@ -175,17 +175,14 @@ internal static class ProcedureScriptTests
             Check(data.Tables[0].Rows.Count == 1 && db.GetDataTable("SELECT * FROM items").Rows.Count == 2, "Values are bound, not interpolated");
         Throws<SQLiteException>(() => db.RunProcedure("Atomic"), "A failing write script must throw");
         Check(db.GetDataTable("SELECT * FROM items WHERE id = 900").Rows.Count == 0, "Write script rolls back all statements");
-        db.IsKeepConnect = true;
-        try
-        {
-            Throws<SQLiteException>(() => db.RunProcedure("Atomic"), "A failed procedure rolls back on a retained connection");
-            Check(db.conn.State == ConnectionState.Open && db.IsOpen, "Procedure failure retains the requested connection");
-            Check(db.GetDataTable("SELECT * FROM items WHERE id = 900").Rows.Count == 0, "Retained connection has no partial writes");
-            db.RunProcedure("AddItem", Values(901, "EUR"), out _);
-            Check(db.GetDataTable("SELECT * FROM items WHERE id = 901").Rows.Count == 1, "A new local transaction commits after failure");
-            db.RunProcedure("DeleteItem", new IDataParameter[] { new SQLiteParameter("@id", 901) }, out _);
-        }
-        finally { db.IsKeepConnect = false; }
+        db.conn.Open();
+        Throws<SQLiteException>(() => db.RunProcedure("Atomic"), "A failed procedure rolls back on an already-open connection");
+        Check(db.conn.State == ConnectionState.Closed, "Procedure failure closes the connection");
+        Check(db.GetDataTable("SELECT * FROM items WHERE id = 900").Rows.Count == 0, "Failed procedure has no partial writes");
+        db.RunProcedure("AddItem", Values(901, "EUR"), out _);
+        Check(db.conn.State == ConnectionState.Closed, "Successful procedure closes the connection");
+        Check(db.GetDataTable("SELECT * FROM items WHERE id = 901").Rows.Count == 1, "A new local transaction commits after failure");
+        db.RunProcedure("DeleteItem", new IDataParameter[] { new SQLiteParameter("@id", 901) }, out _);
         using (var data = db.RunProcedure("MultiResult", Array.Empty<IDataParameter>(), "result"))
             Check(data.Tables.Count == 2 && Convert.ToInt32(data.Tables[1].Rows[0][0]) == 2, "Multiple query results");
         db.RunProcedure("DeleteItem", new IDataParameter[] { new SQLiteParameter("@id", 2) }, out _);

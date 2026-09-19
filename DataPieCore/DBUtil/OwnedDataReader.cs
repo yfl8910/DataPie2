@@ -33,7 +33,6 @@ namespace DBUtil
                         command.Parameters.Add(parameter);
                     }
                 if (access.conn.State != ConnectionState.Open) access.conn.Open();
-                access.IsOpen = true;
                 return new OwnedDataReader(command.ExecuteReader(), command, access);
             }
             catch
@@ -46,8 +45,7 @@ namespace DBUtil
 
         private static void ReleaseConnection(IDbAccess access)
         {
-            if (!access.IsKeepConnect) access.conn.Close();
-            access.IsOpen = access.conn.State == ConnectionState.Open;
+            access.conn.Close();
         }
 
         public void Dispose()

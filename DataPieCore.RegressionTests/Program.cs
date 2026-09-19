@@ -19,6 +19,7 @@ long Count(string table) { using var db = Open(); return Convert.ToInt64(db.GetD
 
 try
 {
+    SqlServerAccessTests.Run();
     SchemaMigrationTests.Run(directory);
     ProcedureScriptTests.Run(directory);
     using (var metadataDb = (SQLiteDbAccess)DbAccessFactory.Create($"Data Source={Path.Combine(directory, "metadata.db")};Pooling=False", "SQLITE"))
@@ -170,14 +171,21 @@ try
     using (var db = Open())
     {
         using (var reader = db.GetDataReader("SELECT id FROM large LIMIT 1")) Check(reader.Read(), "Reader row");
-        Check(db.conn.State == ConnectionState.Closed && !db.IsOpen, "Reader disposal closes connection and resets state");
-        db.IsKeepConnect = true;
-        using (var reader = db.GetDataReader("SELECT id FROM large LIMIT 1")) Check(reader.Read(), "Reusable connection");
-        Check(db.conn.State == ConnectionState.Open && db.IsOpen, "Keep-connect contract");
-        db.IsKeepConnect = false;
+        Check(db.conn.State == ConnectionState.Closed, "Reader disposal closes connection");
+        using (var reader = db.GetDataReader("SELECT id FROM large LIMIT 1"))
+            Check(db.conn.State == ConnectionState.Open && reader.Read(), "Connection remains open while reading");
+        Check(db.conn.State == ConnectionState.Closed, "Reused connection closes after reading");
         try { using var reader = db.GetDataReader("SELECT * FROM missing"); }
         catch (SQLiteException) { }
-        Check(db.conn.State == ConnectionState.Closed && !db.IsOpen, "Failed reader creation closes connection");
+        Check(db.conn.State == ConnectionState.Closed, "Failed reader creation closes connection");
+        db.conn.Open();
+        db.ExecuteSql("SELECT 1");
+        Check(db.conn.State == ConnectionState.Closed, "Execution accepts an already-open connection and closes it");
+        try { db.ExecuteSql("INVALID SQL"); }
+        catch (SQLiteException) { }
+        Check(db.conn.State == ConnectionState.Closed, "Failed execution closes connection");
+        using var recovered = db.GetDataTable("SELECT 1");
+        Check(recovered.Rows.Count == 1 && db.conn.State == ConnectionState.Closed, "Query succeeds after failure and closes connection");
     }
     Console.WriteLine("PASS: Reader ownership, connection reuse and failed-query cleanup.");
 

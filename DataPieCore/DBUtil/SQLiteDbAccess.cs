@@ -10,12 +10,9 @@ namespace DBUtil
 {
     public partial class SQLiteDbAccess : IDbAccess
     {
-        public bool IsKeepConnect { set; get; }
         public string ConnectionString { get; set; }
         public IDbConnection conn { set; get; }
         public DataBaseType DataBaseType { get; set; }
-
-        public bool IsOpen { set; get; }
 
  
 
@@ -29,10 +26,9 @@ namespace DBUtil
             try
             {
                 using SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
-                if (!IsOpen)
+                if (conn.State != ConnectionState.Open)
                 {
                     conn.Open();
-                    IsOpen = true;
                 }
                 int r = cmd.ExecuteNonQuery();
                 return r;
@@ -43,11 +39,7 @@ namespace DBUtil
             }
             finally
             {
-                if (!IsKeepConnect)
-                {
-                    conn.Close();
-                    this.IsOpen = false;
-                }
+                conn.Close();
             }
         }
 
@@ -77,7 +69,6 @@ namespace DBUtil
             {
                 if (paraArr != null) command.Parameters.AddRange(paraArr);
                 if (conn.State != ConnectionState.Open) conn.Open();
-                IsOpen = true;
                 adapter.Fill(result);
                 return result;
             }
@@ -85,8 +76,7 @@ namespace DBUtil
             finally
             {
                 command.Parameters.Clear();
-                if (!IsKeepConnect) conn.Close();
-                IsOpen = conn.State == ConnectionState.Open;
+                conn.Close();
             }
         }
         /// <summary>
@@ -112,7 +102,6 @@ namespace DBUtil
         public void Dispose()
         {
             conn?.Dispose();
-            IsOpen = false;
         }
         /// <summary>
         /// 根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
@@ -174,7 +163,6 @@ namespace DBUtil
             try
             {
                 if (conn.State != ConnectionState.Open) conn.Open();
-                IsOpen = true;
                 using var transaction = ((SQLiteConnection)conn).BeginTransaction();
                 using var command = new SQLiteCommand(script.Sql, (SQLiteConnection)conn)
                 {
@@ -188,8 +176,7 @@ namespace DBUtil
             }
             finally
             {
-                if (!IsKeepConnect) conn.Close();
-                IsOpen = conn.State == ConnectionState.Open;
+                conn.Close();
             }
         }
 

@@ -24,7 +24,6 @@ namespace DBUtil
         /// 获得所有表
         /// </summary>
         /// <returns></returns>
-
         public List<TableStruct> ShowTables()
         {
             using var allColumns = ReadColumns();
@@ -33,6 +32,7 @@ namespace DBUtil
             const string sql = "SELECT name, SCHEMA_NAME(schema_id), object_id FROM sys.tables";
             using var reader = GetDataReader(sql);
             var tables = new List<TableStruct>();
+
             while (reader.Read())
             {
                 int tableId = reader.GetInt32(2);
@@ -45,6 +45,7 @@ namespace DBUtil
                     ForeignKeys = foreignKeys[tableId].ToList()
                 });
             }
+
             return tables;
         }
 
@@ -80,6 +81,7 @@ ORDER BY fk.object_id, fc.constraint_column_id";
                 key.ColumnNames.Add(reader.GetString(3));
                 key.ReferencedColumnNames.Add(reader.GetString(4));
             }
+
             return keys.ToLookup(item => item.TableId, item => item.Key);
         }
 
@@ -93,6 +95,7 @@ ORDER BY fk.object_id, fc.constraint_column_id";
             MaxLength = Convert.ToInt32(row["Length"]),
             IsPrimaryKey = Convert.ToInt32(row["IsPrimaryKey"]) == 1,
         };
+
         private DataTable ReadColumns()
         {
             const string sql = @"SELECT c.object_id AS TableId, c.name AS DbColumnName,
@@ -113,13 +116,12 @@ ORDER BY c.object_id, c.column_id";
             return GetDataTable(sql);
         }
 
-
-
         public List<string> ShowViews()
         {
             const string sql = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.VIEWS";
             using var reader = GetDataReader(sql);
             var views = new List<string>();
+
             while (reader.Read())
                 views.Add(reader.GetString(0));
             return views;
@@ -135,6 +137,7 @@ WHERE v.is_ms_shipped = 0
 ORDER BY s.name, v.name";
             using var reader = GetDataReader(sql);
             var views = new List<ViewSchema>();
+
             while (reader.Read())
                 views.Add(new ViewSchema
                 {
@@ -146,7 +149,6 @@ ORDER BY s.name, v.name";
         }
 
         private string GetDbName() => new SqlConnectionStringBuilder(ConnectionString).InitialCatalog;
-
 
         /// <summary>
         /// 获取当前数据库的用户自定义存储过程
@@ -161,6 +163,7 @@ LEFT JOIN sys.sql_modules m ON m.object_id = p.object_id
 WHERE p.is_ms_shipped = 0 ORDER BY s.name, p.name";
             using var reader = GetDataReader(sql);
             var procedures = new List<Proc>();
+
             while (reader.Read())
                 procedures.Add(new Proc
                 {
@@ -178,6 +181,7 @@ FROM INFORMATION_SCHEMA.ROUTINES
 WHERE ROUTINE_TYPE = 'PROCEDURE'";
             using var reader = GetDataReader(sql);
             var procedures = new List<Proc>();
+
             while (reader.Read())
                 procedures.Add(new Proc
                 {
@@ -195,10 +199,11 @@ WHERE ROUTINE_TYPE = 'PROCEDURE'";
             const string sql = "SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb', 'ReportServer', 'ReportServerTempDB')";
             using var reader = GetDataReader(sql);
             var databases = new List<string>();
-            while (reader.Read()) databases.Add(reader.GetString(0));
+
+            while (reader.Read())
+                databases.Add(reader.GetString(0));
             return databases;
         }
-
 
     }
 }
