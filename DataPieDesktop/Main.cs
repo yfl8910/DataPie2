@@ -28,7 +28,7 @@ namespace DataPieDesktop
             operationVersion++;
             using var progressTimer = new System.Windows.Forms.Timer { Interval = 5000 };
             var inputs = Descendants(tabControl1)
-                .Where(c => c != button17 && c != button18 &&
+                .Where(c => c != cancelSqliteExportButton && c != refreshSqliteProgressButton &&
                     (c is ButtonBase || c is TextBoxBase || c is ComboBox || c is ListBox || c is TreeView || c is DataGridView))
                 .Select(c => (Control: c, Enabled: c.Enabled)).ToArray();
             foreach (var input in inputs) input.Control.Enabled = false;
@@ -224,7 +224,7 @@ namespace DataPieDesktop
         }
 
         //Template Export
-        private async void button1_Click(object sender, EventArgs e)
+        private async void exportTemplateButton_Click(object sender, EventArgs e)
         {
             string selectedTable = comboBox1.Text;
             if (string.IsNullOrWhiteSpace(selectedTable)) return;
@@ -238,7 +238,7 @@ namespace DataPieDesktop
             });
         }
         //Delete
-        private async void button2_Click(object sender, EventArgs e)
+        private async void clearTableDataButton_Click(object sender, EventArgs e)
         {
             string selectedTable = comboBox1.Text;
             if (string.IsNullOrWhiteSpace(selectedTable))
@@ -261,7 +261,7 @@ namespace DataPieDesktop
         }
 
         // Import Excel
-        private async void button3_Click(object sender, EventArgs e)
+        private async void importFileButton_Click(object sender, EventArgs e)
         {
             if (textBox1.Text == "" || comboBox1.Text == "")
             {
@@ -311,7 +311,7 @@ namespace DataPieDesktop
             dbAccess.BulkInsert(tableName, reader);
         }
 
-        private void BrowseBtn1_Click(object sender, EventArgs e)
+        private void browseImportFileButton_Click(object sender, EventArgs e)
         {
             OpenFileDialog openFileDialog = new OpenFileDialog();
             openFileDialog.Filter = "Excel/Csv/Sqlite|*.xlsx;*.xls;*.csv;*.db";
@@ -324,7 +324,7 @@ namespace DataPieDesktop
             }
         }
 
-        private void toolStripButton1_Click(object sender, EventArgs e)
+        private void databaseConnectionToolStripButton_Click(object sender, EventArgs e)
         {
 
             LoginformShow();
@@ -336,7 +336,7 @@ namespace DataPieDesktop
             connectionForm.Show();
         }
 
-        private void toolStripButton2_Click(object sender, EventArgs e)
+        private void exitToolStripButton_Click(object sender, EventArgs e)
         {
             Application.Exit();
             System.Environment.Exit(0);
@@ -349,7 +349,7 @@ namespace DataPieDesktop
         }
 
         //View Data
-        private async void button5_Click(object sender, EventArgs e)
+        private async void previewQueryButton_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(richTextBox1.Text) &&
                 !GenerateSql(table => SqlWriter.WriteSelect(table, AppState.DatabaseType, 1000), "Select SQL generated"))
@@ -378,7 +378,7 @@ namespace DataPieDesktop
             });
         }
         //OUTPUT CSV
-        private async void button7_Click(object sender, EventArgs e)
+        private async void exportTableToCsvButton_Click(object sender, EventArgs e)
         {
             string tableName = comboBox2.Text;
             if (string.IsNullOrWhiteSpace(tableName))
@@ -398,7 +398,7 @@ namespace DataPieDesktop
             });
 
         //Export Excel by sql
-        private async void exportQueryButton_Click(object sender, EventArgs e)
+        private async void exportQueryToExcelButton_Click(object sender, EventArgs e)
         {
             string sql = richTextBox1.Text;
             if (string.IsNullOrWhiteSpace(sql))
@@ -412,7 +412,7 @@ namespace DataPieDesktop
         }
 
         //Export Excel by tableName
-        private async void exportTableButton_Click(object sender, EventArgs e)
+        private async void exportTableToExcelButton_Click(object sender, EventArgs e)
         {
             string tableName = comboBox2.Text;
             if (string.IsNullOrWhiteSpace(tableName))
@@ -480,7 +480,7 @@ namespace DataPieDesktop
             return true;
         }
 
-        private void ClearAllTables_Click(object sender, EventArgs e)
+        private void clearExportListButton_Click(object sender, EventArgs e)
         {
             listBox1.Items.Clear();
         }
@@ -521,7 +521,7 @@ namespace DataPieDesktop
 
         //export muti csv
 
-        private async void button11_Click(object sender, EventArgs e)
+        private async void exportTablesToCsvButton_Click(object sender, EventArgs e)
         {
             await ExportSelectedTablesAsync(".csv", ExportTablesToCsvAsync);
         }
@@ -538,7 +538,7 @@ namespace DataPieDesktop
             });
 
         // run stored procedure 
-        private async void button12_Click(object sender, EventArgs e)
+        private async void executeProceduresButton_Click(object sender, EventArgs e)
         {
             var procedures = listBox2.Items.Cast<string>().ToArray();
             if (procedures.Length == 0)
@@ -579,22 +579,22 @@ namespace DataPieDesktop
             }, "Processing...");
         }
 
-        private void button9_Click(object sender, EventArgs e)
+        private void generateSelectSqlButton_Click(object sender, EventArgs e)
         {
             GenerateSql(table => SqlWriter.WriteSelect(table, AppState.DatabaseType, 1000), "Select SQL generated");
         }
 
-        private void button13_Click(object sender, EventArgs e)
+        private void generateDeleteSqlButton_Click(object sender, EventArgs e)
         {
             GenerateSql(table => SqlWriter.WriteDelete(table, AppState.DatabaseType), "Delete SQL generated");
         }
 
-        private void button14_Click(object sender, EventArgs e)
+        private void generateUpdateSqlButton_Click(object sender, EventArgs e)
         {
             GenerateSql(table => SqlWriter.WriteUpdate(table, AppState.DatabaseType), "Update SQL generated");
         }
 
-        private async void button6_Click(object sender, EventArgs e)
+        private async void executeSqlButton_Click(object sender, EventArgs e)
         {
             DialogResult result = MessageBox.Show("Confirm  Executation ?", "Message", MessageBoxButtons.OKCancel);
 
@@ -618,7 +618,7 @@ namespace DataPieDesktop
             }, () => ShowMessage($"Execute success, Time: {watch.Elapsed.TotalSeconds:F1} seconds, Affect {affectedRows} Rows"), "Processing...");
         }
 
-        private void button15_Click(object sender, EventArgs e)
+        private void browseSqliteOutputFolderButton_Click(object sender, EventArgs e)
         {
             using var dialog = new FolderBrowserDialog
             {
@@ -698,7 +698,7 @@ namespace DataPieDesktop
             string state = SqlServerToSQLite._cancelled ? "Stopping" : "Current Table";
             toolStripStatusLabel2.Text = $"{state}: {table}, Copy Rows: {SqlServerToSQLite.TotalCopyed}";
         }
-        private void button17_Click(object sender, EventArgs e)
+        private void cancelSqliteExportButton_Click(object sender, EventArgs e)
         {
             if (!sqliteExportRunning) return;
             SqlServerToSQLite._cancelled = true;
@@ -706,13 +706,13 @@ namespace DataPieDesktop
             toolStripStatusLabel2.ForeColor = Color.Red;
         }
 
-        private async void button18_Click(object sender, EventArgs e)
+        private async void refreshSqliteProgressButton_Click(object sender, EventArgs e)
         {
             await CheckConnectionAsync();
 
         }
 
-        private void toolStripButton3_Click(object sender, EventArgs e)
+        private void aboutToolStripButton_Click(object sender, EventArgs e)
         {
             AboutDataPie about = new AboutDataPie();
             about.Show();
@@ -723,7 +723,7 @@ namespace DataPieDesktop
             await ExportSelectedTablesAsync(".xlsx", ExportTablesWithMiniExcelAsync);
         }
 
-        private void button21_Click(object sender, EventArgs e)
+        private void browseImportFolderButton_Click(object sender, EventArgs e)
         {
             FolderBrowserDialog folder = new FolderBrowserDialog();
             if (folder.ShowDialog(this) == DialogResult.OK)
@@ -732,7 +732,7 @@ namespace DataPieDesktop
             }
         }
 
-        private async void button20_Click(object sender, EventArgs e)
+        private async void importFolderButton_Click(object sender, EventArgs e)
         {
             if (textBox3.Text == "" || comboBox1.Text == "")
             {
@@ -764,22 +764,22 @@ namespace DataPieDesktop
                 "Processing...");
         }
 
-        private void buttonExAdd_Click(object sender, EventArgs e)
+        private void addExportItemButton_Click(object sender, EventArgs e)
         {
             AddSelectedNode(listBox1, treeView1.SelectedNode);
         }
 
-        private void buttonExRemove_Click(object sender, EventArgs e)
+        private void removeExportItemButton_Click(object sender, EventArgs e)
         {
             RemoveSelectedItem(listBox1);
         }
 
-        private void btnAddProce_Click(object sender, EventArgs e)
+        private void addProcedureButton_Click(object sender, EventArgs e)
         {
             AddSelectedNode(listBox2, treeView2.SelectedNode);
         }
 
-        private void btnDeleteProc_Click(object sender, EventArgs e)
+        private void removeProcedureButton_Click(object sender, EventArgs e)
         {
             RemoveSelectedItem(listBox2);
         }

@@ -34,7 +34,7 @@ internal static class MainBindingsTests
         try
         {
             databaseType.SetValue(null, "SQLSERVER");
-            Invoke("button9_Click", form, EventArgs.Empty);
+            Invoke("generateSelectSqlButton_Click", form, EventArgs.Empty);
             Check(Field<RichTextBox>("richTextBox1").Text.Contains("QueryTable"), "SQL generation uses the query selection");
         }
         finally { databaseType.SetValue(null, originalType); }
@@ -55,11 +55,11 @@ internal static class MainBindingsTests
         Invoke("listBox1_DoubleClick", form, EventArgs.Empty);
         Check(list.Items.Count == 2, "Empty selection removal is safe");
         list.SelectedIndex = 0;
-        Invoke("buttonExRemove_Click", form, EventArgs.Empty);
+        Invoke("removeExportItemButton_Click", form, EventArgs.Empty);
         Check(list.Items.Count == 1, "Remove button uses shared removal");
         var procedures = Field<TreeView>("treeView2");
         procedures.SelectedNode = procedures.Nodes[0].Nodes[0];
-        Invoke("btnAddProce_Click", form, EventArgs.Empty);
+        Invoke("addProcedureButton_Click", form, EventArgs.Empty);
         Check(Field<ListBox>("listBox2").Items.Count == 1, "Procedure addition uses shared validation");
 
         schemaField.SetValue(form, new DbSchema { Name = "Empty" });
