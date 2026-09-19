@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 
@@ -46,22 +45,6 @@ namespace DBUtil
         bool IsTran { get; set; }
 
         /// <summary>
-        /// 打开连接测试
-        /// </summary>
-        Result OpenTest();
-
-        /// <summary>
-        /// 当前数据库使用的参数的前缀符号
-        /// </summary>
-        string paraPrefix { get; }
-
-        /// <summary>
-        /// 创建参数
-        /// </summary>
-        /// <returns>针对当前数据库类型的空参数对象</returns>
-        IDbDataParameter CreatePara();
-
-        /// <summary>
         /// 创建具有名称和值的参数
         /// <para>示例：iDb.CreatePara("id",id);</para>
         /// </summary>
@@ -78,35 +61,6 @@ namespace DBUtil
         /// <param name="strSql">要执行的sql语句</param>
         /// <returns>受影响的行数</returns>
         int ExecuteSql(string strSql);
-
-        /// <summary>
-        /// 执行sql语句
-        /// <para>
-        /// 示例：iDb.ExecuteSql("update User set Sta=1 where Id=" + iDb.paraPrefix + "id", iDb.CreatePara("id", 1));
-        /// </para>
-        /// </summary>
-        /// <param name="strSql">要执行的sql语句</param>
-        /// <param name="paramArr">sql参数数组</param>
-        /// <returns>受影响的行数</returns>
-        int ExecuteSql(string strSql, params IDataParameter[] paramArr);
-
-        /// <summary>
-        /// 执行多个sql语句
-        /// </summary>
-        /// <param name="strSql">多个SQL语句的数组</param>
-        /// <returns></returns>
-        void ExecuteSql(string[] strSql);
-
-        /// <summary>
-        /// 执行多个sql语句
-        /// <para>
-        /// 示例：iDb.ExecuteSql(new string[] { "update User set Sta=1 where Id=" + iDb.paraPrefix + "id", "", "update User setSta=2 wher Id=" + iDb.paraPrefix + "id" }, new IDataParameter[] { iDb.CreatePara("id", 1) }, new IDataParameter[] { iDb.CreatePara("id", 2) });
-        /// </para>
-        /// </summary>
-        /// <param name="strSql">多个SQL语句的数组</param>
-        /// <param name="paraArrs">多个SQL语句的参数对应的二维数组</param>
-        /// <returns></returns>
-        void ExecuteSql(string[] strSql, params IDataParameter[][] paraArrs);
 
         /// <summary>
         /// 向一个表中添加一行数据
@@ -144,42 +98,11 @@ namespace DBUtil
         IDataReader GetDataReader(string strSql);
 
         /// <summary>
-        /// 获取阅读器
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">sql语句参数</param>
-        /// <returns>返回阅读器</returns>
-        IDataReader GetDataReader(string strSql, params IDbDataParameter[] paraArr);
-
-        /// <summary>
-        /// 返回查询结果的数据集
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <returns>返回的查询结果集</returns>
-        DataSet GetDataSet(string strSql);
-
-        /// <summary>
-        /// 返回查询结果的数据集
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">sql语句参数</param>
-        /// <returns>返回的查询结果集</returns>
-        DataSet GetDataSet(string strSql, params IDbDataParameter[] paraArr);
-
-        /// <summary>
         /// 返回查询结果的数据表
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
         DataTable GetDataTable(string strSql);
-
-        /// <summary>
-        /// 返回查询结果的数据表
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">sql语句参数</param>
-        /// <returns>返回的查询结果集</returns>
-        DataTable GetDataTable(string strSql, params IDbDataParameter[] paraArr);
 
         /// <summary>
         /// 开启事务
@@ -195,16 +118,6 @@ namespace DBUtil
         /// 回滚事务
         /// </summary>
         void Rollback();
-
-        /// <summary>
-        /// 获得分页的查询语句
-        /// </summary>
-        /// <param name="selectSql">查询子句,如: "select id,name,age from student where age>18"</param>
-        /// <param name="strOrder">排序子句,如: "order by age desc"</param>
-        /// <param name="PageSize">分页大小,如:10</param>
-        /// <param name="PageIndex">当前页索引,如:1(第一页)</param>
-        /// <returns></returns>
-        string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex);
 
 
      

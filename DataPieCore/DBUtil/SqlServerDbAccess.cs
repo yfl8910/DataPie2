@@ -48,45 +48,6 @@ namespace DBUtil
         public bool IsTran { set; get; }
 
         /// <summary>
-        /// 打开连接测试
-        /// </summary>
-        /// <returns></returns>
-        public Result OpenTest()
-        {
-            try
-            {
-                conn.Open();
-                conn.Close();
-                return new Result()
-                {
-                    Success = true
-                };
-            }
-            catch (Exception ex)
-            {
-                return new Result()
-                {
-                    Success = false,
-                    Data = ex.ToString()
-                };
-            }
-        }
-
-        /// <summary>
-        /// 当前数据库使用的参数的前缀符号
-        /// </summary>
-        public string paraPrefix { get { return "@"; } }
-
-        /// <summary>
-        /// 创建参数
-        /// </summary>
-        /// <returns></returns>
-        public IDbDataParameter CreatePara()
-        {
-            return new SqlParameter();
-        }
-
-        /// <summary>
         /// 创建具有名称和值的参数
         /// </summary>
         /// <returns>针对当前数据库类型的参数对象</returns>
@@ -138,109 +99,6 @@ namespace DBUtil
             }
         }
 
-        /// <summary>
-        /// 执行多个sql语句
-        /// </summary>
-        /// <param name="strSql">多个SQL语句的数组</param>
-        public void ExecuteSql(string[] strSql)
-        {
-            if (strSql == null) return;
-
-            try
-            {
-                using SqlCommand cmd = new SqlCommand
-                {
-                    Connection = (SqlConnection)conn,
-                    CommandTimeout = 1000
-                };
-
-                if (IsTran)
-                {
-                    cmd.Transaction = (SqlTransaction)tran;
-                }
-
-                if (!IsOpen)
-                {
-                    conn.Open();
-                    IsOpen = true;
-                }
-
-                foreach (string sql in strSql)
-                {
-                    if (string.IsNullOrWhiteSpace(sql)) continue;
-                    cmd.CommandText = sql;
-                    cmd.Parameters.Clear();
-                    cmd.ExecuteNonQuery();
-                }
-            }
-            catch (Exception)
-            {
-                throw;
-            }
-            finally
-            {
-                if (!IsTran && !IsKeepConnect)
-                {
-                    try { conn?.Close(); } catch { }
-                    this.IsOpen = false;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 执行带参数的sql语句
-        /// </summary>
-        /// <param name="strSql">要执行的sql语句</param>
-        /// <param name="paramArr">参数数组</param>
-        /// <returns></returns>
-        public int ExecuteSql(string strSql, IDataParameter[] paramArr)
-        {
-            try
-            {
-                using SqlCommand cmd = new SqlCommand(strSql, (SqlConnection)conn);
-                cmd.CommandTimeout = 1000;
-
-                if (IsTran)
-                {
-                    cmd.Transaction = (SqlTransaction)tran;
-                }
-                cmd.Parameters.AddRange(paramArr);
-                if (!IsOpen)
-                {
-                    conn.Open();
-                    IsOpen = true;
-                }
-                int r = cmd.ExecuteNonQuery();
-                cmd.Parameters.Clear();
-                return r;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            finally
-            {
-                if (!IsTran && !IsKeepConnect)
-                {
-                    conn.Close();
-                    this.IsOpen = false;
-                }
-            }
-        }
-
-        /// <summary>
-        /// 批量执行带参数的sql语句
-        /// </summary>
-        /// <param name="strSql"></param>
-        /// <param name="paraArrs"></param>
-        public void ExecuteSql(string[] strSql, IDataParameter[][] paraArrs)
-        {
-            for (int i = 0; i < strSql.Length; i++)
-            {
-                ExecuteSql(strSql[i], paraArrs[i]);
-            }
-        }
-
 
 
         /// <summary>
@@ -252,19 +110,14 @@ namespace DBUtil
         {
             return OwnedDataReader.Open(this, strSql, null, 10000);
         }
-
-        public IDataReader GetDataReader(string strSql, IDbDataParameter[] paraArr)
-        {
-            return OwnedDataReader.Open(this, strSql, paraArr, 30);
-        }
         /// <summary>
         /// 返回查询结果的数据集
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
-        public DataSet GetDataSet(string strSql) => GetDataSet(strSql, null);
+        private DataSet GetDataSet(string strSql) => GetDataSet(strSql, null);
 
-        public DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
+        private DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
             using var command = new SqlCommand(strSql, (SqlConnection)conn);
             if (IsTran) command.Transaction = (SqlTransaction)tran;
@@ -294,24 +147,6 @@ namespace DBUtil
         public DataTable GetDataTable(string strSql)
         {
             DataSet ds = GetDataSet(strSql);
-            if (ds.Tables.Count > 0)
-            {
-                DataTable dt = ds.Tables[0];
-                ds.Tables.Remove(dt);
-                return dt;
-            }
-            return null;
-        }
-
-        /// <summary>
-        /// 返回的查询数据表
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <param name="paraArr">SQL语句中的参数集合</param>
-        /// <returns>返回的查询数据表</returns>
-        public DataTable GetDataTable(string strSql, IDbDataParameter[] paraArr)
-        {
-            DataSet ds = GetDataSet(strSql, paraArr);
             if (ds.Tables.Count > 0)
             {
                 DataTable dt = ds.Tables[0];
@@ -353,21 +188,6 @@ namespace DBUtil
         public void Rollback()
         {
             tran.Rollback();
-        }
-
-
-        /// <summary>
-        /// 获得分页的查询语句
-        /// </summary>
-        /// <param name="selectSql">查询sql如:select name,id from test where id>5</param>
-        /// <param name="strOrder">排序字句如:order by id desc</param>
-        /// <param name="PageSize">页面大小</param>
-        /// <param name="PageIndex">页面索引从1开始</param>
-        /// <returns>经过分页的sql语句</returns>
-        public string GetSqlForPageSize(string selectSql, string strOrder, int PageSize, int PageIndex)
-        {
-            string sql = string.Format("select * from (select *,ROW_NUMBER() OVER({0}) as RNO__ from ({1}) as inner__ ) outer__ WHERE outer__.RNO__ BETWEEN ({2}*{3}+1) AND ({4}*{5})", strOrder, selectSql, PageIndex - 1, PageSize, PageIndex, PageSize);
-            return sql;
         }
 
         /// <summary>
