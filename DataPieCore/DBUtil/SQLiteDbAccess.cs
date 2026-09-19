@@ -180,25 +180,5 @@ namespace DBUtil
             }
         }
 
-        internal IDataReader RunProcedure(string storedProcName, IDataParameter[] parameters)
-        {
-            var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
-            if (!script.Metadata.ReadOnly)
-                throw new NotSupportedException("Use the non-query RunProcedure overload for scripts that modify data.");
-            return OwnedDataReader.Open(this, script.Sql, SQLiteProcedureScripts.Bind(script, parameters), 600);
-        }
-
-        internal DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName)
-        {
-            var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
-            if (!script.Metadata.ReadOnly)
-                throw new NotSupportedException("Use the non-query RunProcedure overload for scripts that modify data.");
-            using var command = new SQLiteCommand(script.Sql, (SQLiteConnection)conn) { CommandTimeout = 600 };
-            command.Parameters.AddRange(SQLiteProcedureScripts.Bind(script, parameters).Cast<SQLiteParameter>().ToArray());
-            using var adapter = new SQLiteDataAdapter(command);
-            var result = new DataSet();
-            adapter.Fill(result, tableName);
-            return result;
-        }
     }
 }
