@@ -949,12 +949,13 @@ namespace DataPieDesktop
                 MessageBox.Show(this, "Please select an existing output folder.");
                 return;
             }
-            if (string.IsNullOrWhiteSpace(dbs.Name) || dbs.Name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            if (string.IsNullOrWhiteSpace(dbs.Name) || dbs.Name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0 ||
+                dbs.Name.EndsWith(".") || dbs.Name.EndsWith(" "))
             {
-                MessageBox.Show(this, "The database name cannot be used as a file name.");
+                MessageBox.Show(this, "The database name cannot be used as a folder or file name.");
                 return;
             }
-            string filename = Path.Combine(textBox2.Text, dbs.Name + ".db");
+            string filename = Path.Combine(textBox2.Text, dbs.Name, dbs.Name + ".db");
             if (File.Exists(filename) && MessageBox.Show(this, $"Replace the existing database?\n{filename}",
                 "Create SQLite", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
             await CreateSqlite(filename, null);
@@ -969,9 +970,7 @@ namespace DataPieDesktop
                 try
                 {
                     Stopwatch watch = Stopwatch.StartNew();
-
-    
-
+                    Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(filename)));
                     this.BeginInvoke(new System.EventHandler(ShowMessage), " Processing…");
 
                     SqlServerToSQLite._cancelled = false;
