@@ -132,7 +132,7 @@ namespace DataPieDesktop
             tabPage1.Controls.Add(groupBox1);
             tabPage1.Location = new System.Drawing.Point(4, 29);
             tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            tabPage1.Padding = new System.Windows.Forms.Padding(3);
             tabPage1.Size = new System.Drawing.Size(1032, 570);
             tabPage1.TabIndex = 0;
             tabPage1.Text = "Input";
@@ -274,7 +274,7 @@ namespace DataPieDesktop
             tabPage2.Controls.Add(groupBox4);
             tabPage2.Location = new System.Drawing.Point(4, 29);
             tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            tabPage2.Padding = new System.Windows.Forms.Padding(3);
             tabPage2.Size = new System.Drawing.Size(1032, 570);
             tabPage2.TabIndex = 1;
             tabPage2.Text = "Output";
@@ -297,7 +297,7 @@ namespace DataPieDesktop
             // buttonExRemove
             // 
             buttonExRemove.Location = new System.Drawing.Point(435, 158);
-            buttonExRemove.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            buttonExRemove.Margin = new System.Windows.Forms.Padding(2);
             buttonExRemove.Name = "buttonExRemove";
             buttonExRemove.Size = new System.Drawing.Size(142, 37);
             buttonExRemove.TabIndex = 8;
@@ -308,7 +308,7 @@ namespace DataPieDesktop
             // buttonExAdd
             // 
             buttonExAdd.Location = new System.Drawing.Point(435, 91);
-            buttonExAdd.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            buttonExAdd.Margin = new System.Windows.Forms.Padding(2);
             buttonExAdd.Name = "buttonExAdd";
             buttonExAdd.Size = new System.Drawing.Size(142, 38);
             buttonExAdd.TabIndex = 7;
@@ -351,7 +351,7 @@ namespace DataPieDesktop
             groupBox4.Controls.Add(exportSheetsWithEpplusButton);
             groupBox4.Location = new System.Drawing.Point(29, 482);
             groupBox4.Name = "groupBox4";
-            groupBox4.Size = new System.Drawing.Size(1004, 87);
+            groupBox4.Size = new System.Drawing.Size(1004, 82);
             groupBox4.TabIndex = 5;
             groupBox4.TabStop = false;
             groupBox4.Text = "Export";
@@ -359,7 +359,7 @@ namespace DataPieDesktop
             // exportSheetsWithMiniExcelButton
             // 
             exportSheetsWithMiniExcelButton.Location = new System.Drawing.Point(430, 27);
-            exportSheetsWithMiniExcelButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            exportSheetsWithMiniExcelButton.Margin = new System.Windows.Forms.Padding(2);
             exportSheetsWithMiniExcelButton.Name = "exportSheetsWithMiniExcelButton";
             exportSheetsWithMiniExcelButton.Size = new System.Drawing.Size(187, 50);
             exportSheetsWithMiniExcelButton.TabIndex = 6;
@@ -395,7 +395,7 @@ namespace DataPieDesktop
             tabPage3.Controls.Add(groupBox3);
             tabPage3.Location = new System.Drawing.Point(4, 29);
             tabPage3.Name = "tabPage3";
-            tabPage3.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            tabPage3.Padding = new System.Windows.Forms.Padding(3);
             tabPage3.Size = new System.Drawing.Size(1032, 570);
             tabPage3.TabIndex = 2;
             tabPage3.Text = "DataView";
@@ -479,7 +479,7 @@ namespace DataPieDesktop
             // exportTableButton
             // 
             exportTableButton.Location = new System.Drawing.Point(374, 75);
-            exportTableButton.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            exportTableButton.Margin = new System.Windows.Forms.Padding(2);
             exportTableButton.Name = "exportTableButton";
             exportTableButton.Size = new System.Drawing.Size(169, 52);
             exportTableButton.TabIndex = 7;
@@ -550,7 +550,7 @@ namespace DataPieDesktop
             tabPage4.Controls.Add(groupBox6);
             tabPage4.Location = new System.Drawing.Point(4, 29);
             tabPage4.Name = "tabPage4";
-            tabPage4.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            tabPage4.Padding = new System.Windows.Forms.Padding(3);
             tabPage4.Size = new System.Drawing.Size(1032, 570);
             tabPage4.TabIndex = 3;
             tabPage4.Text = "Stored procedure";
@@ -573,7 +573,7 @@ namespace DataPieDesktop
             // btnDeleteProc
             // 
             btnDeleteProc.Location = new System.Drawing.Point(403, 156);
-            btnDeleteProc.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            btnDeleteProc.Margin = new System.Windows.Forms.Padding(2);
             btnDeleteProc.Name = "btnDeleteProc";
             btnDeleteProc.Size = new System.Drawing.Size(174, 48);
             btnDeleteProc.TabIndex = 4;
@@ -584,7 +584,7 @@ namespace DataPieDesktop
             // btnAddProce
             // 
             btnAddProce.Location = new System.Drawing.Point(403, 84);
-            btnAddProce.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            btnAddProce.Margin = new System.Windows.Forms.Padding(2);
             btnAddProce.Name = "btnAddProce";
             btnAddProce.Size = new System.Drawing.Size(174, 53);
             btnAddProce.TabIndex = 3;
@@ -629,7 +629,7 @@ namespace DataPieDesktop
             tabPage5.Controls.Add(createSqliteButton);
             tabPage5.Location = new System.Drawing.Point(4, 29);
             tabPage5.Name = "tabPage5";
-            tabPage5.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
+            tabPage5.Padding = new System.Windows.Forms.Padding(3);
             tabPage5.Size = new System.Drawing.Size(1032, 570);
             tabPage5.TabIndex = 4;
             tabPage5.Text = "Tools";
@@ -690,7 +690,7 @@ namespace DataPieDesktop
             toolStrip1.Location = new System.Drawing.Point(0, 0);
             toolStrip1.Name = "toolStrip1";
             toolStrip1.Padding = new System.Windows.Forms.Padding(0, 0, 2, 0);
-            toolStrip1.Size = new System.Drawing.Size(1064, 27);
+            toolStrip1.Size = new System.Drawing.Size(1070, 27);
             toolStrip1.TabIndex = 2;
             // 
             // toolStripButton1
@@ -735,18 +735,18 @@ namespace DataPieDesktop
             // 
             statusStrip1.ImageScalingSize = new System.Drawing.Size(20, 20);
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2 });
-            statusStrip1.Location = new System.Drawing.Point(0, 656);
+            statusStrip1.Location = new System.Drawing.Point(0, 660);
             statusStrip1.Name = "statusStrip1";
             statusStrip1.Padding = new System.Windows.Forms.Padding(2, 0, 16, 0);
             statusStrip1.ShowItemToolTips = true;
-            statusStrip1.Size = new System.Drawing.Size(1064, 26);
+            statusStrip1.Size = new System.Drawing.Size(1070, 26);
             statusStrip1.TabIndex = 3;
             statusStrip1.Text = "statusStrip1";
             // 
             // toolStripStatusLabel1
             // 
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
-            toolStripStatusLabel1.Size = new System.Drawing.Size(1046, 20);
+            toolStripStatusLabel1.Size = new System.Drawing.Size(1052, 20);
             toolStripStatusLabel1.Spring = true;
             toolStripStatusLabel1.Text = "Info:";
             toolStripStatusLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -762,7 +762,7 @@ namespace DataPieDesktop
             // 
             AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(1064, 682);
+            ClientSize = new System.Drawing.Size(1070, 686);
             Controls.Add(statusStrip1);
             Controls.Add(toolStrip1);
             Controls.Add(tabControl1);
@@ -827,8 +827,6 @@ namespace DataPieDesktop
         private System.Windows.Forms.RichTextBox richTextBox1;
         private System.Windows.Forms.Button button7;
         private System.Windows.Forms.StatusStrip statusStrip1;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
-        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel2;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.Button button11;
         private System.Windows.Forms.Button exportSheetsWithEpplusButton;
@@ -865,5 +863,7 @@ namespace DataPieDesktop
         private System.Windows.Forms.Button buttonExAdd;
         private System.Windows.Forms.Button btnDeleteProc;
         private System.Windows.Forms.Button btnAddProce;
+        private WrappingStatusLabel toolStripStatusLabel1;
+        private WrappingStatusLabel toolStripStatusLabel2;
     }
 }
