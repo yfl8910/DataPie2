@@ -17,11 +17,6 @@ namespace DBUtil
         public bool IsKeepConnect { set; get; }
 
         /// <summary>
-        /// 事务管理对象
-        /// </summary>
-        public IDbTransaction tran { set; get; }
-
-        /// <summary>
         /// 连接字符串
         /// </summary>
         public string ConnectionString { get; set; }
@@ -40,12 +35,6 @@ namespace DBUtil
         /// 连接是否打开
         /// </summary>
         public bool IsOpen { set; get; }
-
-        /// <summary>
-        /// 是否开启了事务
-        /// </summary>
-
-        public bool IsTran { set; get; }
 
         /// <summary>
         /// 创建具有名称和值的参数
@@ -72,10 +61,6 @@ namespace DBUtil
                     CommandTimeout = 1000
                 };
                     
-                if (IsTran)
-                {
-                    cmd.Transaction = (SqlTransaction)tran;
-                }
 
                 if (!IsOpen)
                 {
@@ -91,7 +76,7 @@ namespace DBUtil
             }
             finally
             {
-                if (!IsTran && !IsKeepConnect)
+                if (!IsKeepConnect)
                 {
                     try { conn?.Close(); } catch { }
                     this.IsOpen = false;
@@ -120,7 +105,6 @@ namespace DBUtil
         private DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
             using var command = new SqlCommand(strSql, (SqlConnection)conn);
-            if (IsTran) command.Transaction = (SqlTransaction)tran;
             using var adapter = new SqlDataAdapter(command);
             var result = new DataSet();
             try
@@ -135,7 +119,7 @@ namespace DBUtil
             finally
             {
                 command.Parameters.Clear();
-                if (!IsTran && !IsKeepConnect) conn.Close();
+                if (!IsKeepConnect) conn.Close();
                 IsOpen = conn.State == ConnectionState.Open;
             }
         }
@@ -157,51 +141,12 @@ namespace DBUtil
         }
 
         /// <summary>
-        /// 开启事务
-        /// </summary>
-        public void BeginTrans()
-        {
-            if (!IsOpen)
-            {
-                conn.Open();
-                IsOpen = true;
-            }
-            if (IsTran)
-            {
-                tran.Commit();
-            }
-            tran = conn.BeginTransaction();
-            IsTran = true;
-        }
-
-        /// <summary>
-        /// 提交事务
-        /// </summary>
-        public void Commit()
-        {
-            tran.Commit();
-        }
-
-        /// <summary>
-        /// 回滚事务
-        /// </summary>
-        public void Rollback()
-        {
-            tran.Rollback();
-        }
-
-        /// <summary>
         /// 实现释放资源的方法
         /// </summary>
         public void Dispose()
         {
-            try { tran?.Dispose(); }
-            finally
-            {
-                conn?.Dispose();
-                IsOpen = false;
-                IsTran = false;
-            }
+            conn?.Dispose();
+            IsOpen = false;
         }
         /// <summary>
         /// 根据当前的数据库类型和连接字符串创建一个新的数据库操作对象

@@ -25,7 +25,6 @@ namespace DBUtil
             {
                 command.CommandText = sql;
                 command.CommandTimeout = timeout;
-                if (access.IsTran) command.Transaction = access.tran;
                 if (parameters != null)
                     foreach (var parameter in parameters) command.Parameters.Add(parameter);
                 if (access.conn.State != ConnectionState.Open) access.conn.Open();
@@ -42,7 +41,7 @@ namespace DBUtil
 
         private static void ReleaseConnection(IDbAccess access)
         {
-            if (!access.IsTran && !access.IsKeepConnect) access.conn.Close();
+            if (!access.IsKeepConnect) access.conn.Close();
             access.IsOpen = access.conn.State == ConnectionState.Open;
         }
 

@@ -11,14 +11,11 @@ namespace DBUtil
     public partial class SQLiteDbAccess : IDbAccess
     {
         public bool IsKeepConnect { set; get; }
-        public IDbTransaction tran { set; get; }
         public string ConnectionString { get; set; }
         public IDbConnection conn { set; get; }
         public DataBaseType DataBaseType { get; set; }
 
         public bool IsOpen { set; get; }
-
-        public bool IsTran { set; get; }
 
         /// <summary>
         /// 创建具有名称和值的参数
@@ -41,10 +38,6 @@ namespace DBUtil
             try
             {
                 using SQLiteCommand cmd = new SQLiteCommand(strSql, (SQLiteConnection)conn);
-                if (IsTran)
-                {
-                    cmd.Transaction = (SQLiteTransaction)tran;
-                }
                 if (!IsOpen)
                 {
                     conn.Open();
@@ -59,7 +52,7 @@ namespace DBUtil
             }
             finally
             {
-                if (!IsTran && !IsKeepConnect)
+                if (!IsKeepConnect)
                 {
                     conn.Close();
                     this.IsOpen = false;
@@ -87,7 +80,6 @@ namespace DBUtil
         private DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
         {
             using var command = new SQLiteCommand(strSql, (SQLiteConnection)conn);
-            if (IsTran) command.Transaction = (SQLiteTransaction)tran;
             using var adapter = new SQLiteDataAdapter(command);
             var result = new DataSet();
             try
@@ -102,7 +94,7 @@ namespace DBUtil
             finally
             {
                 command.Parameters.Clear();
-                if (!IsTran && !IsKeepConnect) conn.Close();
+                if (!IsKeepConnect) conn.Close();
                 IsOpen = conn.State == ConnectionState.Open;
             }
         }
@@ -124,51 +116,12 @@ namespace DBUtil
         }
 
         /// <summary>
-        /// 开启事务
-        /// </summary>
-        public void BeginTrans()
-        {
-            if (!IsOpen)
-            {
-                conn.Open();
-                IsOpen = true;
-            }
-            if (IsTran)
-            {
-                tran.Commit();
-            }
-            tran = conn.BeginTransaction();
-            IsTran = true;
-        }
-
-        /// <summary>
-        /// 提交事务
-        /// </summary>
-        public void Commit()
-        {
-            tran.Commit();
-        }
-
-        /// <summary>
-        /// 回滚事务
-        /// </summary>
-        public void Rollback()
-        {
-            tran.Rollback();
-        }
-
-        /// <summary>
         /// 实现释放资源的方法
         /// </summary>
         public void Dispose()
         {
-            try { tran?.Dispose(); }
-            finally
-            {
-                conn?.Dispose();
-                IsOpen = false;
-                IsTran = false;
-            }
+            conn?.Dispose();
+            IsOpen = false;
         }
         /// <summary>
         /// 根据当前的数据库类型和连接字符串创建一个新的数据库操作对象
@@ -253,20 +206,20 @@ namespace DBUtil
             {
                 if (conn.State != ConnectionState.Open) conn.Open();
                 IsOpen = true;
-                using var transaction = IsTran ? null : ((SQLiteConnection)conn).BeginTransaction();
+                using var transaction = ((SQLiteConnection)conn).BeginTransaction();
                 using var command = new SQLiteCommand(script.Sql, (SQLiteConnection)conn)
                 {
-                    Transaction = IsTran ? (SQLiteTransaction)tran : transaction,
+                    Transaction = transaction,
                     CommandTimeout = 600
                 };
                 command.Parameters.AddRange(bound.Cast<SQLiteParameter>().ToArray());
                 rowsAffected = command.ExecuteNonQuery();
-                transaction?.Commit();
+                transaction.Commit();
                 return rowsAffected;
             }
             finally
             {
-                if (!IsTran && !IsKeepConnect) conn.Close();
+                if (!IsKeepConnect) conn.Close();
                 IsOpen = conn.State == ConnectionState.Open;
             }
         }
@@ -285,7 +238,6 @@ namespace DBUtil
             if (!script.Metadata.ReadOnly)
                 throw new NotSupportedException("Use the non-query RunProcedure overload for scripts that modify data.");
             using var command = new SQLiteCommand(script.Sql, (SQLiteConnection)conn) { CommandTimeout = 600 };
-            if (IsTran) command.Transaction = (SQLiteTransaction)tran;
             command.Parameters.AddRange(SQLiteProcedureScripts.Bind(script, parameters).Cast<SQLiteParameter>().ToArray());
             using var adapter = new SQLiteDataAdapter(command);
             var result = new DataSet();

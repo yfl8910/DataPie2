@@ -15,11 +15,6 @@ namespace DBUtil
         bool IsKeepConnect { get; set; }
 
         /// <summary>
-        /// 事物对象
-        /// </summary>
-        IDbTransaction tran { get; set; }
-
-        /// <summary>
         /// 连接字符串
         /// </summary>
         string ConnectionString { get; set; }
@@ -38,11 +33,6 @@ namespace DBUtil
         /// 记录是否打开了连接,防止多次打开连接
         /// </summary>
         bool IsOpen { get; set; }
-
-        /// <summary>
-        /// 记录是否开启了事务,防止多次开启事务
-        /// </summary>
-        bool IsTran { get; set; }
 
         /// <summary>
         /// 创建具有名称和值的参数
@@ -103,21 +93,6 @@ namespace DBUtil
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询结果集</returns>
         DataTable GetDataTable(string strSql);
-
-        /// <summary>
-        /// 开启事务
-        /// </summary>
-        void BeginTrans();
-
-        /// <summary>
-        /// 提交事务
-        /// </summary>
-        void Commit();
-
-        /// <summary>
-        /// 回滚事务
-        /// </summary>
-        void Rollback();
 
 
      
