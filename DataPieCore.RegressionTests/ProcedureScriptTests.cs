@@ -239,6 +239,23 @@ internal static class ProcedureScriptTests
             "INSERT INTO source VALUES ('A','x','Revenue',10,'USD'),('A','y','Revenue',20,'USD')," +
             "('A','x','Qty',2,'USD'),('B','x','Revenue',50,'USD'),('B','y','Qty',NULL,'USD')," +
             "('C','x','Revenue',100,'EUR'),('D','x','Other',9,'USD');");
+        using (var command = new SQLiteCommand(ConvertSql("SELECT LEFT('2026-09',4), YEAR('2026-09-19 12:30:00')*100+MONTH('2026-09-19 12:30:00'), " +
+            "SUBSTRING('ABC123  ',4,LEN('ABC123  ')-3), LEN('ABC  '), LEFT(ISNULL(NULL,'abcd'),2), " +
+            "SUBSTRING('abcd',0,3), DAY('2024-02-29'), LEFT(NULL,4), YEAR(NULL), SUBSTRING('ABC',4,LEN('ABC')-3), 'LEFT(x,4)'"), connection))
+        using (var reader = command.ExecuteReader())
+        {
+            Check(reader.Read() && reader.GetString(0) == "2026" && reader.GetInt64(1) == 202609 &&
+                reader.GetString(2) == "123" && reader.GetInt64(3) == 3 && reader.GetString(4) == "ab" &&
+                reader.GetString(5) == "ab" && reader.GetInt64(6) == 29 && reader.IsDBNull(7) && reader.IsDBNull(8) &&
+                reader.GetString(9) == "" && reader.GetString(10) == "LEFT(x,4)", "Scalar conversions preserve dates, nested calls, trailing spaces, NULL and substring boundaries");
+        }
+        foreach (string invalid in new[] { "SELECT LEFT('abc',-1)", "SELECT SUBSTRING('AB',4,LEN('AB')-3)", "SELECT YEAR('not-a-date')" })
+            Throws<SQLiteException>(() => Execute(ConvertSql(invalid)), "Invalid length/date must fail rather than silently alter values");
+        Execute(ConvertSql("UPDATE dbo.source SET detail=LEFT(customer,1), amount=YEAR('2026-09-19')*100+MONTH('2026-09-19') WHERE customer='D'"));
+        using (var command = new SQLiteCommand("SELECT detail,amount FROM source WHERE customer='D'", connection))
+        using (var reader = command.ExecuteReader())
+            Check(reader.Read() && reader.GetString(0) == "D" && reader.GetDouble(1) == 202609, "Scalar conversions execute in UPDATE assignments");
+        Execute("UPDATE source SET detail='x',amount=9 WHERE customer='D'");
         string select = "SELECT TOP 1 customer, SUM(ISNULL([Revenue],0)) AS revenue, SUM(ISNULL([Qty],0)) AS qty " +
             "FROM dbo.source PIVOT (SUM(amount) FOR metric IN ([Revenue],[Qty])) AS PivotTable " +
             "WHERE remark='USD' GROUP BY customer ORDER BY revenue DESC";

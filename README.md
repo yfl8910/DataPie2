@@ -37,6 +37,7 @@ SQL Server 导出到 SQLite 时，会在数据库文件同目录生成 `StoredPr
 - 支持 `INSERT ... SELECT TOP n` / `TOP (n)`，将限行应用于排序后的查询结果；`PERCENT`、`WITH TIES` 和带 TOP 的联合查询仍需人工转换。
 - 支持单表 `PIVOT(SUM(value) FOR key IN (...))` 后按维度分组并使用 `SUM(ISNULL(pivotColumn, 0))` 求和的形式，转换为条件聚合。复杂透视、透视结果过滤、其他聚合方式不会自动转换。
 - 将函数调用 `ISNULL(value, fallback)` 转为 SQLite `IFNULL(value, fallback)`，支持嵌套调用及 `INSERT ... SELECT ... UNION ALL` 中的聚合空值处理。SQLite 的返回值类型规则不同于 SQL Server；依赖隐式类型转换或字符串截断的表达式仍需人工检查。
+- 支持 `LEFT`、`LEN`、三参数 `SUBSTRING` 及 `YEAR/MONTH/DAY` 日期字段调用；`LEN` 不计尾部普通空格。支持嵌套调用和 `YEAR(date) * 100 + MONTH(date)`。日期须为 SQLite 可识别的格式（例如 ISO 日期文本）。负截取长度或无法识别的非空日期会触发 SQLite `integer overflow` 保护错误，避免静默改变数据；日期解析与 SQL Server 的全部隐式转换规则并不等价。
 - 支持过程开头的 `DECLARE` 局部变量：常量、`NULL`、`GETDATE()`、`YEAR/MONTH/DAY(GETDATE())`。日期本身限 `datetime/datetime2`，年月日限 `int/bigint`；声明可省略分号。
 - 日期局部变量在每次调用时按运行程序机器的本地时间统一计算，不会固定为导出日期，也不能由调用方覆盖。源服务器时区不同时需确认业务时间；当前不自动继承源服务器时区。
 - 支持加号两侧为数值常量或已知数值变量的运算，例如 `@year * 100 + @month`；无法确认类型的加号仍需人工转换，不能直接当成 SQLite 字符串拼接。

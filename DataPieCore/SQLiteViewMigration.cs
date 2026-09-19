@@ -119,6 +119,8 @@ namespace DataPieCore
             if (allowWrites) NormalizeDelete(body);
             ConvertTop(body);
             ConvertPivot(body);
+            var numericExpressions = new HashSet<string>(StringComparer.Ordinal);
+            ConvertFunctions(body, numericExpressions, numericVariables);
 
             for (int i = 0; i < body.Count; i++)
             {
@@ -127,7 +129,7 @@ namespace DataPieCore
                     body[i] = "IFNULL";
                 // '+' and COLLATE can silently change meaning between the two database engines.
                 bool Numeric(string token) => decimal.TryParse(token, System.Globalization.NumberStyles.Float,
-                    System.Globalization.CultureInfo.InvariantCulture, out _) || numericVariables?.Contains(token) == true;
+                    System.Globalization.CultureInfo.InvariantCulture, out _) || numericVariables?.Contains(token) == true || numericExpressions.Contains(token);
                 if ((body[i] == "+" && !(i > 0 && i + 1 < body.Count && Numeric(body[i - 1]) && Numeric(body[i + 1]))) ||
                     body[i].Equals("COLLATE", StringComparison.OrdinalIgnoreCase))
                     throw new NotSupportedException("Explicit conversion is required for '+' or COLLATE.");
@@ -143,6 +145,65 @@ namespace DataPieCore
                 body.RemoveRange(i + 2, 2);
             }
             return string.Join(" ", body);
+        }
+
+        private static void ConvertFunctions(List<string> tokens, HashSet<string> numericExpressions, HashSet<string> numericVariables)
+        {
+            for (int i = 0; i + 1 < tokens.Count; i++)
+            {
+                string name = tokens[i].ToUpperInvariant();
+                if (!new[] { "LEFT", "LEN", "SUBSTRING", "YEAR", "MONTH", "DAY", "ISNULL" }.Contains(name) ||
+                    tokens[i + 1] != "(" || (i > 0 && tokens[i - 1] == ".")) continue;
+                var arguments = new List<List<string>> { new List<string>() };
+                int depth = 0;
+                int end = i + 2;
+                for (; end < tokens.Count; end++)
+                {
+                    string token = tokens[end];
+                    if (token == ")" && depth == 0) break;
+                    if (token == "," && depth == 0) { arguments.Add(new List<string>()); continue; }
+                    if (token == "(") depth++;
+                    if (token == ")") depth--;
+                    arguments[arguments.Count - 1].Add(token);
+                }
+                int count = name == "LEFT" || name == "ISNULL" ? 2 : name == "SUBSTRING" ? 3 : 1;
+                if (end == tokens.Count || arguments.Count != count || arguments.Any(arg => arg.Count == 0))
+                    throw new NotSupportedException($"Invalid {name} function arguments.");
+                if (arguments.SelectMany(arg => arg).Any(token => token.Equals("SELECT", StringComparison.OrdinalIgnoreCase)))
+                    throw new NotSupportedException("Subqueries inside converted scalar functions require explicit conversion.");
+                foreach (var argument in arguments)
+                {
+                    ConvertFunctions(argument, numericExpressions, numericVariables);
+                    bool Numeric(string token) => decimal.TryParse(token, System.Globalization.NumberStyles.Float,
+                        System.Globalization.CultureInfo.InvariantCulture, out _) || numericExpressions.Contains(token) || numericVariables?.Contains(token) == true;
+                    for (int j = 0; j < argument.Count; j++)
+                        if (argument[j].Equals("COLLATE", StringComparison.OrdinalIgnoreCase) ||
+                            (argument[j] == "+" && !(j > 0 && j + 1 < argument.Count && Numeric(argument[j - 1]) && Numeric(argument[j + 1]))))
+                            throw new NotSupportedException("Explicit conversion is required for '+' or COLLATE inside function arguments.");
+                }
+                var args = arguments.Select(arg => "(" + string.Join(" ", arg) + ")").ToArray();
+                // SQLite's negative substring lengths have different semantics; force a runtime error instead.
+                const string invalid = "abs(-9223372036854775808)";
+                string expression;
+                if (name == "ISNULL")
+                    expression = $"IFNULL({args[0]}, {args[1]})";
+                else if (name == "LEN")
+                    expression = $"length(rtrim({args[0]}, ' '))";
+                else if (name == "LEFT")
+                    expression = $"CASE WHEN {args[0]} IS NULL OR {args[1]} IS NULL THEN NULL WHEN {args[1]} < 0 THEN {invalid} ELSE substr({args[0]}, 1, {args[1]}) END";
+                else if (name == "SUBSTRING")
+                    expression = $"CASE WHEN {args[0]} IS NULL OR {args[1]} IS NULL OR {args[2]} IS NULL THEN NULL WHEN {args[2]} < 0 THEN {invalid} ELSE substr({args[0]}, max(1, {args[1]}), max(0, {args[2]} + min(0, {args[1]} - 1))) END";
+                else
+                {
+                    string format = name == "YEAR" ? "%Y" : name == "MONTH" ? "%m" : "%d";
+                    string value = $"strftime('{format}', {args[0]})";
+                    expression = $"CASE WHEN {args[0]} IS NULL THEN NULL WHEN {value} IS NULL THEN {invalid} ELSE CAST({value} AS INTEGER) END";
+                }
+                expression = "(" + expression + ")";
+                if (name == "LEN" || name == "YEAR" || name == "MONTH" || name == "DAY") numericExpressions.Add(expression);
+                tokens.RemoveRange(i, end - i + 1);
+                tokens.Insert(i, expression);
+            }
         }
 
         private static void NormalizeDelete(List<string> body)
