@@ -768,7 +768,7 @@ namespace DataPieDesktop
             Controls.Add(tabControl1);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Name = "Main";
-            Text = "DataPie V2025.12（杨福来）";
+            Text = "DataPie V2026.09（杨福来）";
             FormClosed += Main_FormClosed;
             Load += Main_Load;
             tabControl1.ResumeLayout(false);
