@@ -33,6 +33,51 @@ namespace DataPieCore
                 : "`" + name.Replace("`", "``") + "`";
         }
 
+        internal static string QuoteSqlServerTableName(string name)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name);
+            var parts = new List<string>();
+            int position = 0;
+            while (position < name.Length)
+            {
+                while (position < name.Length && char.IsWhiteSpace(name[position])) position++;
+                string part;
+                if (position < name.Length && name[position] == '[')
+                {
+                    var value = new System.Text.StringBuilder();
+                    position++;
+                    bool closed = false;
+                    while (position < name.Length)
+                    {
+                        char current = name[position++];
+                        if (current != ']') { value.Append(current); continue; }
+                        if (position < name.Length && name[position] == ']')
+                        {
+                            value.Append(']');
+                            position++;
+                        }
+                        else { closed = true; break; }
+                    }
+                    if (!closed) throw new ArgumentException("Unclosed table identifier.", nameof(name));
+                    part = value.ToString();
+                    while (position < name.Length && char.IsWhiteSpace(name[position])) position++;
+                }
+                else
+                {
+                    int start = position;
+                    while (position < name.Length && name[position] != '.') position++;
+                    part = name.Substring(start, position - start).Trim();
+                }
+                if (part.Length == 0 || parts.Count == 4)
+                    throw new ArgumentException("Invalid table identifier.", nameof(name));
+                parts.Add(QuoteIdentifier(part, "SQLSERVER"));
+                if (position == name.Length) break;
+                if (name[position++] != '.' || position == name.Length)
+                    throw new ArgumentException("Invalid table identifier.", nameof(name));
+            }
+            return string.Join(".", parts);
+        }
+
         private static bool IsSqlServer(string databaseType)
         {
             if (string.Equals(databaseType, "SQLSERVER", StringComparison.OrdinalIgnoreCase)) return true;

@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
-using System.Linq;
+using DataPieCore;
 
 namespace DBUtil
 {
@@ -53,11 +53,8 @@ namespace DBUtil
                 };
                     
 
-                if (!IsOpen)
-                {
-                    conn.Open();
-                    IsOpen = true;
-                }
+                if (conn.State != ConnectionState.Open) conn.Open();
+                IsOpen = true;
 
                 return cmd.ExecuteNonQuery();
             }
@@ -66,8 +63,8 @@ namespace DBUtil
                 if (!IsKeepConnect)
                 {
                     try { conn?.Close(); } catch { }
-                    this.IsOpen = false;
                 }
+                IsOpen = conn?.State == ConnectionState.Open;
             }
         }
 
@@ -135,37 +132,43 @@ namespace DBUtil
         {
             if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentException(nameof(tableName));
             if (reader == null) throw new ArgumentNullException(nameof(reader));
+            string destination = SqlQueryBuilder.QuoteSqlServerTableName(tableName);
 
             using SqlConnection connection = new SqlConnection(ConnectionString);
             connection.Open();
             using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
             {
-                DestinationTableName = tableName
+                DestinationTableName = destination
             };
 
             // Discover columns using the SAME connection used for bulk copy
-            var columns2 = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToList();
-            List<string> columns1;
-            using (var schemaCmd = new SqlCommand($"SELECT TOP (0) * FROM [{tableName}]", connection))
+            var destinationColumns = new HashSet<string>(StringComparer.Ordinal);
+            using (var schemaCmd = new SqlCommand($"SELECT TOP (0) * FROM {destination}", connection))
             using (var schemaReader = schemaCmd.ExecuteReader())
             {
-                columns1 = Enumerable.Range(0, schemaReader.FieldCount).Select(schemaReader.GetName).ToList();
+                for (int i = 0; i < schemaReader.FieldCount; i++)
+                    destinationColumns.Add(schemaReader.GetName(i));
             }
 
-            var newcolumns = columns1.Intersect(columns2);
-            foreach (var cl in newcolumns)
-            {
-                bulkCopy.ColumnMappings.Add(cl, cl);
-            }
+            AddColumnMappings(bulkCopy, reader, destinationColumns);
 
             bulkCopy.WriteToServer(reader);
             return true;
         }
 
-        public int TruncateTable(string TableName)
+        internal static void AddColumnMappings(SqlBulkCopy bulkCopy, IDataReader reader, HashSet<string> destinationColumns)
         {
-            return ExecuteSql("TRUNCATE TABLE   [" + TableName + "]");
+            for (int i = 0; i < reader.FieldCount; i++)
+            {
+                string name = reader.GetName(i);
+                if (destinationColumns.Remove(name)) bulkCopy.ColumnMappings.Add(i, name);
+            }
+            if (bulkCopy.ColumnMappings.Count == 0)
+                throw new InvalidOperationException("No matching columns were found in the destination table.");
         }
+
+        public int TruncateTable(string tableName)
+            => ExecuteSql("TRUNCATE TABLE " + SqlQueryBuilder.QuoteSqlServerTableName(tableName));
 
         #endregion 批量插入操作
 

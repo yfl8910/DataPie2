@@ -95,46 +95,22 @@ ORDER BY fk.object_id, fc.constraint_column_id";
         };
         private DataTable ReadColumns()
         {
-
-            const string sql = @"SELECT sysobjects.name AS TableName,
-                           syscolumns.Id AS TableId,
-                           syscolumns.name AS DbColumnName,
-                           systypes.name AS DataType,
-                           syscolumns.length AS [Length],
-                           syscomments.text AS DefaultValue,
-                           syscolumns.isnullable AS IsNullable,
-	                       columnproperty(syscolumns.id,syscolumns.name,'IsIdentity')as IsIdentity,
-                           (CASE
-                                WHEN EXISTS
-                                       (
-                                             	select 1
-												from sysindexes i
-												join sysindexkeys k on i.id = k.id and i.indid = k.indid
-												join sysobjects o on i.id = o.id
-												join syscolumns c on i.id=c.id and k.colid = c.colid
-												where o.xtype = 'U'
-												and exists(select 1 from sysobjects where xtype = 'PK' and name = i.name)
-												and o.name=sysobjects.name and c.name=syscolumns.name
-                                       ) THEN 1
-                                ELSE 0
-                            END) AS IsPrimaryKey
-                    FROM syscolumns
-                    INNER JOIN systypes ON syscolumns.xtype = systypes.xtype
-                    LEFT JOIN sysobjects ON syscolumns.id = sysobjects.id
-                    LEFT OUTER JOIN syscomments ON syscolumns.cdefault = syscomments.id
-                    WHERE syscolumns.id IN
-                        (SELECT id
-                         FROM sysobjects
-                         WHERE xtype IN('u',
-                                        'v') )
-                      AND (systypes.name <> 'sysname')
-                      AND systypes.name<>'geometry'
-                      AND systypes.name<>'geography'
-                    ORDER BY syscolumns.colid";
-            DataTable dt = GetDataTable(sql);
-
-            return dt;
-
+            const string sql = @"SELECT c.object_id AS TableId, c.name AS DbColumnName,
+ty.name AS DataType, c.max_length AS [Length],
+OBJECT_DEFINITION(c.default_object_id) AS DefaultValue,
+c.is_nullable AS IsNullable, c.is_identity AS IsIdentity,
+CASE WHEN EXISTS (
+    SELECT 1 FROM sys.indexes i
+    JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
+    WHERE i.object_id = c.object_id AND i.is_primary_key = 1
+      AND ic.column_id = c.column_id AND ic.key_ordinal > 0
+) THEN 1 ELSE 0 END AS IsPrimaryKey
+FROM sys.tables t
+JOIN sys.columns c ON c.object_id = t.object_id
+JOIN sys.types ty ON ty.user_type_id = CASE WHEN c.system_type_id = 240 THEN c.user_type_id ELSE c.system_type_id END
+WHERE ty.name NOT IN ('geometry', 'geography')
+ORDER BY c.object_id, c.column_id";
+            return GetDataTable(sql);
         }
 
 
