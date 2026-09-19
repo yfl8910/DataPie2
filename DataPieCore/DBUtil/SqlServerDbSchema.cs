@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
-using System.Text;
 
 namespace DBUtil
 {
@@ -28,7 +27,7 @@ namespace DBUtil
 
         public List<TableStruct> ShowTables()
         {
-            using var allColumns = AllColumns();
+            using var allColumns = ReadColumns();
             var columnsByTable = allColumns.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
             var foreignKeys = ReadForeignKeys();
             const string sql = "SELECT name, SCHEMA_NAME(schema_id), object_id FROM sys.tables";
@@ -94,10 +93,10 @@ ORDER BY fk.object_id, fc.constraint_column_id";
             MaxLength = Convert.ToInt32(row["Length"]),
             IsPrimaryKey = Convert.ToInt32(row["IsPrimaryKey"]) == 1,
         };
-        public DataTable AllColumns()
+        private DataTable ReadColumns()
         {
 
-            string sql = string.Format(@"SELECT sysobjects.name AS TableName,
+            const string sql = @"SELECT sysobjects.name AS TableName,
                            syscolumns.Id AS TableId,
                            syscolumns.name AS DbColumnName,
                            systypes.name AS DataType,
@@ -131,7 +130,7 @@ ORDER BY fk.object_id, fc.constraint_column_id";
                       AND (systypes.name <> 'sysname')
                       AND systypes.name<>'geometry'
                       AND systypes.name<>'geography'
-                    ORDER BY syscolumns.colid");
+                    ORDER BY syscolumns.colid";
             DataTable dt = GetDataTable(sql);
 
             return dt;
@@ -170,16 +169,7 @@ ORDER BY s.name, v.name";
             return views;
         }
 
-        public string GetDbName()
-        {
-            string DBName;
-
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
-            {
-                DBName = connection.Database.ToString();
-            }
-            return DBName;
-        }
+        private string GetDbName() => new SqlConnectionStringBuilder(ConnectionString).InitialCatalog;
 
 
         /// <summary>
@@ -226,20 +216,11 @@ WHERE ROUTINE_TYPE = 'PROCEDURE'";
         /// <returns></returns>
         public List<string> GetDataBaseInfo()
         {
-            string sql = "SELECT  Name FROM Master..SysDatabases where Name not in('master', 'tempdb', 'model', 'msdb', 'ReportServer', 'ReportServerTempDB')";
-
-            DataTable dt = GetDataTable(sql);
-
-            List<string> DatabaseList = new List<string>();
-
-            if (dt.Rows.Count > 0)
-            {
-                foreach (DataRow _DataRowItem in dt.Rows)
-                {
-                    DatabaseList.Add(_DataRowItem["Name"].ToString());
-                }
-            }
-            return DatabaseList;
+            const string sql = "SELECT name FROM sys.databases WHERE name NOT IN ('master', 'tempdb', 'model', 'msdb', 'ReportServer', 'ReportServerTempDB')";
+            using var reader = GetDataReader(sql);
+            var databases = new List<string>();
+            while (reader.Read()) databases.Add(reader.GetString(0));
+            return databases;
         }
 
 

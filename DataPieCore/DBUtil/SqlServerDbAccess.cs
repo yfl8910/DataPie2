@@ -70,10 +70,6 @@ namespace DBUtil
 
                 return cmd.ExecuteNonQuery();
             }
-            catch (Exception)
-            {
-                throw;
-            }
             finally
             {
                 if (!IsKeepConnect)
@@ -96,48 +92,30 @@ namespace DBUtil
             return OwnedDataReader.Open(this, strSql, null, 10000);
         }
         /// <summary>
-        /// 返回查询结果的数据集
-        /// </summary>
-        /// <param name="strSql">sql语句</param>
-        /// <returns>返回的查询结果集</returns>
-        private DataSet GetDataSet(string strSql) => GetDataSet(strSql, null);
-
-        private DataSet GetDataSet(string strSql, IDbDataParameter[] paraArr)
-        {
-            using var command = new SqlCommand(strSql, (SqlConnection)conn);
-            using var adapter = new SqlDataAdapter(command);
-            var result = new DataSet();
-            try
-            {
-                if (paraArr != null) command.Parameters.AddRange(paraArr);
-                if (conn.State != ConnectionState.Open) conn.Open();
-                IsOpen = true;
-                adapter.Fill(result);
-                return result;
-            }
-            catch { result.Dispose(); throw; }
-            finally
-            {
-                command.Parameters.Clear();
-                if (!IsKeepConnect) conn.Close();
-                IsOpen = conn.State == ConnectionState.Open;
-            }
-        }
-        /// <summary>
         /// 返回查询结果的数据表
         /// </summary>
         /// <param name="strSql">sql语句</param>
         /// <returns>返回的查询数据表</returns>
         public DataTable GetDataTable(string strSql)
         {
-            DataSet ds = GetDataSet(strSql);
-            if (ds.Tables.Count > 0)
+            using var command = new SqlCommand(strSql, (SqlConnection)conn);
+            using var adapter = new SqlDataAdapter(command);
+            var table = new DataTable("Table");
+            try
             {
-                DataTable dt = ds.Tables[0];
-                ds.Tables.Remove(dt);
-                return dt;
+                if (conn.State != ConnectionState.Open) conn.Open();
+                IsOpen = true;
+                adapter.Fill(table);
+                if (table.Columns.Count > 0) return table;
+                table.Dispose();
+                return null;
             }
-            return null;
+            catch { table.Dispose(); throw; }
+            finally
+            {
+                if (!IsKeepConnect) conn.Close();
+                IsOpen = conn.State == ConnectionState.Open;
+            }
         }
 
         /// <summary>
@@ -161,20 +139,6 @@ namespace DBUtil
 
         #region 批量插入操作
 
-        // Helper to get column names for a table using the provided connection (avoids using this.conn)
-        private static List<string> GetTableColumnsUsingConnection(SqlConnection connection, string tableName)
-        {
-            if (connection == null) return new List<string>();
-            string sql = $"SELECT TOP (0) * FROM [{tableName}]";
-            using var cmd = new SqlCommand(sql, connection);
-            using var reader = cmd.ExecuteReader();
-            var names = new List<string>(reader.FieldCount);
-            for (int i = 0; i < reader.FieldCount; i++)
-            {
-                names.Add(reader.GetName(i));
-            }
-            return names;
-        }
 
         public bool BulkInsert(string tableName, IDataReader reader)
         {
@@ -203,15 +167,8 @@ namespace DBUtil
                 bulkCopy.ColumnMappings.Add(cl, cl);
             }
 
-            try
-            {
-                bulkCopy.WriteToServer(reader);
-                return true;
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            bulkCopy.WriteToServer(reader);
+            return true;
         }
 
         public bool BulkInsert(string tableName, DataTable dt, IList<string> maplist)
@@ -228,62 +185,15 @@ namespace DBUtil
                 bulkCopy.ColumnMappings.Add(a, a);
             }
 
-            try
-            {
-                bulkCopy.WriteToServer(dt);
-                return true;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            finally
-            {
-                connection.Close();
-            }
+            bulkCopy.WriteToServer(dt);
+            return true;
         }
 
         public bool BulkInsert(string tableName, DataTable dt)
         {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
-            connection.Open();
-            using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
-            {
-                DestinationTableName = tableName
-            };
-
-            DataTable dt2 = GetDataTable("select * from " + tableName + " where 1=2");
-
-            List<string> cols = new List<string>();
-
-            foreach (DataColumn col in dt2.Columns)
-            {
-                cols.Add(col.ColumnName);
-            }
-
-            //仅仅导入列名一致的表
-            foreach (DataColumn dc in dt.Columns)
-            {
-                if (cols.Contains(dc.ColumnName))
-                {
-                    bulkCopy.ColumnMappings.Add(dc.ColumnName, dc.ColumnName);
-                }
-            }
-
-            try
-            {
-                bulkCopy.WriteToServer(dt);
-
-                return true;
-            }
-            catch (Exception e)
-            {
-                throw e;
-            }
-            finally
-            {
-                connection.Close();
-            }
+            if (dt == null) throw new ArgumentNullException(nameof(dt));
+            using var reader = dt.CreateDataReader();
+            return BulkInsert(tableName, reader);
         }
 
         public int TruncateTable(string TableName)
@@ -303,13 +213,9 @@ namespace DBUtil
         /// <returns>SqlDataReader</returns>
         public IDataReader RunProcedure(string storedProcName, IDataParameter[] parameters)
         {
-            SqlConnection connection = new SqlConnection(ConnectionString);
-            SqlDataReader returnReader;
-            connection.Open();
-            SqlCommand command = BuildQueryCommand(connection, storedProcName, parameters);
-            command.CommandType = CommandType.StoredProcedure;
-            returnReader = command.ExecuteReader(CommandBehavior.CloseConnection);
-            return returnReader;
+            var boundParameters = parameters?.Cast<IDbDataParameter>().ToArray();
+            return OwnedDataReader.Open(CreateNewAccess(), storedProcName,
+                boundParameters, 100000, CommandType.StoredProcedure, true);
         }
 
         /// <summary>
@@ -320,10 +226,8 @@ namespace DBUtil
             using SqlConnection connection = new SqlConnection(ConnectionString);
             int result;
             connection.Open();
-            SqlCommand command = BuildIntCommand(connection, storedProcName, null);
-            command.CommandTimeout = 100000;
+            using SqlCommand command = BuildIntCommand(connection, storedProcName, null);
             result = command.ExecuteNonQuery();
-            connection.Close();
             return result;
         }
 
@@ -339,29 +243,12 @@ namespace DBUtil
             using SqlConnection connection = new SqlConnection(ConnectionString);
             DataSet dataSet = new DataSet();
             connection.Open();
-            SqlDataAdapter sqlDA = new SqlDataAdapter
-            {
-                SelectCommand = BuildQueryCommand(connection, storedProcName, parameters)
-            };
+            using var command = BuildQueryCommand(connection, storedProcName, parameters);
+            using var sqlDA = new SqlDataAdapter(command);
             sqlDA.Fill(dataSet, tableName);
-            connection.Close();
             return dataSet;
         }
 
-        public DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName, int Times)
-        {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
-            DataSet dataSet = new DataSet();
-            connection.Open();
-            SqlDataAdapter sqlDA = new SqlDataAdapter
-            {
-                SelectCommand = BuildQueryCommand(connection, storedProcName, parameters)
-            };
-            sqlDA.SelectCommand.CommandTimeout = Times;
-            sqlDA.Fill(dataSet, tableName);
-            connection.Close();
-            return dataSet;
-        }
 
         /// <summary>
         /// 构建 SqlCommand 对象(用来返回一个结果集，而不是一个整数值)
@@ -374,10 +261,10 @@ namespace DBUtil
         {
             SqlCommand command = new SqlCommand(storedProcName, connection)
             {
-                CommandType = CommandType.StoredProcedure
+                CommandType = CommandType.StoredProcedure,
+                CommandTimeout = 100000
             };
 
-            command.CommandTimeout = 100000;
             if (parameters != null)
             {
                 foreach (SqlParameter parameter in parameters)
@@ -407,11 +294,9 @@ namespace DBUtil
             using SqlConnection connection = new SqlConnection(ConnectionString);
             int result;
             connection.Open();
-            SqlCommand command = BuildIntCommand(connection, storedProcName, parameters);
-            command.CommandTimeout = 100000;
+            using SqlCommand command = BuildIntCommand(connection, storedProcName, parameters);
             rowsAffected = command.ExecuteNonQuery();
             result = (int)command.Parameters["ReturnValue"].Value;
-            connection.Close();
             return result;
         }
 
@@ -424,7 +309,6 @@ namespace DBUtil
         private SqlCommand BuildIntCommand(SqlConnection connection, string storedProcName, IDataParameter[] parameters)
         {
             SqlCommand command = BuildQueryCommand(connection, storedProcName, parameters);
-            command.CommandTimeout = 100000;
             command.Parameters.Add(new SqlParameter("ReturnValue",
                 SqlDbType.Int, 4, ParameterDirection.ReturnValue,
                 false, 0, 0, string.Empty, DataRowVersion.Default, null));

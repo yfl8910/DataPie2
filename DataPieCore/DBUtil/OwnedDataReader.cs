@@ -10,37 +10,51 @@ namespace DBUtil
         private readonly IDbCommand command;
         private readonly IDbAccess access;
         private bool disposed;
+        private readonly bool disposeAccess;
 
-        private OwnedDataReader(IDataReader reader, IDbCommand command, IDbAccess access)
+        private OwnedDataReader(IDataReader reader, IDbCommand command, IDbAccess access, bool disposeAccess)
         {
             this.reader = reader;
             this.command = command;
             this.access = access;
+            this.disposeAccess = disposeAccess;
         }
 
-        public static IDataReader Open(IDbAccess access, string sql, IDbDataParameter[] parameters, int timeout)
+        public static IDataReader Open(IDbAccess access, string sql, IDbDataParameter[] parameters, int timeout,
+            CommandType commandType = CommandType.Text, bool disposeAccess = false)
         {
             var command = access.conn.CreateCommand();
             try
             {
                 command.CommandText = sql;
+                command.CommandType = commandType;
                 command.CommandTimeout = timeout;
                 if (parameters != null)
-                    foreach (var parameter in parameters) command.Parameters.Add(parameter);
+                    foreach (var parameter in parameters)
+                    {
+                        if ((parameter.Direction == ParameterDirection.Input || parameter.Direction == ParameterDirection.InputOutput)
+                            && parameter.Value == null) parameter.Value = DBNull.Value;
+                        command.Parameters.Add(parameter);
+                    }
                 if (access.conn.State != ConnectionState.Open) access.conn.Open();
                 access.IsOpen = true;
-                return new OwnedDataReader(command.ExecuteReader(), command, access);
+                return new OwnedDataReader(command.ExecuteReader(), command, access, disposeAccess);
             }
             catch
             {
                 try { command.Parameters.Clear(); command.Dispose(); }
-                finally { ReleaseConnection(access); }
+                finally { ReleaseConnection(access, disposeAccess); }
                 throw;
             }
         }
 
-        private static void ReleaseConnection(IDbAccess access)
+        private static void ReleaseConnection(IDbAccess access, bool disposeAccess)
         {
+            if (disposeAccess)
+            {
+                access.Dispose();
+                return;
+            }
             if (!access.IsKeepConnect) access.conn.Close();
             access.IsOpen = access.conn.State == ConnectionState.Open;
         }
@@ -53,7 +67,7 @@ namespace DBUtil
             finally
             {
                 try { command.Parameters.Clear(); command.Dispose(); }
-                finally { ReleaseConnection(access); }
+                finally { ReleaseConnection(access, disposeAccess); }
             }
         }
         public void Close() => Dispose();

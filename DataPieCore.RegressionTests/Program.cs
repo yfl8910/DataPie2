@@ -178,6 +178,26 @@ try
         Check(db.conn.State == ConnectionState.Closed && !db.IsOpen, "Failed reader creation closes connection");
     }
     Console.WriteLine("PASS: Reader ownership, connection reuse and failed-query cleanup.");
+    var openOwnedReader = typeof(IDbAccess).Assembly.GetType("DBUtil.OwnedDataReader")
+        .GetMethod("Open", BindingFlags.Public | BindingFlags.Static);
+    using (var ownedAccess = Open())
+    {
+        ownedAccess.IsKeepConnect = true;
+        using (var reader = (IDataReader)openOwnedReader.Invoke(null,
+            new object[] { ownedAccess, "SELECT 42", null, 30, CommandType.Text, true }))
+            Check(reader.Read() && reader.GetInt64(0) == 42, "Owned access reader returns data");
+        Check(!ownedAccess.IsOpen, "Reader disposes its independent access even with keep-connect enabled");
+    }
+    using (var ownedAccess = Open())
+    {
+        bool ownedReaderFailed = false;
+        try
+        {
+            openOwnedReader.Invoke(null, new object[] { ownedAccess, "SELECT * FROM missing", null, 30, CommandType.Text, true });
+        }
+        catch (TargetInvocationException ex) when (ex.InnerException is SQLiteException) { ownedReaderFailed = true; }
+        Check(ownedReaderFailed && !ownedAccess.IsOpen, "Failed reader creation releases its independent access");
+    }
 
     Execute("CREATE TABLE csv_target (id INTEGER, text TEXT)");
     string csv = Path.Combine(directory, "input.csv");
