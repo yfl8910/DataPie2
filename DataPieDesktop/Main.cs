@@ -594,7 +594,9 @@ namespace DataPieDesktop
 
         private void ShowMessage(object o, System.EventArgs e)
         {
+            toolStripStatusLabel2.Text = string.Empty;
             statusStrip1.Items[0].Text = AppState.DatabaseName + "-" + o.ToString();
+            toolStripStatusLabel1.ToolTipText = toolStripStatusLabel1.Text;
             statusStrip1.Items[0].ForeColor = Color.Red;
         }
 
@@ -602,8 +604,7 @@ namespace DataPieDesktop
         {
             Exception ee = o as Exception;
 
-            statusStrip1.Items[0].Text = AppState.DatabaseName + "-" + "Error! " + ee.Message;
-            statusStrip1.Items[0].ForeColor = Color.Red;
+            ShowMessage("Error! " + ee.Message, e);
         }
 
 

@@ -780,6 +780,7 @@ namespace DataPieDesktop
             statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { toolStripStatusLabel1, toolStripStatusLabel2 });
             statusStrip1.Location = new System.Drawing.Point(0, 776);
             statusStrip1.Name = "statusStrip1";
+            statusStrip1.ShowItemToolTips = true;
             statusStrip1.Padding = new System.Windows.Forms.Padding(2, 0, 19, 0);
             statusStrip1.Size = new System.Drawing.Size(1301, 42);
             statusStrip1.TabIndex = 3;
@@ -788,15 +789,17 @@ namespace DataPieDesktop
             // toolStripStatusLabel1
             // 
             toolStripStatusLabel1.Name = "toolStripStatusLabel1";
+            toolStripStatusLabel1.Spring = true;
+            toolStripStatusLabel1.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             toolStripStatusLabel1.Size = new System.Drawing.Size(47, 35);
             toolStripStatusLabel1.Text = "Info:";
             toolStripStatusLabel1.ToolTipText = "Info";
             // 
             // toolStripStatusLabel2
             // 
-            toolStripStatusLabel2.AutoSize = false;
+            toolStripStatusLabel2.AutoSize = true;
             toolStripStatusLabel2.Name = "toolStripStatusLabel2";
-            toolStripStatusLabel2.Size = new System.Drawing.Size(1120, 35);
+            toolStripStatusLabel2.Size = new System.Drawing.Size(0, 35);
             toolStripStatusLabel2.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // Main
