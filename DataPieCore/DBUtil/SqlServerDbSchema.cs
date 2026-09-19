@@ -440,61 +440,18 @@ WHERE p.is_ms_shipped = 0 ORDER BY s.name, p.name";
 
         public List<Proc> GetProcs()
         {
-            List<Proc> res = new List<Proc>();
-            string sql = @"select 名称=ROUTINE_NAME,最近更新=LAST_ALTERED
-from INFORMATION_SCHEMA.ROUTINES
-where ROUTINE_TYPE='PROCEDURE'";
-            DataTable dt = GetDataTable(sql);
-            if (dt.Rows.Count > 0)
-            {
-                for (int i = 0; i < dt.Rows.Count; i++)
+            const string sql = @"SELECT ROUTINE_NAME, LAST_ALTERED
+FROM INFORMATION_SCHEMA.ROUTINES
+WHERE ROUTINE_TYPE = 'PROCEDURE'";
+            using var reader = GetDataReader(sql);
+            var procedures = new List<Proc>();
+            while (reader.Read())
+                procedures.Add(new Proc
                 {
-                    Proc proc = new Proc
-                    {
-                        Name = dt.Rows[i]["名称"].ToString(),
-                        LastUpdate = dt.Rows[i]["最近更新"].ToString()
-                    };
-
-                    //去除参数表和存储过程定义，提升速度
-
-                    //sql = @"sp_helptext '" + proc.Name + "'";
-                    //StringBuilder sb = new StringBuilder("");
-                    //DataTable dt2 = GetDataTable(sql);
-                    //if (dt2.Rows.Count > 0)
-                    //{
-                    //    for (int ii = 0; ii < dt2.Rows.Count; ii++)
-                    //    {
-                    //        sb.AppendLine(dt2.Rows[ii][0].ToString());
-                    //    }
-                    //    proc.CreateSql = sb.ToString();
-                    //}
-
-                    //string sql2 = @"select '参数名称' = name,
-                    //'类型' = type_name(xusertype),
-                    //'长度' = length
-                    //from syscolumns
-                    //where id = object_id('" + proc.Name + "')";
-                    //DataTable dt3 = GetDataTable(sql2);
-                    //List<Procparam> p = new List<Procparam>();
-                    //if (dt3.Rows.Count > 0)
-                    //{
-                    //    for (int ii = 0; ii < dt3.Rows.Count; ii++)
-                    //    {
-                    //        Procparam param1 = new Procparam
-                    //        {
-                    //            Name = dt3.Rows[ii]["参数名称"].ToString(),
-                    //            Type = dt3.Rows[ii]["类型"].ToString(),
-                    //            Length = dt3.Rows[ii]["长度"].ToString()
-                    //        };
-                    //        p.Add(param1);
-                    //    }
-                    //}
-                    //proc.Param = p;
-
-                    res.Add(proc);
-                }
-            }
-            return res;
+                    Name = reader.GetString(0),
+                    LastUpdate = reader.GetValue(1).ToString()
+                });
+            return procedures;
         }
 
         /// <summary>
