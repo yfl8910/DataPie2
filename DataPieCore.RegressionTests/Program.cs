@@ -131,22 +131,24 @@ try
     invalid.Rows.Add(3L, "new", 0.0, new byte[] { 3 }, DBNull.Value);
     invalid.Rows.Add(1L, "duplicate", 0.0, new byte[] { 4 }, DBNull.Value);
     bool failed = false;
-    try { using var db = Open(); db.BulkInsert("typed", invalid); }
+    try { using var db = Open(); using var reader = invalid.CreateDataReader(); db.BulkInsert("typed", reader); }
     catch (SQLiteException) { failed = true; }
     Check(failed && Count("typed") == 2, "Failed import must roll back all rows");
     Execute("CREATE TABLE mapped (text TEXT, id INTEGER)");
-    using (var db = Open()) db.BulkInsert("mapped", rows, new[] { "text", "id" });
-    Check(Count("mapped") == 2, "Mapped DataTable import");
+    using (var projected = rows.DefaultView.ToTable(false, "text", "id"))
+    using (var reader = projected.CreateDataReader())
+    using (var db = Open()) db.BulkInsert("mapped", reader);
+    Check(Count("mapped") == 2, "Projected Reader import");
     Execute("CREATE TABLE \"odd\"\"table\" (\"odd\"\"column\" TEXT)");
     var quoted = new DataTable(); quoted.Columns.Add("odd\"column"); quoted.Rows.Add("value");
-    using (var db = Open()) db.BulkInsert("odd\"table", quoted);
-    Console.WriteLine("PASS: transaction rollback, mapped DataTable import and quoted identifiers.");
+    using (var db = Open()) using (var reader = quoted.CreateDataReader()) db.BulkInsert("odd\"table", reader);
+    Console.WriteLine("PASS: transaction rollback, projected Reader import and quoted identifiers.");
 
     Execute("CREATE TABLE large (id INTEGER)");
     var large = new DataTable(); large.Columns.Add("id", typeof(int));
     for (int i = 0; i < 100000; i++) large.Rows.Add(i);
     var watch = Stopwatch.StartNew();
-    using (var db = Open()) db.BulkInsert("large", large);
+    using (var db = Open()) using (var reader = large.CreateDataReader()) db.BulkInsert("large", reader);
     Console.WriteLine($"INFO: imported 100,000 integer rows in {watch.Elapsed.TotalSeconds:F2}s (not a before/after benchmark).");
     using (var db = Open())
     {
@@ -178,26 +180,6 @@ try
         Check(db.conn.State == ConnectionState.Closed && !db.IsOpen, "Failed reader creation closes connection");
     }
     Console.WriteLine("PASS: Reader ownership, connection reuse and failed-query cleanup.");
-    var openOwnedReader = typeof(IDbAccess).Assembly.GetType("DBUtil.OwnedDataReader")
-        .GetMethod("Open", BindingFlags.Public | BindingFlags.Static);
-    using (var ownedAccess = Open())
-    {
-        ownedAccess.IsKeepConnect = true;
-        using (var reader = (IDataReader)openOwnedReader.Invoke(null,
-            new object[] { ownedAccess, "SELECT 42", null, 30, CommandType.Text, true }))
-            Check(reader.Read() && reader.GetInt64(0) == 42, "Owned access reader returns data");
-        Check(!ownedAccess.IsOpen, "Reader disposes its independent access even with keep-connect enabled");
-    }
-    using (var ownedAccess = Open())
-    {
-        bool ownedReaderFailed = false;
-        try
-        {
-            openOwnedReader.Invoke(null, new object[] { ownedAccess, "SELECT * FROM missing", null, 30, CommandType.Text, true });
-        }
-        catch (TargetInvocationException ex) when (ex.InnerException is SQLiteException) { ownedReaderFailed = true; }
-        Check(ownedReaderFailed && !ownedAccess.IsOpen, "Failed reader creation releases its independent access");
-    }
 
     Execute("CREATE TABLE csv_target (id INTEGER, text TEXT)");
     string csv = Path.Combine(directory, "input.csv");

@@ -17,15 +17,6 @@ namespace DBUtil
 
         public bool IsOpen { set; get; }
 
-        /// <summary>
-        /// 创建具有名称和值的参数
-        /// </summary>
-        /// <returns>针对当前数据库类型的参数对象</returns>
-        public IDbDataParameter CreatePara(string name, object value)
-        {
-            return new SQLiteParameter(name, value);
-        }
-
  
 
         /// <summary>
@@ -132,11 +123,6 @@ namespace DBUtil
             return DbAccessFactory.Create(ConnectionString, DataBaseType);
         }
 
-        public bool BulkInsert(string tableName, IDataReader reader)
-        {
-            return BulkInsertReader(tableName, reader, null);
-        }
-
         List<string> IDbAccess.ShowViews() => ShowViews();
 
         public int TruncateTable(string tableName)
@@ -146,14 +132,12 @@ namespace DBUtil
 
         private static string QuoteIdentifier(string name) => "\"" + name.Replace("\"", "\"\"") + "\"";
 
-        private bool BulkInsertReader(string tableName, IDataReader reader, IList<string> columns)
+        public bool BulkInsert(string tableName, IDataReader reader)
         {
             if (string.IsNullOrWhiteSpace(tableName)) throw new ArgumentException(nameof(tableName));
             if (reader == null) throw new ArgumentNullException(nameof(reader));
-            var names = columns ?? Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToArray();
-            if (names.Count == 0) throw new ArgumentException("No columns to import.");
-            var ordinals = names.Select(reader.GetOrdinal).ToArray();
-            if (ordinals.Any(i => i < 0)) throw new ArgumentException("An import column is missing.");
+            var names = Enumerable.Range(0, reader.FieldCount).Select(reader.GetName).ToArray();
+            if (names.Length == 0) throw new ArgumentException("No columns to import.");
             using var connection = new SQLiteConnection(ConnectionString);
             connection.Open();
             using var transaction = connection.BeginTransaction();
@@ -161,8 +145,8 @@ namespace DBUtil
             command.Transaction = transaction;
             command.CommandText = "INSERT INTO " + QuoteIdentifier(tableName) + " (" +
                 string.Join(",", names.Select(QuoteIdentifier)) + ") VALUES (" +
-                string.Join(",", Enumerable.Range(0, names.Count).Select(i => "@p" + i)) + ")";
-            var parameters = new SQLiteParameter[names.Count];
+                string.Join(",", Enumerable.Range(0, names.Length).Select(i => "@p" + i)) + ")";
+            var parameters = new SQLiteParameter[names.Length];
             for (int i = 0; i < parameters.Length; i++)
             {
                 parameters[i] = new SQLiteParameter("@p" + i);
@@ -172,33 +156,18 @@ namespace DBUtil
             while (reader.Read())
             {
                 for (int i = 0; i < parameters.Length; i++)
-                    parameters[i].Value = reader.GetValue(ordinals[i]) ?? DBNull.Value;
+                    parameters[i].Value = reader.GetValue(i) ?? DBNull.Value;
                 command.ExecuteNonQuery();
             }
             transaction.Commit();
             return true;
-        }
-
-        public bool BulkInsert(string tableName, DataTable dt)
-        {
-            if (dt == null) throw new ArgumentNullException(nameof(dt));
-            using var reader = dt.CreateDataReader();
-            return BulkInsert(tableName, reader);
-        }
-
-        public bool BulkInsert(string tableName, DataTable dt, IList<string> maplist)
-        {
-            if (dt == null) throw new ArgumentNullException(nameof(dt));
-            if (maplist == null) throw new ArgumentNullException(nameof(maplist));
-            using var reader = dt.CreateDataReader();
-            return BulkInsertReader(tableName, reader, maplist);
         }
         public int RunProcedure(string storedProcName)
         {
             return RunProcedure(storedProcName, Array.Empty<IDataParameter>(), out _);
         }
 
-        public int RunProcedure(string storedProcName, IDataParameter[] parameters, out int rowsAffected)
+        internal int RunProcedure(string storedProcName, IDataParameter[] parameters, out int rowsAffected)
         {
             var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
             var bound = SQLiteProcedureScripts.Bind(script, parameters);
@@ -224,7 +193,7 @@ namespace DBUtil
             }
         }
 
-        public IDataReader RunProcedure(string storedProcName, IDataParameter[] parameters)
+        internal IDataReader RunProcedure(string storedProcName, IDataParameter[] parameters)
         {
             var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
             if (!script.Metadata.ReadOnly)
@@ -232,7 +201,7 @@ namespace DBUtil
             return OwnedDataReader.Open(this, script.Sql, SQLiteProcedureScripts.Bind(script, parameters), 600);
         }
 
-        public DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName)
+        internal DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName)
         {
             var script = SQLiteProcedureScripts.Load(ConnectionString, storedProcName);
             if (!script.Metadata.ReadOnly)

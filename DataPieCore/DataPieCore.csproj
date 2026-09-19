@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="DataPieCore.RegressionTests" />
     <PackageReference Include="EPPlus" Version="8.7.0" />
     <PackageReference Include="ExcelDataReader" Version="3.9.0" />
     <PackageReference Include="MiniExcel" Version="1.46.0" />

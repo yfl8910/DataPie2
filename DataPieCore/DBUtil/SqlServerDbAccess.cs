@@ -36,15 +36,6 @@ namespace DBUtil
         /// </summary>
         public bool IsOpen { set; get; }
 
-        /// <summary>
-        /// 创建具有名称和值的参数
-        /// </summary>
-        /// <returns>针对当前数据库类型的参数对象</returns>
-        public IDbDataParameter CreatePara(string name, object value)
-        {
-            return new SqlParameter(name, value);
-        }
-
 
 
         /// <summary>
@@ -171,31 +162,6 @@ namespace DBUtil
             return true;
         }
 
-        public bool BulkInsert(string tableName, DataTable dt, IList<string> maplist)
-        {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
-            connection.Open();
-            using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
-            {
-                DestinationTableName = tableName
-            };
-
-            foreach (string a in maplist)
-            {
-                bulkCopy.ColumnMappings.Add(a, a);
-            }
-
-            bulkCopy.WriteToServer(dt);
-            return true;
-        }
-
-        public bool BulkInsert(string tableName, DataTable dt)
-        {
-            if (dt == null) throw new ArgumentNullException(nameof(dt));
-            using var reader = dt.CreateDataReader();
-            return BulkInsert(tableName, reader);
-        }
-
         public int TruncateTable(string TableName)
         {
             return ExecuteSql("TRUNCATE TABLE   [" + TableName + "]");
@@ -206,114 +172,20 @@ namespace DBUtil
         #region 存储过程操作
 
         /// <summary>
-        /// 执行存储过程，返回SqlDataReader ( 注意：调用该方法后，一定要对SqlDataReader进行Close )
-        /// </summary>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <returns>SqlDataReader</returns>
-        public IDataReader RunProcedure(string storedProcName, IDataParameter[] parameters)
-        {
-            var boundParameters = parameters?.Cast<IDbDataParameter>().ToArray();
-            return OwnedDataReader.Open(CreateNewAccess(), storedProcName,
-                boundParameters, 100000, CommandType.StoredProcedure, true);
-        }
-
-        /// <summary>
         /// 执行存储过程，返回影响行数
         /// </summary>
         public int RunProcedure(string storedProcName)
         {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
-            int result;
-            connection.Open();
-            using SqlCommand command = BuildIntCommand(connection, storedProcName, null);
-            result = command.ExecuteNonQuery();
-            return result;
-        }
-
-        /// <summary>
-        /// 执行存储过程
-        /// </summary>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <param name="tableName">DataSet结果中的表名</param>
-        /// <returns>DataSet</returns>
-        public DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName)
-        {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
-            DataSet dataSet = new DataSet();
-            connection.Open();
-            using var command = BuildQueryCommand(connection, storedProcName, parameters);
-            using var sqlDA = new SqlDataAdapter(command);
-            sqlDA.Fill(dataSet, tableName);
-            return dataSet;
-        }
-
-
-        /// <summary>
-        /// 构建 SqlCommand 对象(用来返回一个结果集，而不是一个整数值)
-        /// </summary>
-        /// <param name="connection">数据库连接</param>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <returns>SqlCommand</returns>
-        private SqlCommand BuildQueryCommand(SqlConnection connection, string storedProcName, IDataParameter[] parameters)
-        {
-            SqlCommand command = new SqlCommand(storedProcName, connection)
+            using var connection = new SqlConnection(ConnectionString);
+            using var command = new SqlCommand(storedProcName, connection)
             {
                 CommandType = CommandType.StoredProcedure,
                 CommandTimeout = 100000
             };
-
-            if (parameters != null)
-            {
-                foreach (SqlParameter parameter in parameters)
-                {
-                    // 检查未分配值的输出参数,将其分配以DBNull.Value.
-                    if ((parameter.Direction == ParameterDirection.InputOutput || parameter.Direction == ParameterDirection.Input) &&
-                        (parameter.Value == null))
-                    {
-                        parameter.Value = DBNull.Value;
-                    }
-                    command.Parameters.Add(parameter);
-                }
-            }
-
-            return command;
-        }
-
-        /// <summary>
-        /// 执行存储过程，返回影响的行数
-        /// </summary>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <param name="rowsAffected">影响的行数</param>
-        /// <returns></returns>
-        public int RunProcedure(string storedProcName, IDataParameter[] parameters, out int rowsAffected)
-        {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
-            int result;
             connection.Open();
-            using SqlCommand command = BuildIntCommand(connection, storedProcName, parameters);
-            rowsAffected = command.ExecuteNonQuery();
-            result = (int)command.Parameters["ReturnValue"].Value;
-            return result;
+            return command.ExecuteNonQuery();
         }
 
-        /// <summary>
-        /// 创建 SqlCommand 对象实例(用来返回一个整数值)
-        /// </summary>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <returns>SqlCommand 对象实例</returns>
-        private SqlCommand BuildIntCommand(SqlConnection connection, string storedProcName, IDataParameter[] parameters)
-        {
-            SqlCommand command = BuildQueryCommand(connection, storedProcName, parameters);
-            command.Parameters.Add(new SqlParameter("ReturnValue",
-                SqlDbType.Int, 4, ParameterDirection.ReturnValue,
-                false, 0, 0, string.Empty, DataRowVersion.Default, null));
-            return command;
-        }
 
         #endregion 存储过程操作
     }

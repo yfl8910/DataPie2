@@ -34,15 +34,6 @@ namespace DBUtil
         /// </summary>
         bool IsOpen { get; set; }
 
-        /// <summary>
-        /// 创建具有名称和值的参数
-        /// <para>示例：iDb.CreatePara("id",id);</para>
-        /// </summary>
-        /// <param name="name">参数名,不用加前缀</param>
-        /// <param name="value">参数值</param>
-        /// <returns>针对当前数据库类型的参数对象</returns>
-        IDbDataParameter CreatePara(string name, object value);
-
       
 
         /// <summary>
@@ -59,24 +50,6 @@ namespace DBUtil
         /// <param name="reader">reader</param>
         /// <returns>返回是受影响的行数</returns>
         bool BulkInsert(string tableName, IDataReader reader);
-
-        /// <summary>
-        /// 批量插入一个table
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dt">数据表</param>
-        /// <returns>返回是否成功</returns>
-        bool BulkInsert(string tableName, DataTable dt);
-
-        /// <summary>
-        /// 批量插入一个table
-        /// </summary>
-        /// <param name="tableName">表名</param>
-        /// <param name="dt">数据表</param>
-        /// <param name="maplist">字段映射</param>
-        /// <returns>返回是否成功</returns>
-
-        public bool BulkInsert(string tableName, DataTable dt, IList<string> maplist);
 
 
 
@@ -123,32 +96,6 @@ namespace DBUtil
         /// 执行存储过程，返回影响行数
         /// </summary>
         public int RunProcedure(string storedProcName);
-
-        /// <summary>
-        /// 执行存储过程，返回影响的行数
-        /// </summary>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <param name="rowsAffected">影响的行数</param>
-        /// <returns></returns>
-        public int RunProcedure(string storedProcName, IDataParameter[] parameters, out int rowsAffected);
-
-        /// <summary>
-        /// 执行存储过程，返回SqlDataReader ( 注意：调用该方法后，一定要对SqlDataReader进行Close )
-        /// </summary>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <returns>SqlDataReader</returns>
-        public IDataReader RunProcedure(string storedProcName, IDataParameter[] parameters);
-
-        /// <summary>
-        /// 执行存储过程
-        /// </summary>
-        /// <param name="storedProcName">存储过程名</param>
-        /// <param name="parameters">存储过程参数</param>
-        /// <param name="tableName">DataSet结果中的表名</param>
-        /// <returns>DataSet</returns>
-        public DataSet RunProcedure(string storedProcName, IDataParameter[] parameters, string tableName);
 
         /// <summary>
         /// 获取数据库信息

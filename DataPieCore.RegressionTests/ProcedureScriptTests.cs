@@ -135,7 +135,7 @@ internal static class ProcedureScriptTests
         Check(File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("LIMIT 10"), "Reusable TOP conversion");
         Check(!File.ReadAllText(Path.Combine(folder, "GetItems.txt")).Contains("CREATE PROCEDURE"), "Export contains executable body, not T-SQL declaration");
 
-        using var db = DbAccessFactory.Create($"Data Source={path};Pooling=False", "SQLITE");
+        using var db = (SQLiteDbAccess)DbAccessFactory.Create($"Data Source={path};Pooling=False", "SQLITE");
         Check(db.GetProcs().Count == supportedCount, "Only supported scripts appear in the procedure list");
         Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 0, "Export validation must not execute writes");
         db.ExecuteSql("INSERT INTO Ratios VALUES (1,10,2,3,NULL),(2,10,-3,3,NULL),(3,10,NULL,3,NULL)");
@@ -157,21 +157,21 @@ internal static class ProcedureScriptTests
                 "UPDATE FROM preserves matching and survives independent unsupported declarations");
         }
         IDataParameter[] Values(int id, string code) => new IDataParameter[]
-            { db.CreatePara("@id", id), db.CreatePara("@code", code) };
+            { new SQLiteParameter("@id", id), new SQLiteParameter("@code", code) };
         Check(db.RunProcedure("AddItem", Values(1, "EUR"), out int affected) == 1 && affected == 1, "Parameterized insert");
         db.RunProcedure("AddItem", Values(2, "CH"), out _);
         using (var reader = db.RunProcedure("GetItems", Array.Empty<IDataParameter>()))
             Check(reader.Read() && reader.GetInt64(0) == 1 && !reader.Read(), "Default parameters and reader execution");
         Check(db.conn.State == ConnectionState.Closed, "Procedure reader releases its connection");
-        using (var data = db.RunProcedure("GetItems", new IDataParameter[] { db.CreatePara("code", "CH") }, "items"))
+        using (var data = db.RunProcedure("GetItems", new IDataParameter[] { new SQLiteParameter("code", "CH") }, "items"))
             Check(data.Tables[0].Rows.Count == 1 && Convert.ToInt32(data.Tables[0].Rows[0]["id"]) == 2, "Named parameter override and DataSet execution");
         Throws<ArgumentException>(() => db.RunProcedure("Required"), "Missing required parameter");
-        Throws<ArgumentException>(() => db.RunProcedure("Required", new IDataParameter[] { db.CreatePara("@bad", 1) }, out _), "Unknown parameter");
+        Throws<ArgumentException>(() => db.RunProcedure("Required", new IDataParameter[] { new SQLiteParameter("@bad", 1) }, out _), "Unknown parameter");
         Throws<NotSupportedException>(() => db.RunProcedure("UnsupportedIf"), "Unsupported scripts cannot execute");
         Throws<ArgumentException>(() => db.RunProcedure("../outside"), "Procedure names cannot escape script directory");
         string payload = "EUR'; DELETE FROM items; --";
         db.RunProcedure("UpdateItem", Values(2, payload), out _);
-        using (var data = db.RunProcedure("GetItems", new IDataParameter[] { db.CreatePara("@code", payload) }, "items"))
+        using (var data = db.RunProcedure("GetItems", new IDataParameter[] { new SQLiteParameter("@code", payload) }, "items"))
             Check(data.Tables[0].Rows.Count == 1 && db.GetDataTable("SELECT * FROM items").Rows.Count == 2, "Values are bound, not interpolated");
         Throws<SQLiteException>(() => db.RunProcedure("Atomic"), "A failing write script must throw");
         Check(db.GetDataTable("SELECT * FROM items WHERE id = 900").Rows.Count == 0, "Write script rolls back all statements");
@@ -183,12 +183,12 @@ internal static class ProcedureScriptTests
             Check(db.GetDataTable("SELECT * FROM items WHERE id = 900").Rows.Count == 0, "Retained connection has no partial writes");
             db.RunProcedure("AddItem", Values(901, "EUR"), out _);
             Check(db.GetDataTable("SELECT * FROM items WHERE id = 901").Rows.Count == 1, "A new local transaction commits after failure");
-            db.RunProcedure("DeleteItem", new IDataParameter[] { db.CreatePara("@id", 901) }, out _);
+            db.RunProcedure("DeleteItem", new IDataParameter[] { new SQLiteParameter("@id", 901) }, out _);
         }
         finally { db.IsKeepConnect = false; }
         using (var data = db.RunProcedure("MultiResult", Array.Empty<IDataParameter>(), "result"))
             Check(data.Tables.Count == 2 && Convert.ToInt32(data.Tables[1].Rows[0][0]) == 2, "Multiple query results");
-        db.RunProcedure("DeleteItem", new IDataParameter[] { db.CreatePara("@id", 2) }, out _);
+        db.RunProcedure("DeleteItem", new IDataParameter[] { new SQLiteParameter("@id", 2) }, out _);
         Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 1, "Parameterized delete");
         using (var reader = db.RunProcedure("sales.same", Array.Empty<IDataParameter>()))
             Check(reader.Read() && reader.GetInt64(0) == 2, "Same-name procedures use schema-qualified filenames");
@@ -208,7 +208,7 @@ internal static class ProcedureScriptTests
             Check((string)data.Tables[0].Rows[0]["code"] == "O'Brien" &&
                 Convert.ToDecimal(data.Tables[0].Rows[0]["amount"]) == -1.25m &&
                 data.Tables[0].Rows[0]["empty_value"] == DBNull.Value, "Local constants, comma declarations and implicit NULL");
-        Throws<ArgumentException>(() => db.RunProcedure("DateLocals", new IDataParameter[] { db.CreatePara("@year", 2000) }, out _),
+        Throws<ArgumentException>(() => db.RunProcedure("DateLocals", new IDataParameter[] { new SQLiteParameter("@year", 2000) }, out _),
             "Caller cannot override local variables");
         Throws<NotSupportedException>(() => db.RunProcedure("LocalSet"), "Reassignment is unsupported");
         string localBody = string.Join("\n", File.ReadAllLines(Path.Combine(folder, "DateLocals.txt")).Skip(1));
@@ -252,7 +252,7 @@ internal static class ProcedureScriptTests
         }
         using (var data = db.RunProcedure("InitializerDependency", Array.Empty<IDataParameter>(), "result"))
             Check(Convert.ToInt32(data.Tables[0].Rows[0][0]) == 12, "Transitive initializer dependencies retain input parameters");
-        using (var data = db.RunProcedure("InitializerDependency", new IDataParameter[] { db.CreatePara("@input", DBNull.Value) }, "result"))
+        using (var data = db.RunProcedure("InitializerDependency", new IDataParameter[] { new SQLiteParameter("@input", DBNull.Value) }, "result"))
             Check(data.Tables[0].Rows[0][0] == DBNull.Value, "Initializer arithmetic propagates NULL");
         using (var data = db.RunProcedure("InitializerDecimal", Array.Empty<IDataParameter>(), "result"))
             Check(Convert.ToDecimal(data.Tables[0].Rows[0][0]) == 2.25m, "Numeric variable initialization preserves decimal precision");
@@ -266,7 +266,7 @@ internal static class ProcedureScriptTests
         }
         using (var data = db.RunProcedure("ConditionalNull", Array.Empty<IDataParameter>(), "result"))
             Check(Convert.ToInt32(data.Tables[0].Rows[0][0]) == 4, "NULL IF condition does not execute assignment");
-        using (var data = db.RunProcedure("ConditionalNull", new IDataParameter[] { db.CreatePara("@input", 1) }, "result"))
+        using (var data = db.RunProcedure("ConditionalNull", new IDataParameter[] { new SQLiteParameter("@input", 1) }, "result"))
             Check(Convert.ToInt32(data.Tables[0].Rows[0][0]) == 5, "Conditional arithmetic uses input values");
         Throws<NotSupportedException>(() => db.RunProcedure("ConditionalElse"), "Unsupported ELSE must not be detached from IF");
         foreach (var now in new[] { new DateTime(2024, 12, 31, 23, 59, 59), new DateTime(2025, 1, 1, 0, 0, 0) })
