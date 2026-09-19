@@ -880,23 +880,39 @@ namespace DataPieDesktop
 
         }
 
-        private async void button15_Click(object sender, EventArgs e)
+        private void button15_Click(object sender, EventArgs e)
         {
-
-            string filename = FileDialogs.ShowSaveDialog(dbs.Name + ".db", ".db");
-
-            if (filename != null && AppState.DatabaseType == "SQLSERVER")
+            using var dialog = new FolderBrowserDialog
             {
-                textBox2.Text = filename;
+                Description = "Select the SQLite output folder",
+                SelectedPath = Directory.Exists(textBox2.Text) ? textBox2.Text : string.Empty
+            };
+            if (dialog.ShowDialog(this) == DialogResult.OK)
+                textBox2.Text = dialog.SelectedPath;
+        }
 
-                await CreateSqlite(textBox2.Text, null);
-            }
-
-            else
+        private async void createSqliteButton_Click(object sender, EventArgs e)
+        {
+            if (operationRunning) return;
+            if (AppState.DatabaseType != "SQLSERVER" || dbs == null)
             {
-                statusStrip1.Items[1].Text = "Only support SQL server To Sqlite";
-                statusStrip1.Items[1].ForeColor = Color.Red;
+                MessageBox.Show(this, "Please connect to a SQL Server database first.");
+                return;
             }
+            if (!Directory.Exists(textBox2.Text))
+            {
+                MessageBox.Show(this, "Please select an existing output folder.");
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(dbs.Name) || dbs.Name.IndexOfAny(Path.GetInvalidFileNameChars()) >= 0)
+            {
+                MessageBox.Show(this, "The database name cannot be used as a file name.");
+                return;
+            }
+            string filename = Path.Combine(textBox2.Text, dbs.Name + ".db");
+            if (File.Exists(filename) && MessageBox.Show(this, $"Replace the existing database?\n{filename}",
+                "Create SQLite", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
+            await CreateSqlite(filename, null);
         }
 
         public async Task CreateSqlite(string filename, string password)
