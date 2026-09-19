@@ -35,6 +35,16 @@ namespace DataPieCore
             public List<string> Warnings { get; set; } = new List<string>();
             public List<Parameter> Parameters { get; set; } = new List<Parameter>();
             public List<Parameter> Locals { get; set; } = new List<Parameter>();
+            public List<ConditionalAssignment> Assignments { get; set; } = new List<ConditionalAssignment>();
+        }
+
+        internal sealed class ConditionalAssignment
+        {
+            public string Left { get; set; }
+            public string Operator { get; set; }
+            public string Right { get; set; }
+            public string Target { get; set; }
+            public string Expression { get; set; }
         }
 
         internal sealed class Script
@@ -103,6 +113,9 @@ namespace DataPieCore
                     if (executable.Count == 0) throw new NotSupportedException("No executable statements remain. " + string.Join(" ", metadata.Warnings));
                     var referencedVariables = new HashSet<string>(executable.SelectMany(SQLiteViewMigration.Tokenize)
                         .Where(token => token.StartsWith("@", StringComparison.Ordinal)), StringComparer.OrdinalIgnoreCase);
+                    foreach (var assignment in metadata.Assignments)
+                        referencedVariables.UnionWith(SQLiteViewMigration.Tokenize(assignment.Left + " " + assignment.Right + " " + assignment.Target + " " + assignment.Expression)
+                            .Where(token => token.StartsWith("@", StringComparison.Ordinal)));
                     metadata.Parameters.RemoveAll(parameter => !referencedVariables.Contains(parameter.Name));
                     metadata.Locals.RemoveAll(local => !referencedVariables.Contains(local.Name));
                     metadata.ReadOnly = executable.All(statement => statement.StartsWith("SELECT ", StringComparison.OrdinalIgnoreCase));
@@ -225,6 +238,7 @@ namespace DataPieCore
                 metadata.Locals.Clear();
             }
             var unavailable = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            ReadConditionalAssignments(body, metadata);
             body = SeparateStatements(body);
             metadata.ReadOnly = true;
             var statement = new List<string>();
@@ -292,6 +306,40 @@ namespace DataPieCore
             }
             if (result.Count == 0) throw new NotSupportedException("Procedure has no supported SQL statements.");
             return result;
+        }
+
+        private static void ReadConditionalAssignments(List<string> body, Metadata metadata)
+        {
+            const string atom = @"(?:@[\p{L}_][\p{L}\p{N}_]*|[+-]?\s*\d+)";
+            var pattern = new Regex(@"\AIF\s+(?<left>" + atom + @")\s*(?<op><>|!=|<=|>=|=|<|>)\s*(?<right>" + atom +
+                @")\s+SET\s+(?<target>@[\p{L}_][\p{L}\p{N}_]*)\s*=\s*(?<value>" + atom + @"(?:\s*[+-]\s*" + atom + @")*)",
+                RegexOptions.IgnoreCase);
+            int consumed = 0;
+            var assignments = new List<ConditionalAssignment>();
+            while (consumed < body.Count)
+            {
+                while (consumed < body.Count && body[consumed] == ";") consumed++;
+                if (consumed == body.Count || !body[consumed].Equals("IF", StringComparison.OrdinalIgnoreCase)) break;
+                var match = pattern.Match(string.Join(" ", body.Skip(consumed)));
+                if (!match.Success) return;
+                var assignment = new ConditionalAssignment
+                {
+                    Left = match.Groups["left"].Value, Operator = match.Groups["op"].Value,
+                    Right = match.Groups["right"].Value, Target = match.Groups["target"].Value,
+                    Expression = match.Groups["value"].Value
+                };
+                if (!metadata.Locals.Any(local => local.Type == DbType.Int64 && local.Name.Equals(assignment.Target, StringComparison.OrdinalIgnoreCase))) return;
+                var variables = SQLiteViewMigration.Tokenize(match.Value).Where(token => token.StartsWith("@", StringComparison.Ordinal));
+                if (variables.Any(variable => !metadata.Parameters.Concat(metadata.Locals)
+                    .Any(parameter => parameter.Type == DbType.Int64 && parameter.Name.Equals(variable, StringComparison.OrdinalIgnoreCase)))) return;
+                consumed += SQLiteViewMigration.Tokenize(match.Value).Count;
+                assignments.Add(assignment);
+            }
+            // Do not detach an ELSE, block or unsupported expression from its original condition.
+            if (assignments.Count == 0 || (consumed < body.Count && !new[] { "SELECT", "INSERT", "UPDATE", "DELETE" }
+                .Contains(body[consumed], StringComparer.OrdinalIgnoreCase))) return;
+            metadata.Assignments.AddRange(assignments);
+            body.RemoveRange(0, consumed);
         }
 
         private static List<string> SeparateStatements(List<string> tokens)
@@ -441,7 +489,7 @@ namespace DataPieCore
                 if (!values.TryAdd(name, parameter.Value ?? DBNull.Value))
                     throw new ArgumentException($"Duplicate parameter: {name}");
             }
-            return script.Metadata.Parameters.Select(parameter =>
+            var bound = script.Metadata.Parameters.Select(parameter =>
             {
                 if (!values.TryGetValue(parameter.Name, out var value))
                 {
@@ -462,6 +510,36 @@ namespace DataPieCore
                         _ => throw new NotSupportedException($"Unsupported local initializer: {local.Initializer}")
                     }
                 })).ToArray();
+            var boundValues = bound.ToDictionary(parameter => parameter.ParameterName, StringComparer.OrdinalIgnoreCase);
+            long? Evaluate(string expression)
+            {
+                var tokens = SQLiteViewMigration.Tokenize(expression);
+                long total = 0;
+                int sign = 1;
+                foreach (string token in tokens)
+                {
+                    if (token == "+") continue;
+                    if (token == "-") { sign = -sign; continue; }
+                    object value = token.StartsWith("@", StringComparison.Ordinal) ? boundValues[token].Value : token;
+                    if (value == null || value == DBNull.Value) return null;
+                    total = checked(total + checked(sign * Convert.ToInt64(value, CultureInfo.InvariantCulture)));
+                    sign = 1;
+                }
+                return total;
+            }
+            foreach (var assignment in script.Metadata.Assignments)
+            {
+                long? left = Evaluate(assignment.Left), right = Evaluate(assignment.Right);
+                if (!left.HasValue || !right.HasValue) continue;
+                bool matches = assignment.Operator switch
+                {
+                    "=" => left == right, "<>" or "!=" => left != right,
+                    "<" => left < right, ">" => left > right, "<=" => left <= right, ">=" => left >= right,
+                    _ => throw new NotSupportedException("Unsupported conditional comparison.")
+                };
+                if (matches) boundValues[assignment.Target].Value = (object)Evaluate(assignment.Expression) ?? DBNull.Value;
+            }
+            return bound;
         }
 
         private static Script Read(string path)

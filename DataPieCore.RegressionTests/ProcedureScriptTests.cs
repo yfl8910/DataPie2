@@ -60,6 +60,11 @@ internal static class ProcedureScriptTests
         Add("DateLocals", "declare @year int = Year(getdate())\n declare @month int = MONTH(GETDATE())\n" +
             "DECLARE @day int = DAY(GETDATE()); DECLARE @now datetime = GETDATE();" +
             "SELECT @YEAR AS year, @month AS month, @day AS day, @now AS snapshot; SELECT @year AS year;");
+        Add("ConditionalDateLocals", "DECLARE @year int=YEAR(GETDATE()) DECLARE @month int=MONTH(GETDATE()) DECLARE @day int=DAY(GETDATE()) " +
+            "IF @day<15 SET @month=@month-1 IF @year=2027 SET @year=2026 IF @month=0 SET @month=12 " +
+            "SELECT @year AS year, @month AS month;");
+        Add("ConditionalElse", "DECLARE @month int=1; IF @month=1 SET @month=2 ELSE SET @month=3; SELECT @month;");
+        Add("ConditionalNull", "DECLARE @value int=4; IF @input>0 SET @value=@value+2-1; SELECT @value;", "@input int=NULL");
         Add("ConstantLocals", "DECLARE @code nvarchar(20) = N'O''Brien', @amount decimal(10,2) = -1.25, @empty int; " +
             "SELECT @code AS code, @amount AS amount, @empty AS empty_value;");
         Add("CommentedLocal", "-- declare @year int = Year(getdate())\nSELECT 1 AS id;");
@@ -95,8 +100,8 @@ internal static class ProcedureScriptTests
 
         SqlServerToSQLite.dbs = schema;
         var result = SqlServerToSQLite.CreateSQLiteDatabase(path, null, false);
-        Check(result.ProcedureErrors.Count == 22, "Partial and unsupported procedures must be explicitly reported");
-        int supportedCount = schema.DbProcs.Count - 10;
+        Check(result.ProcedureErrors.Count == 23, "Partial and unsupported procedures must be explicitly reported");
+        int supportedCount = schema.DbProcs.Count - 11;
         string folder = Path.Combine(directory, "StoredProcedures");
         Check(Directory.GetFiles(folder, "*.txt").Length == schema.DbProcs.Count, "One text file per procedure");
         Check(File.ReadAllText(Path.Combine(folder, "UnsupportedIf.txt")).Contains("-- UNSUPPORTED:"), "Unsupported file marker");
@@ -189,6 +194,20 @@ internal static class ProcedureScriptTests
         var load = scripts.GetMethod("Load", BindingFlags.Static | BindingFlags.NonPublic)!;
         var bind = scripts.GetMethod("Bind", BindingFlags.Static | BindingFlags.NonPublic)!;
         object script = load.Invoke(null, new object[] { db.ConnectionString, "DateLocals" })!;
+        object conditional = load.Invoke(null, new object[] { db.ConnectionString, "ConditionalDateLocals" })!;
+        foreach (var test in new[] { (new DateTime(2027,1,14),2026,12), (new DateTime(2027,1,15),2026,1),
+            (new DateTime(2026,1,1),2026,12), (new DateTime(2028,3,14),2028,2), (new DateTime(2028,3,15),2028,3) })
+        {
+            var parameters = (IDbDataParameter[])bind.Invoke(null, new object[] { conditional, Array.Empty<IDataParameter>(), test.Item1 })!;
+            var values = parameters.ToDictionary(parameter => parameter.ParameterName, parameter => parameter.Value);
+            Check(Convert.ToInt32(values["@year"]) == test.Item2 && Convert.ToInt32(values["@month"]) == test.Item3,
+                "Conditional assignments run sequentially per invocation and retain original year rules");
+        }
+        using (var data = db.RunProcedure("ConditionalNull", Array.Empty<IDataParameter>(), "result"))
+            Check(Convert.ToInt32(data.Tables[0].Rows[0][0]) == 4, "NULL IF condition does not execute assignment");
+        using (var data = db.RunProcedure("ConditionalNull", new IDataParameter[] { db.CreatePara("@input", 1) }, "result"))
+            Check(Convert.ToInt32(data.Tables[0].Rows[0][0]) == 5, "Conditional arithmetic uses input values");
+        Throws<NotSupportedException>(() => db.RunProcedure("ConditionalElse"), "Unsupported ELSE must not be detached from IF");
         foreach (var now in new[] { new DateTime(2024, 12, 31, 23, 59, 59), new DateTime(2025, 1, 1, 0, 0, 0) })
         {
             var bound = (IDbDataParameter[])bind.Invoke(null, new object[] { script, Array.Empty<IDataParameter>(), now })!;
