@@ -18,10 +18,8 @@ namespace DBUtil
                 Dbtype = "SQLSERVER",
                 DbTables = ShowTables(),
                 DbViews = ShowViews(),
-                //DbViews2 = ShowViews2(),
                 DbProcs = GetProcs()
-                   //DbList = GetDataBaseInfo()
-               };
+            };
             return dbs;
         }
 
@@ -33,9 +31,7 @@ namespace DBUtil
         public List<TableStruct> ShowTables()
         {
             using var allColumns = AllColumns();
-            using var allForeignKeys = AllForeignKeys();
             var columnsByTable = allColumns.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
-            var keysByTable = allForeignKeys.AsEnumerable().ToLookup(r => Convert.ToInt32(r["TableId"]));
             const string sql = "SELECT name, SCHEMA_NAME(schema_id), object_id FROM sys.tables";
             using var reader = GetDataReader(sql);
             var tables = new List<TableStruct>();
@@ -47,16 +43,10 @@ namespace DBUtil
                 {
                     Name = reader.GetString(0),
                     TableSchemaName = reader.GetValue(1).ToString(),
-                    Columns = columns,
-                    ForeignKeys = keysByTable[tableId].Select(ReadForeignKey).ToList(),
-                    PrimaryKey = columns.FirstOrDefault(column => column.IsPrimaryKey)?.Name
+                    Columns = columns
                 });
             }
             return tables;
-        }
-        public List<Column> ShowColumns(DataTable dt, string tablename)
-        {
-            return dt.AsEnumerable().Where(r => r["TableName"].ToString() == tablename).Select(ReadColumn).ToList();
         }
 
         private static Column ReadColumn(DataRow row) => new Column
@@ -117,209 +107,7 @@ namespace DBUtil
 
         }
 
-    
-        public DataTable AllForeignKeys()
-        {
 
-
-            string sql = string.Format(
-                         @"SELECT 
-	f.parent_object_id AS TableId, OBJECT_SCHEMA_NAME(f.parent_object_id) AS TableSchemaName,
-	OBJECT_NAME(f.parent_object_id) AS TableName,
-	COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
-	f.name AS ForeignKeyName,
-	OBJECT_SCHEMA_NAME(f.referenced_object_id) AS ReferenceTableSchemaName,
-	OBJECT_NAME(f.referenced_object_id) AS ReferenceTableName,
-	COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferenceColumnName,
-	f.update_referential_action_desc,
-	f.delete_referential_action_desc
-FROM 
-	sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc
-		ON f.OBJECT_ID = fc.constraint_object_id");
-            DataTable dt = GetDataTable(sql);
-
-            return dt;
-
-        }
-
-        public List<ForeignKeySchema> ShowForeignKeys1(DataTable dt, string tablename)
-        {
-            return dt.AsEnumerable().Where(r => r["TableName"].ToString() == tablename).Select(ReadForeignKey).ToList();
-        }
-
-        private static ForeignKeySchema ReadForeignKey(DataRow row) => new ForeignKeySchema
-        {
-            ColumnName = row["ColumnName"].ToString(),
-            ForeignTableName = row["ReferenceTableName"].ToString(),
-            ForeignColumnName = row["ReferenceColumnName"].ToString(),
-            TableName = row["TableName"].ToString(),
-            CascadeOnDelete = row["delete_referential_action_desc"].ToString() == "CASCADE",
-        };
-        public List<ForeignKeySchema> ShowForeignKeys2(string tablename)
-        {
-            List<ForeignKeySchema> list = new List<ForeignKeySchema>();
-
-          string sql=  string.Format(
-                       @"SELECT 
-	f.parent_object_id AS TableId, OBJECT_SCHEMA_NAME(f.parent_object_id) AS TableSchemaName,
-	OBJECT_NAME(f.parent_object_id) AS TableName,
-	COL_NAME(fc.parent_object_id, fc.parent_column_id) AS ColumnName,
-	f.name AS ForeignKeyName,
-	OBJECT_SCHEMA_NAME(f.referenced_object_id) AS ReferenceTableSchemaName,
-	OBJECT_NAME(f.referenced_object_id) AS ReferenceTableName,
-	COL_NAME(fc.referenced_object_id, fc.referenced_column_id) AS ReferenceColumnName,
-	f.update_referential_action_desc,
-	f.delete_referential_action_desc
-FROM 
-	sys.foreign_keys AS f INNER JOIN sys.foreign_key_columns AS fc
-		ON f.OBJECT_ID = fc.constraint_object_id
-WHERE OBJECT_NAME(f.parent_object_id) = '{0}'
-",
-                       tablename);
-
-            SqlCommand cmd = new SqlCommand(sql, (SqlConnection)conn);
-
-            conn.Open();
-
-            using (SqlDataReader reader = cmd.ExecuteReader(CommandBehavior.CloseConnection))
-            {
-                while (reader.Read())
-                {
-                    ForeignKeySchema fkc = new ForeignKeySchema();
-                    fkc.ColumnName = (string)reader["ColumnName"];
-                    fkc.ForeignTableName = (string)reader["ReferenceTableName"];
-                    fkc.ForeignColumnName = (string)reader["ReferenceColumnName"];
-                    fkc.CascadeOnDelete = (string)reader["delete_referential_action_desc"] == "CASCADE";
-                    //fkc.IsNullable = (string)reader["IsNullable"] == "YES";
-                    fkc.TableName = tablename;
-                    list.Add(fkc);
-                }
-            }
-            return list;
-        }
-
-        public List<Constraint> ShowConstraints(string tablename)
-        {
-            List<Constraint> cons = new List<Constraint>();
-
-            string sql = "sp_helpconstraint @objname='" + tablename + "'";
-            DataSet ds = GetDataSet(sql);
-            if (ds.Tables.Count > 1 && ds.Tables[1].Rows.Count > 0)
-            {
-                for (int i = 0; i < ds.Tables[1].Rows.Count; i++)
-                {
-                    Constraint constraint = new Constraint();
-
-                    string type = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString();
-                    if (string.IsNullOrWhiteSpace(type))
-                    {
-                        continue;
-                    }
-                    if (type.StartsWith("CHECK"))
-                    {
-                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
-                        constraint.Type = "CHECK";
-                        string[] arr = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString().Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries);
-
-                        constraint.Keys = arr[arr.Length - 1];
-                        constraint.Remark = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
-                        cons.Add(constraint);
-                        continue;
-                    }
-                    else if (type.StartsWith("DEFAULT"))
-                    {
-                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
-                        constraint.Type = "DEFAULT";
-                        string[] arr = (ds.Tables[1].Rows[i]["constraint_type"] ?? "").ToString().Split(new String[] { " " }, StringSplitOptions.RemoveEmptyEntries);
-
-                        constraint.Keys = arr[arr.Length - 1];
-                        constraint.Remark = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
-                        cons.Add(constraint);
-                        continue;
-                    }
-                    else if (type.StartsWith("FOREIGN"))
-                    {
-                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
-                        constraint.Type = "FOREIGN";
-                        if (ds.Tables[1].Rows.Count > i)
-                        {
-                            constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
-                            constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
-                            constraint.DelType = (ds.Tables[1].Rows[i]["delete_action"] ?? "").ToString();
-                            constraint.UpdateType = (ds.Tables[1].Rows[i]["update_action"] ?? "").ToString();
-
-                            DataTable dt2 = GetDataTable("select delete_referential_action,update_referential_action from sys.foreign_keys where name='" + constraint.Name + "'");
-                            switch (dt2.Rows[0]["delete_referential_action"].ToString())
-                            {
-                                case "0":
-                                    {
-                                        constraint.DelType = "NO ACTION";
-                                        break;
-                                    }
-                                case "1":
-                                    {
-                                        constraint.DelType = "CASCADE";
-                                        break;
-                                    }
-                                case "2":
-                                    {
-                                        constraint.DelType = "SET NULL";
-                                        break;
-                                    }
-                                case "3":
-                                    {
-                                        constraint.DelType = "SET DEFAULT";
-                                        break;
-                                    }
-                            }
-                            switch (dt2.Rows[0]["update_referential_action"].ToString())
-                            {
-                                case "0":
-                                    {
-                                        constraint.UpdateType = "NO ACTION";
-                                        break;
-                                    }
-                                case "1":
-                                    {
-                                        constraint.UpdateType = "CASCADE";
-                                        break;
-                                    }
-                                case "2":
-                                    {
-                                        constraint.UpdateType = "SET NULL";
-                                        break;
-                                    }
-                                case "3":
-                                    {
-                                        constraint.UpdateType = "SET DEFAULT";
-                                        break;
-                                    }
-                            }
-                            constraint.RefStr = (ds.Tables[1].Rows[i + 1]["constraint_keys"] ?? "").ToString();
-                        }
-                        constraint.Remark = "Update(" + constraint.UpdateType + ")," + "Delete(" + constraint.DelType + "),Ref(" + constraint.RefStr + ")";
-                        cons.Add(constraint);
-                        continue;
-                    }
-                    else if (type.StartsWith("PRIMARY"))
-                    {
-                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
-                        constraint.Type = "PRIMARY";
-                        constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
-                        cons.Add(constraint);
-                    }
-                    else if (type.StartsWith("UNIQUE"))
-                    {
-                        constraint.Name = (ds.Tables[1].Rows[i]["constraint_name"] ?? "").ToString();
-                        constraint.Type = "UNIQUE";
-                        constraint.Keys = (ds.Tables[1].Rows[i]["constraint_keys"] ?? "").ToString();
-                        cons.Add(constraint);
-                    }
-                }
-            }
-
-            return cons;
-        }
 
         public List<string> ShowViews()
         {
@@ -362,51 +150,6 @@ ORDER BY s.name, v.name";
             return DBName;
         }
 
-        public DataTable GetSchema(string collectionName)
-        {
-            using SqlConnection connection = new SqlConnection(ConnectionString);
-            DataTable dt = new DataTable();
-            try
-            {
-                dt.Clear();
-                connection.Open();
-                dt = connection.GetSchema(collectionName);
-            }
-            catch
-            {
-                dt = null;
-            }
-            return dt;
-        }
-
-        /// <summary>
-        /// 根据条件，返回架构信息	
-        /// </summary>
-        /// <param name="collectionName">集合名称</param>
-        /// <param name="restictionValues">约束条件</param>
-        /// <returns>DataTable</returns>
-        public  DataTable GetSchema(string collectionName, string[] restictionValues)
-        {
-            using (SqlConnection connection = new SqlConnection(ConnectionString))
-            {
-                DataTable dt = new DataTable();
-                try
-                {
-                    dt.Clear();
-                    connection.Open();
-                    dt = connection.GetSchema(collectionName, restictionValues);
-
-                }
-                catch
-                {
-                    dt = null;
-                }
-
-                return dt;
-
-            }
-
-        }
 
         /// <summary>
         /// 获取当前数据库的用户自定义存储过程
@@ -469,6 +212,6 @@ WHERE ROUTINE_TYPE = 'PROCEDURE'";
             return DatabaseList;
         }
 
-  
+
     }
 }
