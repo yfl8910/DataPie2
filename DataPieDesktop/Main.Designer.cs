@@ -91,8 +91,8 @@ namespace DataPieDesktop
             toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             toolStripButton3 = new System.Windows.Forms.ToolStripButton();
             statusStrip1 = new System.Windows.Forms.StatusStrip();
-            toolStripStatusLabel1 = new System.Windows.Forms.ToolStripStatusLabel();
-            toolStripStatusLabel2 = new System.Windows.Forms.ToolStripStatusLabel();
+            toolStripStatusLabel1 = new WrappingStatusLabel();
+            toolStripStatusLabel2 = new WrappingStatusLabel();
             tabControl1.SuspendLayout();
             tabPage1.SuspendLayout();
             groupBox8.SuspendLayout();

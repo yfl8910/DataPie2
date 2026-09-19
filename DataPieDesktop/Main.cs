@@ -38,6 +38,7 @@ namespace DataPieDesktop
 
         private Point pi;
         private bool operationRunning;
+        private bool updatingStatusLayout;
 
         private async Task RunOperationAsync(Action work, Action completed = null)
         {
@@ -101,7 +102,51 @@ namespace DataPieDesktop
         {
             InitializeComponent();
             _syncContext = SynchronizationContext.Current;
+            ConfigureStatusBar();
+        }
 
+        private void ConfigureStatusBar()
+        {
+            statusStrip1.AutoSize = false;
+            foreach (var label in new[] { toolStripStatusLabel1, toolStripStatusLabel2 })
+            {
+                label.AutoSize = false;
+                label.Spring = false;
+                label.TextChanged += (_, _) => UpdateStatusLayout();
+            }
+            foreach (TabPage page in tabControl1.TabPages) page.AutoScroll = true;
+            statusStrip1.Layout += (_, _) => UpdateStatusLayout();
+            statusStrip1.FontChanged += (_, _) => UpdateStatusLayout();
+            ClientSizeChanged += (_, _) => UpdateStatusLayout();
+            DpiChanged += (_, _) => UpdateStatusLayout();
+            UpdateStatusLayout();
+        }
+
+        private void UpdateStatusLayout()
+        {
+            if (updatingStatusLayout || IsDisposed || Disposing) return;
+            updatingStatusLayout = true;
+            try
+            {
+                bool hasProgress = !string.IsNullOrEmpty(toolStripStatusLabel2.Text);
+                toolStripStatusLabel2.Visible = hasProgress;
+                int width = Math.Max(2, statusStrip1.DisplayRectangle.Width - toolStripStatusLabel1.Margin.Horizontal -
+                    (hasProgress ? toolStripStatusLabel2.Margin.Horizontal : 0));
+                int progressWidth = hasProgress ? width / 2 : 0;
+                int messageWidth = width - progressWidth;
+                int height = ((WrappingStatusLabel)toolStripStatusLabel1).MeasureHeight(messageWidth);
+                if (hasProgress) height = Math.Max(height, ((WrappingStatusLabel)toolStripStatusLabel2).MeasureHeight(progressWidth));
+                toolStripStatusLabel1.Size = new Size(messageWidth, height);
+                toolStripStatusLabel2.Size = new Size(progressWidth, height);
+                toolStripStatusLabel1.ToolTipText = toolStripStatusLabel1.Text;
+                toolStripStatusLabel2.ToolTipText = toolStripStatusLabel2.Text;
+                statusStrip1.Height = height + statusStrip1.Padding.Vertical +
+                    Math.Max(toolStripStatusLabel1.Margin.Vertical, toolStripStatusLabel2.Margin.Vertical);
+                int gap = Math.Max(1, 8 * DeviceDpi / 96);
+                tabControl1.Size = new Size(Math.Max(1, ClientSize.Width - tabControl1.Left * 2),
+                    Math.Max(1, ClientSize.Height - statusStrip1.Height - gap - tabControl1.Top));
+            }
+            finally { updatingStatusLayout = false; }
         }
 
         private void tabPage1_Click(object sender, EventArgs e)
