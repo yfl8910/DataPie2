@@ -116,6 +116,7 @@ namespace DataPieCore
             if (body.LastOrDefault() == ";") body.RemoveAt(body.Count - 1);
             if (body.Count == 0 || body.Contains(";"))
                 throw new NotSupportedException("Expected one view query.");
+            if (allowWrites) NormalizeDelete(body);
             ConvertTop(body);
             ConvertPivot(body);
 
@@ -144,16 +145,35 @@ namespace DataPieCore
             return string.Join(" ", body);
         }
 
+        private static void NormalizeDelete(List<string> body)
+        {
+            if (!body[0].Equals("DELETE", StringComparison.OrdinalIgnoreCase) ||
+                (body.Count > 1 && body[1].Equals("FROM", StringComparison.OrdinalIgnoreCase))) return;
+            const string identifier = @"^(?:\[(?:\]\]|[^\]])+\]|""(?:""""|[^""])+""|[\p{L}_#][\p{L}\p{N}_$#]*)$";
+            int end = 2;
+            if (body.Count < end || !Regex.IsMatch(body[1], identifier) || body[1].Equals("TOP", StringComparison.OrdinalIgnoreCase))
+                throw new NotSupportedException("Only DELETE table [WHERE ...] can omit FROM.");
+            if (body.Count > end && body[end] == ".")
+            {
+                if (body.Count <= end + 1 || !Regex.IsMatch(body[end + 1], identifier))
+                    throw new NotSupportedException("Invalid DELETE target.");
+                end += 2;
+            }
+            if (body.Count > end && !body[end].Equals("WHERE", StringComparison.OrdinalIgnoreCase))
+                throw new NotSupportedException("DELETE aliases, joins, OUTPUT and cross-database targets require explicit conversion.");
+            body.Insert(1, "FROM");
+        }
+
         private static void ConvertTop(List<string> body)
         {
             if (body[0].Equals("INSERT", StringComparison.OrdinalIgnoreCase))
             {
-                int depth = 0;
+                int insertDepth = 0;
                 for (int i = 1; i < body.Count; i++)
                 {
-                    if (body[i] == "(") depth++;
-                    if (body[i] == ")") depth--;
-                    if (depth != 0 || !body[i].Equals("SELECT", StringComparison.OrdinalIgnoreCase)) continue;
+                    if (body[i] == "(") insertDepth++;
+                    if (body[i] == ")") insertDepth--;
+                    if (insertDepth != 0 || !body[i].Equals("SELECT", StringComparison.OrdinalIgnoreCase)) continue;
                     var query = body.Skip(i).ToList();
                     ConvertTop(query);
                     body.RemoveRange(i, body.Count - i);
@@ -227,12 +247,18 @@ namespace DataPieCore
             }
             // Only additive pivot aggregates can be collapsed without reproducing implicit pivot grouping.
             var remaining = Tokenize(projection + " " + suffix);
+            if (remaining.Any(token => new[] { "SUM", "COUNT", "AVG", "MIN", "MAX", "OVER" }
+                .Contains(token, StringComparer.OrdinalIgnoreCase)))
+                throw new NotSupportedException("Only SUM(ISNULL(pivotColumn, 0)) aggregates can be collapsed safely.");
             int order = remaining.FindIndex(token => token.Equals("ORDER", StringComparison.OrdinalIgnoreCase));
             for (int i = 0; i < (order < 0 ? remaining.Count : order); i++)
             {
                 if (i > 0 && remaining[i - 1].Equals("AS", StringComparison.OrdinalIgnoreCase)) continue;
                 if (columns.Any(column => Unquote(column).Equals(Unquote(remaining[i]), StringComparison.OrdinalIgnoreCase)))
                     throw new NotSupportedException("PIVOT columns must only occur inside SUM(ISNULL(column, 0)); filters and grouping must use source dimensions.");
+                if (new[] { pivot.Groups["key"].Value, pivot.Groups["value"].Value }
+                    .Any(column => Unquote(column).Equals(Unquote(remaining[i]), StringComparison.OrdinalIgnoreCase)))
+                    throw new NotSupportedException("PIVOT key and value columns are unavailable outside the pivot aggregate.");
             }
             for (int i = 0; i < expressions.Count; i++)
                 projection = projection.Replace("__datapie_pivot_" + i + "__", expressions[i]);

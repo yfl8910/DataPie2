@@ -8,6 +8,7 @@ internal static class ProcedureScriptTests
 {
     public static void Run(string root)
     {
+        CheckPivotConversion();
         string directory = Path.Combine(root, "procedure-tests");
         Directory.CreateDirectory(directory);
         string path = Path.Combine(directory, "data.db");
@@ -24,6 +25,21 @@ internal static class ProcedureScriptTests
         void Add(string name, string body, string parameters = "", string owner = "dbo")
             => schema.DbProcs.Add(new Proc { Name = name, SchemaName = owner,
                 CreateSql = $"CREATE PROCEDURE [{owner}].[{name}] {parameters} AS BEGIN SET NOCOUNT ON; {body} END" });
+        foreach (string name in new[] { "SellOut", "ProductTypeModelMap" })
+            schema.DbTables.Add(new TableStruct
+            {
+                Name = name, TableSchemaName = "dbo", PrimaryKey = "Model",
+                Columns = new List<Column>
+                {
+                    new Column { Name = "Model", Type = "nvarchar", MaxLength = 50, IsPrimaryKey = true, Default = "" },
+                    new Column { Name = "ProductType", Type = "nvarchar", MaxLength = 50, IsNullable = true, Default = "" }
+                }
+            });
+        string updateFrom = "UPDATE [dbo].[SellOut] SET [ProductType] = a.ProductType " +
+            "from [dbo].[ProductTypeModelMap] a WHERE SellOut.Model=a.Model";
+        Add("UpdateSellOut", updateFrom);
+        Add("UpdateSellOutWithLocals", "declare @year int=YEAR(GETDATE()) declare @month int=MONTH(GETDATE()) " + updateFrom);
+        Add("UpdateSellOutAfterBadLocal", "declare @year int=YEAR(GETDATE()) - 1 " + updateFrom);
         Add("GetItems", "SELECT TOP (10) id, code FROM dbo.items WHERE id >= @min AND code = @code ORDER BY id;",
             "@Min int = 1, @Code nvarchar(20) = N'EUR'");
         Add("Required", "SELECT * FROM dbo.items WHERE id = @id;", "@id int");
@@ -79,7 +95,7 @@ internal static class ProcedureScriptTests
 
         SqlServerToSQLite.dbs = schema;
         var result = SqlServerToSQLite.CreateSQLiteDatabase(path, null, false);
-        Check(result.ProcedureErrors.Count == 21, "Partial and unsupported procedures must be explicitly reported");
+        Check(result.ProcedureErrors.Count == 22, "Partial and unsupported procedures must be explicitly reported");
         int supportedCount = schema.DbProcs.Count - 10;
         string folder = Path.Combine(directory, "StoredProcedures");
         Check(Directory.GetFiles(folder, "*.txt").Length == schema.DbProcs.Count, "One text file per procedure");
@@ -90,6 +106,15 @@ internal static class ProcedureScriptTests
         using var db = DbAccessFactory.Create($"Data Source={path};Pooling=False", "SQLITE");
         Check(db.GetProcs().Count == supportedCount, "Only supported scripts appear in the procedure list");
         Check(db.GetDataTable("SELECT * FROM items").Rows.Count == 0, "Export validation must not execute writes");
+        db.ExecuteSql("INSERT INTO SellOut VALUES ('matched','old'),('unmatched','keep'); INSERT INTO ProductTypeModelMap VALUES ('matched','new');");
+        foreach (string name in new[] { "UpdateSellOut", "UpdateSellOutWithLocals", "UpdateSellOutAfterBadLocal" })
+        {
+            db.ExecuteSql("UPDATE SellOut SET ProductType='old' WHERE Model='matched'");
+            db.RunProcedure(name);
+            var rows = db.GetDataTable("SELECT ProductType FROM SellOut ORDER BY Model");
+            Check((string)rows.Rows[0][0] == "new" && (string)rows.Rows[1][0] == "keep",
+                "UPDATE FROM preserves matching and survives independent unsupported declarations");
+        }
         IDataParameter[] Values(int id, string code) => new IDataParameter[]
             { db.CreatePara("@id", id), db.CreatePara("@code", code) };
         Check(db.RunProcedure("AddItem", Values(1, "EUR"), out int affected) == 1 && affected == 1, "Parameterized insert");
@@ -193,6 +218,73 @@ internal static class ProcedureScriptTests
         Throws<FileNotFoundException>(() => db.RunProcedure("StaleProcedure"), "Stale scripts cannot execute");
         Check(Directory.EnumerateFiles(directory, "*.txt").Count() == 0, "Unsafe filename stays inside StoredProcedures");
         Console.WriteLine("PASS: procedure scripts, parameters/defaults, CRUD, atomic rollback, result sets, filenames and unsupported markers.");
+    }
+
+    private static void CheckPivotConversion()
+    {
+        var converter = typeof(SqlServerToSQLite).Assembly.GetType("DataPieCore.SQLiteViewMigration")!;
+        var tokenize = converter.GetMethod("Tokenize", BindingFlags.Static | BindingFlags.NonPublic)!;
+        var convert = converter.GetMethod("ConvertQuery", BindingFlags.Static | BindingFlags.NonPublic)!;
+        string ConvertSql(string sql)
+        {
+            var tokens = (List<string>)tokenize.Invoke(null, new object[] { sql })!;
+            return (string)convert.Invoke(null, new object?[] { tokens,
+                new HashSet<string>(StringComparer.OrdinalIgnoreCase) { "dbo.source", "dbo.target" }, true, null })!;
+        }
+        using var connection = new SQLiteConnection("Data Source=:memory:");
+        connection.Open();
+        void Execute(string sql) { using var command = new SQLiteCommand(sql, connection); command.ExecuteNonQuery(); }
+        Execute("CREATE TABLE source (customer TEXT, detail TEXT, metric TEXT, amount REAL, remark TEXT); " +
+            "CREATE TABLE target (customer TEXT, revenue REAL, qty REAL); " +
+            "INSERT INTO source VALUES ('A','x','Revenue',10,'USD'),('A','y','Revenue',20,'USD')," +
+            "('A','x','Qty',2,'USD'),('B','x','Revenue',50,'USD'),('B','y','Qty',NULL,'USD')," +
+            "('C','x','Revenue',100,'EUR'),('D','x','Other',9,'USD');");
+        string select = "SELECT TOP 1 customer, SUM(ISNULL([Revenue],0)) AS revenue, SUM(ISNULL([Qty],0)) AS qty " +
+            "FROM dbo.source PIVOT (SUM(amount) FOR metric IN ([Revenue],[Qty])) AS PivotTable " +
+            "WHERE remark='USD' GROUP BY customer ORDER BY revenue DESC";
+        string converted = ConvertSql("INSERT INTO dbo.target (customer,revenue,qty) " + select);
+        Check(converted.Contains("LIMIT 1") && !converted.Contains("PIVOT"), "INSERT TOP and PIVOT are converted");
+        Execute(converted);
+        using (var command = new SQLiteCommand("SELECT customer,revenue,qty FROM target", connection))
+        using (var reader = command.ExecuteReader())
+            Check(reader.Read() && reader.GetString(0) == "B" && reader.GetDouble(1) == 50 && reader.GetDouble(2) == 0 && !reader.Read(),
+                "TOP selects highest aggregate and missing pivot values become zero");
+        Execute("DELETE FROM target");
+        Execute(ConvertSql("INSERT INTO dbo.target (customer,revenue,qty) " + select.Replace("TOP 1", "TOP (100000)")));
+        using (var command = new SQLiteCommand("SELECT revenue,qty FROM target WHERE customer='A'", connection))
+        using (var reader = command.ExecuteReader())
+            Check(reader.Read() && reader.GetDouble(0) == 30 && reader.GetDouble(1) == 2, "Pivot sums across implicit source groups");
+        using (var command = new SQLiteCommand("SELECT revenue,qty FROM target WHERE customer='D'", connection))
+        using (var reader = command.ExecuteReader())
+            Check(reader.Read() && reader.GetDouble(0) == 0 && reader.GetDouble(1) == 0, "Unmatched pivot keys preserve zero-valued groups");
+        Execute("DELETE FROM target");
+        Execute(ConvertSql("INSERT INTO dbo.target (customer,revenue,qty) SELECT TOP (1) customer,amount,0 FROM dbo.source ORDER BY amount DESC"));
+        using (var command = new SQLiteCommand("SELECT customer FROM target", connection))
+            Check((string)command.ExecuteScalar()! == "C", "INSERT TOP also works without PIVOT");
+        Execute("INSERT INTO target VALUES ('keep',1,1)");
+        Execute(ConvertSql("delete [dbo].[target] WHERE customer = 'C'"));
+        using (var command = new SQLiteCommand("SELECT customer FROM target", connection))
+        using (var reader = command.ExecuteReader())
+            Check(reader.Read() && reader.GetString(0) == "keep" && !reader.Read(), "DELETE without FROM preserves its filter");
+        Check(ConvertSql("delete [dbo].[target]") == "delete FROM \"target\"", "DELETE schema target gains FROM and maps the schema");
+        Execute(ConvertSql("delete [dbo].[target]"));
+        Execute("INSERT INTO target VALUES ('again',1,1)");
+        Execute(ConvertSql("DELETE target WHERE customer = 'again'"));
+        using (var command = new SQLiteCommand("SELECT COUNT(*) FROM target", connection))
+            Check(Convert.ToInt64(command.ExecuteScalar()) == 0, "Qualified and unqualified DELETE without FROM execute");
+        Check(ConvertSql("DELETE FROM dbo.target WHERE customer = 'keep'").Contains("WHERE customer = 'keep'"),
+            "Existing DELETE FROM syntax stays supported");
+        foreach (string unsupported in new[] { select.Replace("TOP 1", "TOP 1 PERCENT"),
+            select.Replace("TOP 1", "TOP 1 WITH TIES"), select.Replace("SUM(amount)", "AVG(amount)"),
+            select.Replace("SUM(ISNULL([Qty],0))", "COUNT(*)"),
+            select.Replace("remark='USD'", "[Qty]>0"), select + " UNION ALL SELECT 1,2,3",
+            "DELETE t FROM dbo.target t JOIN dbo.source s ON t.customer=s.customer",
+            "DELETE TOP (1) dbo.target", "DELETE other.dbo.target", "DELETE missing.target" })
+        {
+            try { ConvertSql(unsupported); }
+            catch (TargetInvocationException ex) when (ex.InnerException is NotSupportedException) { continue; }
+            throw new Exception("Unsafe TOP/PIVOT shapes must be rejected");
+        }
     }
 
     private static void Check(bool condition, string message)

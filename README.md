@@ -34,6 +34,8 @@ SQL Server 导出到 SQLite 时，会在数据库文件同目录生成 `StoredPr
 
 - 支持简单的 `SELECT`、`INSERT`、`UPDATE`、`DELETE`；可以拆分省略分号的连续语句，保留 `INSERT ... SELECT`、子查询和联合查询的结构。复杂结构仍建议显式使用分号。
 - 支持输入参数和字面量默认值，以及已有的 `N'...'`、顶层常量 `TOP`、表名 schema 转换。
+- 支持 `INSERT ... SELECT TOP n` / `TOP (n)`，将限行应用于排序后的查询结果；`PERCENT`、`WITH TIES` 和带 TOP 的联合查询仍需人工转换。
+- 支持单表 `PIVOT(SUM(value) FOR key IN (...))` 后按维度分组并使用 `SUM(ISNULL(pivotColumn, 0))` 求和的形式，转换为条件聚合。复杂透视、透视结果过滤、其他聚合方式不会自动转换。
 - 将函数调用 `ISNULL(value, fallback)` 转为 SQLite `IFNULL(value, fallback)`，支持嵌套调用及 `INSERT ... SELECT ... UNION ALL` 中的聚合空值处理。SQLite 的返回值类型规则不同于 SQL Server；依赖隐式类型转换或字符串截断的表达式仍需人工检查。
 - 支持过程开头的 `DECLARE` 局部变量：常量、`NULL`、`GETDATE()`、`YEAR/MONTH/DAY(GETDATE())`。日期本身限 `datetime/datetime2`，年月日限 `int/bigint`；声明可省略分号。
 - 日期局部变量在每次调用时按运行程序机器的本地时间统一计算，不会固定为导出日期，也不能由调用方覆盖。源服务器时区不同时需确认业务时间；当前不自动继承源服务器时区。
