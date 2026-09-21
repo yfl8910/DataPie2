@@ -16,6 +16,7 @@ internal static class Program
         {
             try
             {
+                ConnectionFormTests.Run();
                 MainBindingsTests.Run(form);
                 await CheckOperations(form);
             }

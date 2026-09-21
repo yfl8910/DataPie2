@@ -30,490 +30,490 @@ namespace DataPieDesktop
         private void InitializeComponent()
         {
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(DatabaseConnectionForm));
-            Login = new System.Windows.Forms.Button();
-            comboBox1 = new System.Windows.Forms.ComboBox();
-            tabControl1 = new System.Windows.Forms.TabControl();
-            tabPage3 = new System.Windows.Forms.TabPage();
-            groupBox1 = new System.Windows.Forms.GroupBox();
-            button7 = new System.Windows.Forms.Button();
-            button5 = new System.Windows.Forms.Button();
-            textBox4 = new System.Windows.Forms.TextBox();
-            button4 = new System.Windows.Forms.Button();
-            button6 = new System.Windows.Forms.Button();
-            textBox3 = new System.Windows.Forms.TextBox();
-            comboBox5 = new System.Windows.Forms.ComboBox();
-            comboBox4 = new System.Windows.Forms.ComboBox();
-            comboBox3 = new System.Windows.Forms.ComboBox();
-            label8 = new System.Windows.Forms.Label();
-            label7 = new System.Windows.Forms.Label();
-            label6 = new System.Windows.Forms.Label();
-            label5 = new System.Windows.Forms.Label();
-            label4 = new System.Windows.Forms.Label();
-            tabPage4 = new System.Windows.Forms.TabPage();
-            button9 = new System.Windows.Forms.Button();
-            button8 = new System.Windows.Forms.Button();
-            textBox5 = new System.Windows.Forms.TextBox();
-            label9 = new System.Windows.Forms.Label();
-            tabPage1 = new System.Windows.Forms.TabPage();
-            tabPage2 = new System.Windows.Forms.TabPage();
-            button10 = new System.Windows.Forms.Button();
-            dataGridView1 = new System.Windows.Forms.DataGridView();
-            comboBox2 = new System.Windows.Forms.ComboBox();
-            label1 = new System.Windows.Forms.Label();
-            textBox1 = new System.Windows.Forms.TextBox();
-            button3 = new System.Windows.Forms.Button();
-            textBox2 = new System.Windows.Forms.TextBox();
-            button2 = new System.Windows.Forms.Button();
-            label2 = new System.Windows.Forms.Label();
-            button1 = new System.Windows.Forms.Button();
-            label3 = new System.Windows.Forms.Label();
-            tabControl1.SuspendLayout();
-            tabPage3.SuspendLayout();
-            groupBox1.SuspendLayout();
-            tabPage4.SuspendLayout();
-            tabPage1.SuspendLayout();
-            tabPage2.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            connectSavedConnectionButton = new System.Windows.Forms.Button();
+            savedConnectionComboBox = new System.Windows.Forms.ComboBox();
+            connectionTabControl = new System.Windows.Forms.TabControl();
+            sqlServerTabPage = new System.Windows.Forms.TabPage();
+            sqlServerConnectionGroupBox = new System.Windows.Forms.GroupBox();
+            connectSqlServerButton = new System.Windows.Forms.Button();
+            stopLocalSqlServerButton = new System.Windows.Forms.Button();
+            passwordTextBox = new System.Windows.Forms.TextBox();
+            startLocalSqlServerButton = new System.Windows.Forms.Button();
+            loadDatabasesButton = new System.Windows.Forms.Button();
+            userNameTextBox = new System.Windows.Forms.TextBox();
+            databaseNameComboBox = new System.Windows.Forms.ComboBox();
+            serverNameComboBox = new System.Windows.Forms.ComboBox();
+            authenticationModeComboBox = new System.Windows.Forms.ComboBox();
+            databaseNameLabel = new System.Windows.Forms.Label();
+            passwordLabel = new System.Windows.Forms.Label();
+            userNameLabel = new System.Windows.Forms.Label();
+            serverNameLabel = new System.Windows.Forms.Label();
+            authenticationModeLabel = new System.Windows.Forms.Label();
+            sqliteTabPage = new System.Windows.Forms.TabPage();
+            connectSqliteButton = new System.Windows.Forms.Button();
+            browseSqliteFileButton = new System.Windows.Forms.Button();
+            sqliteFilePathTextBox = new System.Windows.Forms.TextBox();
+            sqliteFilePathLabel = new System.Windows.Forms.Label();
+            savedConnectionsTabPage = new System.Windows.Forms.TabPage();
+            connectionSettingsTabPage = new System.Windows.Forms.TabPage();
+            testConnectionButton = new System.Windows.Forms.Button();
+            savedConnectionsGridView = new System.Windows.Forms.DataGridView();
+            databaseTypeComboBox = new System.Windows.Forms.ComboBox();
+            connectionNameLabel = new System.Windows.Forms.Label();
+            connectionNameTextBox = new System.Windows.Forms.TextBox();
+            deleteConnectionButton = new System.Windows.Forms.Button();
+            connectionStringTextBox = new System.Windows.Forms.TextBox();
+            updateConnectionButton = new System.Windows.Forms.Button();
+            databaseTypeLabel = new System.Windows.Forms.Label();
+            addConnectionButton = new System.Windows.Forms.Button();
+            connectionStringLabel = new System.Windows.Forms.Label();
+            connectionTabControl.SuspendLayout();
+            sqlServerTabPage.SuspendLayout();
+            sqlServerConnectionGroupBox.SuspendLayout();
+            sqliteTabPage.SuspendLayout();
+            savedConnectionsTabPage.SuspendLayout();
+            connectionSettingsTabPage.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)savedConnectionsGridView).BeginInit();
             SuspendLayout();
-            // 
-            // Login
-            // 
-            Login.Location = new System.Drawing.Point(584, 59);
-            Login.Name = "Login";
-            Login.Size = new System.Drawing.Size(121, 39);
-            Login.TabIndex = 0;
-            Login.Text = "Login";
-            Login.UseVisualStyleBackColor = true;
-            Login.Click += Login_Click;
-            // 
-            // comboBox1
-            // 
-            comboBox1.FormattingEnabled = true;
-            comboBox1.ItemHeight = 20;
-            comboBox1.Location = new System.Drawing.Point(150, 62);
-            comboBox1.Name = "comboBox1";
-            comboBox1.Size = new System.Drawing.Size(374, 28);
-            comboBox1.TabIndex = 1;
-            comboBox1.SelectedIndexChanged += comboBox1_SelectedIndexChanged;
-            // 
-            // tabControl1
-            // 
-            tabControl1.Controls.Add(tabPage3);
-            tabControl1.Controls.Add(tabPage4);
-            tabControl1.Controls.Add(tabPage1);
-            tabControl1.Controls.Add(tabPage2);
-            tabControl1.Location = new System.Drawing.Point(13, 26);
-            tabControl1.Name = "tabControl1";
-            tabControl1.SelectedIndex = 0;
-            tabControl1.Size = new System.Drawing.Size(934, 502);
-            tabControl1.TabIndex = 14;
-            // 
-            // tabPage3
-            // 
-            tabPage3.Controls.Add(groupBox1);
-            tabPage3.Location = new System.Drawing.Point(4, 29);
-            tabPage3.Name = "tabPage3";
-            tabPage3.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            tabPage3.Size = new System.Drawing.Size(926, 469);
-            tabPage3.TabIndex = 2;
-            tabPage3.Text = "SqlServer";
-            tabPage3.UseVisualStyleBackColor = true;
-            // 
-            // groupBox1
-            // 
-            groupBox1.Controls.Add(button7);
-            groupBox1.Controls.Add(button5);
-            groupBox1.Controls.Add(textBox4);
-            groupBox1.Controls.Add(button4);
-            groupBox1.Controls.Add(button6);
-            groupBox1.Controls.Add(textBox3);
-            groupBox1.Controls.Add(comboBox5);
-            groupBox1.Controls.Add(comboBox4);
-            groupBox1.Controls.Add(comboBox3);
-            groupBox1.Controls.Add(label8);
-            groupBox1.Controls.Add(label7);
-            groupBox1.Controls.Add(label6);
-            groupBox1.Controls.Add(label5);
-            groupBox1.Controls.Add(label4);
-            groupBox1.Location = new System.Drawing.Point(0, 6);
-            groupBox1.Name = "groupBox1";
-            groupBox1.Size = new System.Drawing.Size(905, 457);
-            groupBox1.TabIndex = 2;
-            groupBox1.TabStop = false;
-            groupBox1.Text = "Sql Server Login Info";
-            // 
-            // button7
-            // 
-            button7.Location = new System.Drawing.Point(349, 288);
-            button7.Name = "button7";
-            button7.Size = new System.Drawing.Size(133, 48);
-            button7.TabIndex = 4;
-            button7.Text = "Login";
-            button7.UseVisualStyleBackColor = true;
-            button7.Click += button7_Click;
-            // 
-            // button5
-            // 
-            button5.Location = new System.Drawing.Point(587, 321);
-            button5.Name = "button5";
-            button5.Size = new System.Drawing.Size(126, 42);
-            button5.TabIndex = 1;
-            button5.Text = "Server Stop";
-            button5.UseVisualStyleBackColor = true;
-            button5.Click += button5_Click;
-            // 
-            // textBox4
-            // 
-            textBox4.Location = new System.Drawing.Point(201, 182);
-            textBox4.Name = "textBox4";
-            textBox4.Size = new System.Drawing.Size(281, 27);
-            textBox4.TabIndex = 9;
-            // 
-            // button4
-            // 
-            button4.Location = new System.Drawing.Point(587, 258);
-            button4.Name = "button4";
-            button4.Size = new System.Drawing.Size(126, 48);
-            button4.TabIndex = 0;
-            button4.Text = "Server Start";
-            button4.UseVisualStyleBackColor = true;
-            button4.Click += button4_Click;
-            // 
-            // button6
-            // 
-            button6.Location = new System.Drawing.Point(192, 289);
-            button6.Name = "button6";
-            button6.Size = new System.Drawing.Size(128, 47);
-            button6.TabIndex = 3;
-            button6.Text = "Test";
-            button6.UseVisualStyleBackColor = true;
-            button6.Click += button6_Click;
-            // 
-            // textBox3
-            // 
-            textBox3.Location = new System.Drawing.Point(201, 137);
-            textBox3.Name = "textBox3";
-            textBox3.Size = new System.Drawing.Size(281, 27);
-            textBox3.TabIndex = 8;
-            // 
-            // comboBox5
-            // 
-            comboBox5.FormattingEnabled = true;
-            comboBox5.Location = new System.Drawing.Point(201, 229);
-            comboBox5.Name = "comboBox5";
-            comboBox5.Size = new System.Drawing.Size(280, 28);
-            comboBox5.TabIndex = 7;
-            // 
-            // comboBox4
-            // 
-            comboBox4.FormattingEnabled = true;
-            comboBox4.Location = new System.Drawing.Point(201, 87);
-            comboBox4.Name = "comboBox4";
-            comboBox4.Size = new System.Drawing.Size(280, 28);
-            comboBox4.TabIndex = 6;
-            comboBox4.Text = "(local)";
-            // 
-            // comboBox3
-            // 
-            comboBox3.FormattingEnabled = true;
-            comboBox3.Items.AddRange(new object[] { "Windows", "SQL Server" });
-            comboBox3.Location = new System.Drawing.Point(201, 40);
-            comboBox3.Name = "comboBox3";
-            comboBox3.Size = new System.Drawing.Size(280, 28);
-            comboBox3.TabIndex = 5;
-            comboBox3.Text = "Windows";
-            comboBox3.SelectedIndexChanged += comboBox3_SelectedIndexChanged;
-            // 
-            // label8
-            // 
-            label8.AutoSize = true;
-            label8.Location = new System.Drawing.Point(69, 237);
-            label8.Name = "label8";
-            label8.Size = new System.Drawing.Size(69, 20);
-            label8.TabIndex = 4;
-            label8.Text = "DBname";
-            // 
-            // label7
-            // 
-            label7.AutoSize = true;
-            label7.Location = new System.Drawing.Point(69, 182);
-            label7.Name = "label7";
-            label7.Size = new System.Drawing.Size(78, 20);
-            label7.TabIndex = 3;
-            label7.Text = "Password";
-            // 
-            // label6
-            // 
-            label6.AutoSize = true;
-            label6.Location = new System.Drawing.Point(69, 137);
-            label6.Name = "label6";
-            label6.Size = new System.Drawing.Size(85, 20);
-            label6.TabIndex = 2;
-            label6.Text = "UserName";
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Location = new System.Drawing.Point(69, 87);
-            label5.Name = "label5";
-            label5.Size = new System.Drawing.Size(56, 20);
-            label5.TabIndex = 1;
-            label5.Text = "Server";
-            // 
-            // label4
-            // 
-            label4.AutoSize = true;
-            label4.Location = new System.Drawing.Point(69, 43);
-            label4.Name = "label4";
-            label4.Size = new System.Drawing.Size(132, 20);
-            label4.TabIndex = 0;
-            label4.Text = "Authentication：";
-            // 
-            // tabPage4
-            // 
-            tabPage4.Controls.Add(button9);
-            tabPage4.Controls.Add(button8);
-            tabPage4.Controls.Add(textBox5);
-            tabPage4.Controls.Add(label9);
-            tabPage4.Location = new System.Drawing.Point(4, 29);
-            tabPage4.Name = "tabPage4";
-            tabPage4.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            tabPage4.Size = new System.Drawing.Size(926, 469);
-            tabPage4.TabIndex = 3;
-            tabPage4.Text = "Sqlite";
-            tabPage4.UseVisualStyleBackColor = true;
-            // 
-            // button9
-            // 
-            button9.Location = new System.Drawing.Point(515, 194);
-            button9.Name = "button9";
-            button9.Size = new System.Drawing.Size(138, 46);
-            button9.TabIndex = 3;
-            button9.Text = "Login";
-            button9.UseVisualStyleBackColor = true;
-            button9.Click += button9_Click;
-            // 
-            // button8
-            // 
-            button8.Location = new System.Drawing.Point(336, 194);
-            button8.Name = "button8";
-            button8.Size = new System.Drawing.Size(124, 46);
-            button8.TabIndex = 2;
-            button8.Text = "Browse...";
-            button8.UseVisualStyleBackColor = true;
-            button8.Click += button8_Click;
-            // 
-            // textBox5
-            // 
-            textBox5.Location = new System.Drawing.Point(242, 89);
-            textBox5.Name = "textBox5";
-            textBox5.Size = new System.Drawing.Size(470, 27);
-            textBox5.TabIndex = 1;
-            // 
-            // label9
-            // 
-            label9.AutoSize = true;
-            label9.Location = new System.Drawing.Point(132, 96);
-            label9.Name = "label9";
-            label9.Size = new System.Drawing.Size(75, 20);
-            label9.TabIndex = 0;
-            label9.Text = "File path:";
-            // 
-            // tabPage1
-            // 
-            tabPage1.Controls.Add(comboBox1);
-            tabPage1.Controls.Add(Login);
-            tabPage1.Location = new System.Drawing.Point(4, 29);
-            tabPage1.Name = "tabPage1";
-            tabPage1.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            tabPage1.Size = new System.Drawing.Size(926, 469);
-            tabPage1.TabIndex = 0;
-            tabPage1.Text = "All DataBase";
-            tabPage1.UseVisualStyleBackColor = true;
-            // 
-            // tabPage2
-            // 
-            tabPage2.Controls.Add(button10);
-            tabPage2.Controls.Add(dataGridView1);
-            tabPage2.Controls.Add(comboBox2);
-            tabPage2.Controls.Add(label1);
-            tabPage2.Controls.Add(textBox1);
-            tabPage2.Controls.Add(button3);
-            tabPage2.Controls.Add(textBox2);
-            tabPage2.Controls.Add(button2);
-            tabPage2.Controls.Add(label2);
-            tabPage2.Controls.Add(button1);
-            tabPage2.Controls.Add(label3);
-            tabPage2.Location = new System.Drawing.Point(4, 29);
-            tabPage2.Name = "tabPage2";
-            tabPage2.Padding = new System.Windows.Forms.Padding(3, 3, 3, 3);
-            tabPage2.Size = new System.Drawing.Size(926, 469);
-            tabPage2.TabIndex = 1;
-            tabPage2.Text = "Config";
-            tabPage2.UseVisualStyleBackColor = true;
-            // 
-            // button10
-            // 
-            button10.Location = new System.Drawing.Point(49, 122);
-            button10.Name = "button10";
-            button10.Size = new System.Drawing.Size(106, 29);
-            button10.TabIndex = 25;
-            button10.Text = "Test";
-            button10.UseVisualStyleBackColor = true;
-            button10.Click += button10_Click;
-            // 
-            // dataGridView1
-            // 
-            dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dataGridView1.Location = new System.Drawing.Point(49, 164);
-            dataGridView1.Name = "dataGridView1";
-            dataGridView1.RowHeadersWidth = 51;
-            dataGridView1.Size = new System.Drawing.Size(856, 284);
-            dataGridView1.TabIndex = 15;
-            dataGridView1.RowHeaderMouseClick += dataGridView1_RowHeaderMouseClick;
-            // 
-            // comboBox2
-            // 
-            comboBox2.FormattingEnabled = true;
-            comboBox2.Location = new System.Drawing.Point(574, 34);
-            comboBox2.Name = "comboBox2";
-            comboBox2.Size = new System.Drawing.Size(266, 28);
-            comboBox2.TabIndex = 24;
-            // 
-            // label1
-            // 
-            label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(49, 41);
-            label1.Name = "label1";
-            label1.Size = new System.Drawing.Size(70, 20);
-            label1.TabIndex = 17;
-            label1.Text = "Dbname";
-            // 
-            // textBox1
-            // 
-            textBox1.Location = new System.Drawing.Point(131, 34);
-            textBox1.Name = "textBox1";
-            textBox1.Size = new System.Drawing.Size(328, 27);
-            textBox1.TabIndex = 14;
-            // 
-            // button3
-            // 
-            button3.Location = new System.Drawing.Point(744, 122);
-            button3.Name = "button3";
-            button3.Size = new System.Drawing.Size(106, 29);
-            button3.TabIndex = 22;
-            button3.Text = "Delete";
-            button3.UseVisualStyleBackColor = true;
-            button3.Click += Delete_Click;
-            // 
-            // textBox2
-            // 
-            textBox2.Location = new System.Drawing.Point(218, 77);
-            textBox2.Name = "textBox2";
-            textBox2.Size = new System.Drawing.Size(621, 27);
-            textBox2.TabIndex = 16;
-            // 
-            // button2
-            // 
-            button2.Location = new System.Drawing.Point(505, 122);
-            button2.Name = "button2";
-            button2.Size = new System.Drawing.Size(106, 29);
-            button2.TabIndex = 21;
-            button2.Text = "Update";
-            button2.UseVisualStyleBackColor = true;
-            button2.Click += Update_Click;
-            // 
-            // label2
-            // 
-            label2.AutoSize = true;
-            label2.Location = new System.Drawing.Point(492, 41);
-            label2.Name = "label2";
-            label2.Size = new System.Drawing.Size(63, 20);
-            label2.TabIndex = 18;
-            label2.Text = "Dbtype";
-            // 
-            // button1
-            // 
-            button1.Location = new System.Drawing.Point(268, 122);
-            button1.Name = "button1";
-            button1.Size = new System.Drawing.Size(106, 29);
-            button1.TabIndex = 20;
-            button1.Text = "Add";
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += Add_Click;
-            // 
-            // label3
-            // 
-            label3.AutoSize = true;
-            label3.Location = new System.Drawing.Point(49, 82);
-            label3.Name = "label3";
-            label3.Size = new System.Drawing.Size(144, 20);
-            label3.TabIndex = 19;
-            label3.Text = "ConnectionStrings";
-            // 
+            //
+            // connectSavedConnectionButton
+            //
+            connectSavedConnectionButton.Location = new System.Drawing.Point(584, 59);
+            connectSavedConnectionButton.Name = "connectSavedConnectionButton";
+            connectSavedConnectionButton.Size = new System.Drawing.Size(121, 39);
+            connectSavedConnectionButton.TabIndex = 0;
+            connectSavedConnectionButton.Text = "Connect";
+            connectSavedConnectionButton.UseVisualStyleBackColor = true;
+            connectSavedConnectionButton.Click += connectSavedConnectionButton_Click;
+            //
+            // savedConnectionComboBox
+            //
+            savedConnectionComboBox.FormattingEnabled = true;
+            savedConnectionComboBox.ItemHeight = 20;
+            savedConnectionComboBox.Location = new System.Drawing.Point(150, 62);
+            savedConnectionComboBox.Name = "savedConnectionComboBox";
+            savedConnectionComboBox.Size = new System.Drawing.Size(374, 28);
+            savedConnectionComboBox.TabIndex = 1;
+            savedConnectionComboBox.SelectedIndexChanged += savedConnectionComboBox_SelectedIndexChanged;
+            //
+            // connectionTabControl
+            //
+            connectionTabControl.Controls.Add(sqlServerTabPage);
+            connectionTabControl.Controls.Add(sqliteTabPage);
+            connectionTabControl.Controls.Add(savedConnectionsTabPage);
+            connectionTabControl.Controls.Add(connectionSettingsTabPage);
+            connectionTabControl.Location = new System.Drawing.Point(13, 26);
+            connectionTabControl.Name = "connectionTabControl";
+            connectionTabControl.SelectedIndex = 0;
+            connectionTabControl.Size = new System.Drawing.Size(934, 502);
+            connectionTabControl.TabIndex = 14;
+            //
+            // sqlServerTabPage
+            //
+            sqlServerTabPage.Controls.Add(sqlServerConnectionGroupBox);
+            sqlServerTabPage.Location = new System.Drawing.Point(4, 29);
+            sqlServerTabPage.Name = "sqlServerTabPage";
+            sqlServerTabPage.Padding = new System.Windows.Forms.Padding(3);
+            sqlServerTabPage.Size = new System.Drawing.Size(926, 469);
+            sqlServerTabPage.TabIndex = 2;
+            sqlServerTabPage.Text = "SqlServer";
+            sqlServerTabPage.UseVisualStyleBackColor = true;
+            //
+            // sqlServerConnectionGroupBox
+            //
+            sqlServerConnectionGroupBox.Controls.Add(connectSqlServerButton);
+            sqlServerConnectionGroupBox.Controls.Add(stopLocalSqlServerButton);
+            sqlServerConnectionGroupBox.Controls.Add(passwordTextBox);
+            sqlServerConnectionGroupBox.Controls.Add(startLocalSqlServerButton);
+            sqlServerConnectionGroupBox.Controls.Add(loadDatabasesButton);
+            sqlServerConnectionGroupBox.Controls.Add(userNameTextBox);
+            sqlServerConnectionGroupBox.Controls.Add(databaseNameComboBox);
+            sqlServerConnectionGroupBox.Controls.Add(serverNameComboBox);
+            sqlServerConnectionGroupBox.Controls.Add(authenticationModeComboBox);
+            sqlServerConnectionGroupBox.Controls.Add(databaseNameLabel);
+            sqlServerConnectionGroupBox.Controls.Add(passwordLabel);
+            sqlServerConnectionGroupBox.Controls.Add(userNameLabel);
+            sqlServerConnectionGroupBox.Controls.Add(serverNameLabel);
+            sqlServerConnectionGroupBox.Controls.Add(authenticationModeLabel);
+            sqlServerConnectionGroupBox.Location = new System.Drawing.Point(0, 6);
+            sqlServerConnectionGroupBox.Name = "sqlServerConnectionGroupBox";
+            sqlServerConnectionGroupBox.Size = new System.Drawing.Size(905, 457);
+            sqlServerConnectionGroupBox.TabIndex = 2;
+            sqlServerConnectionGroupBox.TabStop = false;
+            sqlServerConnectionGroupBox.Text = "SQL Server Connection";
+            //
+            // connectSqlServerButton
+            //
+            connectSqlServerButton.Location = new System.Drawing.Point(349, 288);
+            connectSqlServerButton.Name = "connectSqlServerButton";
+            connectSqlServerButton.Size = new System.Drawing.Size(133, 53);
+            connectSqlServerButton.TabIndex = 4;
+            connectSqlServerButton.Text = "Connect";
+            connectSqlServerButton.UseVisualStyleBackColor = true;
+            connectSqlServerButton.Click += connectSqlServerButton_Click;
+            //
+            // stopLocalSqlServerButton
+            //
+            stopLocalSqlServerButton.Location = new System.Drawing.Point(587, 321);
+            stopLocalSqlServerButton.Name = "stopLocalSqlServerButton";
+            stopLocalSqlServerButton.Size = new System.Drawing.Size(141, 42);
+            stopLocalSqlServerButton.TabIndex = 1;
+            stopLocalSqlServerButton.Text = "Stop  SQL Server";
+            stopLocalSqlServerButton.UseVisualStyleBackColor = true;
+            stopLocalSqlServerButton.Click += stopLocalSqlServerButton_Click;
+            //
+            // passwordTextBox
+            //
+            passwordTextBox.Location = new System.Drawing.Point(201, 182);
+            passwordTextBox.Name = "passwordTextBox";
+            passwordTextBox.Size = new System.Drawing.Size(281, 27);
+            passwordTextBox.TabIndex = 9;
+            //
+            // startLocalSqlServerButton
+            //
+            startLocalSqlServerButton.Location = new System.Drawing.Point(587, 258);
+            startLocalSqlServerButton.Name = "startLocalSqlServerButton";
+            startLocalSqlServerButton.Size = new System.Drawing.Size(141, 48);
+            startLocalSqlServerButton.TabIndex = 0;
+            startLocalSqlServerButton.Text = "Start SQL Server";
+            startLocalSqlServerButton.UseVisualStyleBackColor = true;
+            startLocalSqlServerButton.Click += startLocalSqlServerButton_Click;
+            //
+            // loadDatabasesButton
+            //
+            loadDatabasesButton.Location = new System.Drawing.Point(192, 289);
+            loadDatabasesButton.Name = "loadDatabasesButton";
+            loadDatabasesButton.Size = new System.Drawing.Size(129, 52);
+            loadDatabasesButton.TabIndex = 3;
+            loadDatabasesButton.Text = "Load Databases";
+            loadDatabasesButton.UseVisualStyleBackColor = true;
+            loadDatabasesButton.Click += loadDatabasesButton_Click;
+            //
+            // userNameTextBox
+            //
+            userNameTextBox.Location = new System.Drawing.Point(201, 137);
+            userNameTextBox.Name = "userNameTextBox";
+            userNameTextBox.Size = new System.Drawing.Size(281, 27);
+            userNameTextBox.TabIndex = 8;
+            //
+            // databaseNameComboBox
+            //
+            databaseNameComboBox.FormattingEnabled = true;
+            databaseNameComboBox.Location = new System.Drawing.Point(201, 229);
+            databaseNameComboBox.Name = "databaseNameComboBox";
+            databaseNameComboBox.Size = new System.Drawing.Size(280, 28);
+            databaseNameComboBox.TabIndex = 7;
+            //
+            // serverNameComboBox
+            //
+            serverNameComboBox.FormattingEnabled = true;
+            serverNameComboBox.Location = new System.Drawing.Point(201, 87);
+            serverNameComboBox.Name = "serverNameComboBox";
+            serverNameComboBox.Size = new System.Drawing.Size(280, 28);
+            serverNameComboBox.TabIndex = 6;
+            serverNameComboBox.Text = "(local)";
+            //
+            // authenticationModeComboBox
+            //
+            authenticationModeComboBox.FormattingEnabled = true;
+            authenticationModeComboBox.Items.AddRange(new object[] { "Windows", "SQL Server" });
+            authenticationModeComboBox.Location = new System.Drawing.Point(201, 40);
+            authenticationModeComboBox.Name = "authenticationModeComboBox";
+            authenticationModeComboBox.Size = new System.Drawing.Size(280, 28);
+            authenticationModeComboBox.TabIndex = 5;
+            authenticationModeComboBox.Text = "Windows";
+            authenticationModeComboBox.SelectedIndexChanged += authenticationModeComboBox_SelectedIndexChanged;
+            //
+            // databaseNameLabel
+            //
+            databaseNameLabel.AutoSize = true;
+            databaseNameLabel.Location = new System.Drawing.Point(69, 237);
+            databaseNameLabel.Name = "databaseNameLabel";
+            databaseNameLabel.Size = new System.Drawing.Size(69, 20);
+            databaseNameLabel.TabIndex = 4;
+            databaseNameLabel.Text = "DBname";
+            //
+            // passwordLabel
+            //
+            passwordLabel.AutoSize = true;
+            passwordLabel.Location = new System.Drawing.Point(69, 182);
+            passwordLabel.Name = "passwordLabel";
+            passwordLabel.Size = new System.Drawing.Size(78, 20);
+            passwordLabel.TabIndex = 3;
+            passwordLabel.Text = "Password";
+            //
+            // userNameLabel
+            //
+            userNameLabel.AutoSize = true;
+            userNameLabel.Location = new System.Drawing.Point(69, 137);
+            userNameLabel.Name = "userNameLabel";
+            userNameLabel.Size = new System.Drawing.Size(85, 20);
+            userNameLabel.TabIndex = 2;
+            userNameLabel.Text = "UserName";
+            //
+            // serverNameLabel
+            //
+            serverNameLabel.AutoSize = true;
+            serverNameLabel.Location = new System.Drawing.Point(69, 87);
+            serverNameLabel.Name = "serverNameLabel";
+            serverNameLabel.Size = new System.Drawing.Size(56, 20);
+            serverNameLabel.TabIndex = 1;
+            serverNameLabel.Text = "Server";
+            //
+            // authenticationModeLabel
+            //
+            authenticationModeLabel.AutoSize = true;
+            authenticationModeLabel.Location = new System.Drawing.Point(69, 43);
+            authenticationModeLabel.Name = "authenticationModeLabel";
+            authenticationModeLabel.Size = new System.Drawing.Size(132, 20);
+            authenticationModeLabel.TabIndex = 0;
+            authenticationModeLabel.Text = "Authentication：";
+            //
+            // sqliteTabPage
+            //
+            sqliteTabPage.Controls.Add(connectSqliteButton);
+            sqliteTabPage.Controls.Add(browseSqliteFileButton);
+            sqliteTabPage.Controls.Add(sqliteFilePathTextBox);
+            sqliteTabPage.Controls.Add(sqliteFilePathLabel);
+            sqliteTabPage.Location = new System.Drawing.Point(4, 29);
+            sqliteTabPage.Name = "sqliteTabPage";
+            sqliteTabPage.Padding = new System.Windows.Forms.Padding(3);
+            sqliteTabPage.Size = new System.Drawing.Size(926, 469);
+            sqliteTabPage.TabIndex = 3;
+            sqliteTabPage.Text = "Sqlite";
+            sqliteTabPage.UseVisualStyleBackColor = true;
+            //
+            // connectSqliteButton
+            //
+            connectSqliteButton.Location = new System.Drawing.Point(515, 194);
+            connectSqliteButton.Name = "connectSqliteButton";
+            connectSqliteButton.Size = new System.Drawing.Size(138, 46);
+            connectSqliteButton.TabIndex = 3;
+            connectSqliteButton.Text = "Connect";
+            connectSqliteButton.UseVisualStyleBackColor = true;
+            connectSqliteButton.Click += connectSqliteButton_Click;
+            //
+            // browseSqliteFileButton
+            //
+            browseSqliteFileButton.Location = new System.Drawing.Point(336, 194);
+            browseSqliteFileButton.Name = "browseSqliteFileButton";
+            browseSqliteFileButton.Size = new System.Drawing.Size(124, 46);
+            browseSqliteFileButton.TabIndex = 2;
+            browseSqliteFileButton.Text = "Browse...";
+            browseSqliteFileButton.UseVisualStyleBackColor = true;
+            browseSqliteFileButton.Click += browseSqliteFileButton_Click;
+            //
+            // sqliteFilePathTextBox
+            //
+            sqliteFilePathTextBox.Location = new System.Drawing.Point(242, 89);
+            sqliteFilePathTextBox.Name = "sqliteFilePathTextBox";
+            sqliteFilePathTextBox.Size = new System.Drawing.Size(470, 27);
+            sqliteFilePathTextBox.TabIndex = 1;
+            //
+            // sqliteFilePathLabel
+            //
+            sqliteFilePathLabel.AutoSize = true;
+            sqliteFilePathLabel.Location = new System.Drawing.Point(132, 96);
+            sqliteFilePathLabel.Name = "sqliteFilePathLabel";
+            sqliteFilePathLabel.Size = new System.Drawing.Size(75, 20);
+            sqliteFilePathLabel.TabIndex = 0;
+            sqliteFilePathLabel.Text = "File path:";
+            //
+            // savedConnectionsTabPage
+            //
+            savedConnectionsTabPage.Controls.Add(savedConnectionComboBox);
+            savedConnectionsTabPage.Controls.Add(connectSavedConnectionButton);
+            savedConnectionsTabPage.Location = new System.Drawing.Point(4, 29);
+            savedConnectionsTabPage.Name = "savedConnectionsTabPage";
+            savedConnectionsTabPage.Padding = new System.Windows.Forms.Padding(3);
+            savedConnectionsTabPage.Size = new System.Drawing.Size(926, 469);
+            savedConnectionsTabPage.TabIndex = 0;
+            savedConnectionsTabPage.Text = "All DataBase";
+            savedConnectionsTabPage.UseVisualStyleBackColor = true;
+            //
+            // connectionSettingsTabPage
+            //
+            connectionSettingsTabPage.Controls.Add(testConnectionButton);
+            connectionSettingsTabPage.Controls.Add(savedConnectionsGridView);
+            connectionSettingsTabPage.Controls.Add(databaseTypeComboBox);
+            connectionSettingsTabPage.Controls.Add(connectionNameLabel);
+            connectionSettingsTabPage.Controls.Add(connectionNameTextBox);
+            connectionSettingsTabPage.Controls.Add(deleteConnectionButton);
+            connectionSettingsTabPage.Controls.Add(connectionStringTextBox);
+            connectionSettingsTabPage.Controls.Add(updateConnectionButton);
+            connectionSettingsTabPage.Controls.Add(databaseTypeLabel);
+            connectionSettingsTabPage.Controls.Add(addConnectionButton);
+            connectionSettingsTabPage.Controls.Add(connectionStringLabel);
+            connectionSettingsTabPage.Location = new System.Drawing.Point(4, 29);
+            connectionSettingsTabPage.Name = "connectionSettingsTabPage";
+            connectionSettingsTabPage.Padding = new System.Windows.Forms.Padding(3);
+            connectionSettingsTabPage.Size = new System.Drawing.Size(926, 469);
+            connectionSettingsTabPage.TabIndex = 1;
+            connectionSettingsTabPage.Text = "Config";
+            connectionSettingsTabPage.UseVisualStyleBackColor = true;
+            //
+            // testConnectionButton
+            //
+            testConnectionButton.Location = new System.Drawing.Point(49, 122);
+            testConnectionButton.Name = "testConnectionButton";
+            testConnectionButton.Size = new System.Drawing.Size(106, 29);
+            testConnectionButton.TabIndex = 25;
+            testConnectionButton.Text = "Test";
+            testConnectionButton.UseVisualStyleBackColor = true;
+            testConnectionButton.Click += testConnectionButton_Click;
+            //
+            // savedConnectionsGridView
+            //
+            savedConnectionsGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            savedConnectionsGridView.Location = new System.Drawing.Point(49, 164);
+            savedConnectionsGridView.Name = "savedConnectionsGridView";
+            savedConnectionsGridView.RowHeadersWidth = 51;
+            savedConnectionsGridView.Size = new System.Drawing.Size(856, 284);
+            savedConnectionsGridView.TabIndex = 15;
+            savedConnectionsGridView.RowHeaderMouseClick += savedConnectionsGridView_RowHeaderMouseClick;
+            //
+            // databaseTypeComboBox
+            //
+            databaseTypeComboBox.FormattingEnabled = true;
+            databaseTypeComboBox.Location = new System.Drawing.Point(574, 34);
+            databaseTypeComboBox.Name = "databaseTypeComboBox";
+            databaseTypeComboBox.Size = new System.Drawing.Size(266, 28);
+            databaseTypeComboBox.TabIndex = 24;
+            //
+            // connectionNameLabel
+            //
+            connectionNameLabel.AutoSize = true;
+            connectionNameLabel.Location = new System.Drawing.Point(49, 41);
+            connectionNameLabel.Name = "connectionNameLabel";
+            connectionNameLabel.Size = new System.Drawing.Size(70, 20);
+            connectionNameLabel.TabIndex = 17;
+            connectionNameLabel.Text = "Dbname";
+            //
+            // connectionNameTextBox
+            //
+            connectionNameTextBox.Location = new System.Drawing.Point(131, 34);
+            connectionNameTextBox.Name = "connectionNameTextBox";
+            connectionNameTextBox.Size = new System.Drawing.Size(328, 27);
+            connectionNameTextBox.TabIndex = 14;
+            //
+            // deleteConnectionButton
+            //
+            deleteConnectionButton.Location = new System.Drawing.Point(744, 122);
+            deleteConnectionButton.Name = "deleteConnectionButton";
+            deleteConnectionButton.Size = new System.Drawing.Size(106, 29);
+            deleteConnectionButton.TabIndex = 22;
+            deleteConnectionButton.Text = "Delete";
+            deleteConnectionButton.UseVisualStyleBackColor = true;
+            deleteConnectionButton.Click += deleteConnectionButton_Click;
+            //
+            // connectionStringTextBox
+            //
+            connectionStringTextBox.Location = new System.Drawing.Point(218, 77);
+            connectionStringTextBox.Name = "connectionStringTextBox";
+            connectionStringTextBox.Size = new System.Drawing.Size(621, 27);
+            connectionStringTextBox.TabIndex = 16;
+            //
+            // updateConnectionButton
+            //
+            updateConnectionButton.Location = new System.Drawing.Point(505, 122);
+            updateConnectionButton.Name = "updateConnectionButton";
+            updateConnectionButton.Size = new System.Drawing.Size(106, 29);
+            updateConnectionButton.TabIndex = 21;
+            updateConnectionButton.Text = "Update";
+            updateConnectionButton.UseVisualStyleBackColor = true;
+            updateConnectionButton.Click += updateConnectionButton_Click;
+            //
+            // databaseTypeLabel
+            //
+            databaseTypeLabel.AutoSize = true;
+            databaseTypeLabel.Location = new System.Drawing.Point(492, 41);
+            databaseTypeLabel.Name = "databaseTypeLabel";
+            databaseTypeLabel.Size = new System.Drawing.Size(63, 20);
+            databaseTypeLabel.TabIndex = 18;
+            databaseTypeLabel.Text = "Dbtype";
+            //
+            // addConnectionButton
+            //
+            addConnectionButton.Location = new System.Drawing.Point(268, 122);
+            addConnectionButton.Name = "addConnectionButton";
+            addConnectionButton.Size = new System.Drawing.Size(106, 29);
+            addConnectionButton.TabIndex = 20;
+            addConnectionButton.Text = "Add";
+            addConnectionButton.UseVisualStyleBackColor = true;
+            addConnectionButton.Click += addConnectionButton_Click;
+            //
+            // connectionStringLabel
+            //
+            connectionStringLabel.AutoSize = true;
+            connectionStringLabel.Location = new System.Drawing.Point(49, 82);
+            connectionStringLabel.Name = "connectionStringLabel";
+            connectionStringLabel.Size = new System.Drawing.Size(144, 20);
+            connectionStringLabel.TabIndex = 19;
+            connectionStringLabel.Text = "ConnectionStrings";
+            //
             // DatabaseConnectionForm
-            // 
+            //
             AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             ClientSize = new System.Drawing.Size(988, 546);
-            Controls.Add(tabControl1);
+            Controls.Add(connectionTabControl);
             Icon = (System.Drawing.Icon)resources.GetObject("$this.Icon");
             Name = "DatabaseConnectionForm";
             Text = "DataPie V2026.09";
             Load += DatabaseConnectionForm_Load;
-            tabControl1.ResumeLayout(false);
-            tabPage3.ResumeLayout(false);
-            groupBox1.ResumeLayout(false);
-            groupBox1.PerformLayout();
-            tabPage4.ResumeLayout(false);
-            tabPage4.PerformLayout();
-            tabPage1.ResumeLayout(false);
-            tabPage2.ResumeLayout(false);
-            tabPage2.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            connectionTabControl.ResumeLayout(false);
+            sqlServerTabPage.ResumeLayout(false);
+            sqlServerConnectionGroupBox.ResumeLayout(false);
+            sqlServerConnectionGroupBox.PerformLayout();
+            sqliteTabPage.ResumeLayout(false);
+            sqliteTabPage.PerformLayout();
+            savedConnectionsTabPage.ResumeLayout(false);
+            connectionSettingsTabPage.ResumeLayout(false);
+            connectionSettingsTabPage.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)savedConnectionsGridView).EndInit();
             ResumeLayout(false);
 
         }
 
         #endregion
 
-        private System.Windows.Forms.Button Login;
-        private System.Windows.Forms.ComboBox comboBox1;
-        private System.Windows.Forms.TabControl tabControl1;
-        private System.Windows.Forms.TabPage tabPage1;
-        private System.Windows.Forms.TabPage tabPage2;
-        private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.ComboBox comboBox2;
-        private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.TextBox textBox1;
-        private System.Windows.Forms.Button button3;
-        private System.Windows.Forms.TextBox textBox2;
-        private System.Windows.Forms.Button button2;
-        private System.Windows.Forms.Label label2;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TabPage tabPage3;
-        private System.Windows.Forms.Button button5;
-        private System.Windows.Forms.Button button4;
-        private System.Windows.Forms.Button button7;
-        private System.Windows.Forms.Button button6;
-        private System.Windows.Forms.GroupBox groupBox1;
-        private System.Windows.Forms.TextBox textBox4;
-        private System.Windows.Forms.TextBox textBox3;
-        private System.Windows.Forms.ComboBox comboBox5;
-        private System.Windows.Forms.ComboBox comboBox4;
-        private System.Windows.Forms.ComboBox comboBox3;
-        private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Label label7;
-        private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.TabPage tabPage4;
-        private System.Windows.Forms.Button button9;
-        private System.Windows.Forms.Button button8;
-        private System.Windows.Forms.TextBox textBox5;
-        private System.Windows.Forms.Label label9;
-        private System.Windows.Forms.Button button10;
+        private System.Windows.Forms.Button connectSavedConnectionButton;
+        private System.Windows.Forms.ComboBox savedConnectionComboBox;
+        private System.Windows.Forms.TabControl connectionTabControl;
+        private System.Windows.Forms.TabPage savedConnectionsTabPage;
+        private System.Windows.Forms.TabPage connectionSettingsTabPage;
+        private System.Windows.Forms.DataGridView savedConnectionsGridView;
+        private System.Windows.Forms.ComboBox databaseTypeComboBox;
+        private System.Windows.Forms.Label connectionNameLabel;
+        private System.Windows.Forms.TextBox connectionNameTextBox;
+        private System.Windows.Forms.Button deleteConnectionButton;
+        private System.Windows.Forms.TextBox connectionStringTextBox;
+        private System.Windows.Forms.Button updateConnectionButton;
+        private System.Windows.Forms.Label databaseTypeLabel;
+        private System.Windows.Forms.Button addConnectionButton;
+        private System.Windows.Forms.Label connectionStringLabel;
+        private System.Windows.Forms.TabPage sqlServerTabPage;
+        private System.Windows.Forms.Button stopLocalSqlServerButton;
+        private System.Windows.Forms.Button startLocalSqlServerButton;
+        private System.Windows.Forms.Button connectSqlServerButton;
+        private System.Windows.Forms.Button loadDatabasesButton;
+        private System.Windows.Forms.GroupBox sqlServerConnectionGroupBox;
+        private System.Windows.Forms.TextBox passwordTextBox;
+        private System.Windows.Forms.TextBox userNameTextBox;
+        private System.Windows.Forms.ComboBox databaseNameComboBox;
+        private System.Windows.Forms.ComboBox serverNameComboBox;
+        private System.Windows.Forms.ComboBox authenticationModeComboBox;
+        private System.Windows.Forms.Label databaseNameLabel;
+        private System.Windows.Forms.Label passwordLabel;
+        private System.Windows.Forms.Label userNameLabel;
+        private System.Windows.Forms.Label serverNameLabel;
+        private System.Windows.Forms.Label authenticationModeLabel;
+        private System.Windows.Forms.TabPage sqliteTabPage;
+        private System.Windows.Forms.Button connectSqliteButton;
+        private System.Windows.Forms.Button browseSqliteFileButton;
+        private System.Windows.Forms.TextBox sqliteFilePathTextBox;
+        private System.Windows.Forms.Label sqliteFilePathLabel;
+        private System.Windows.Forms.Button testConnectionButton;
     }
 }
 

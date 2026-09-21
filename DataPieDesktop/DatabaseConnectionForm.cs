@@ -1,492 +1,240 @@
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.Linq;
-using System.Text;
+using System.ServiceProcess;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Configuration;
 using DBUtil;
-using DataPieCore;
-using System.ServiceProcess;
-
-
 
 namespace DataPieDesktop
 {
     public partial class DatabaseConnectionForm : Form
     {
-        public static Main main = null;
-
-        int ID = 0;
-
-        string sqlcon;
-
-        string Dbtype;
-
-        IDbAccess dbaccess;
-
-        IList<Dbinfo> _DataBaseList = new List<Dbinfo>();
-
-        DBConfig db = new DBConfig();
-
+        private static Main main;
+        private readonly ConnectionStore connectionStore = new();
+        private int selectedConnectionId;
+        private bool operationRunning;
 
         public DatabaseConnectionForm()
         {
-          
             InitializeComponent();
+            savedConnectionComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            databaseTypeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            authenticationModeComboBox.DropDownStyle = ComboBoxStyle.DropDownList;
+            passwordTextBox.UseSystemPasswordChar = true;
         }
 
-     
-
-        private async void Login_Click(object sender, EventArgs e)
+        private async Task RunActionAsync(Func<Task> action)
         {
-            await ShowMainFormAsync();
-
-            this.Hide();
-        }
-
-    
-        private async Task ShowMainFormAsync()
-        {
-            if (main == null)
-            {
-                main = new Main();
-                main.Show();
-
-
-            }
-            else
-            {
-                main.Show();
-                await main.LoadDatabaseSchemaAsync();
-
-            }
-
-            
-        }
-
-        private void DatabaseConnectionForm_Load(object sender, EventArgs e)
-        {
-              //sqlcon = ConfigurationManager.AppSettings["Sqlite"];
-
-              sqlcon = "Data Source=data.db";
-
-              Dbtype = "SQLITE";
-
-              dbaccess = DbAccessFactory.Create(sqlcon, Dbtype);
-              InitializeConnectionStore(dbaccess);
-
-
-            _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo where UPPER(Dbtype) <> 'MYSQL'").ToList<Dbinfo>();
-
-            string[] dbtypes = { "SQLSERVER", "SQLITE" };
-
-            if (_DataBaseList.Count > 0)
-            {
-                comboBox1.DataSource = _DataBaseList.Select(p => p.Dbname).ToList();
-                comboBox1.Enabled = true;
-                comboBox1.SelectedIndex = 0;
-
-                dataGridView1.DataSource = _DataBaseList;
-
-            }
-
-            comboBox2.DataSource = dbtypes;
-
-            textBox3.Enabled = false;
-            textBox4.Enabled = false;
-
-
-        }
-
-        private static void InitializeConnectionStore(IDbAccess access)
-        {
-            access.ExecuteSql("CREATE TABLE IF NOT EXISTS Dbinfo(Id INTEGER PRIMARY KEY AUTOINCREMENT, Dbname varchar(50) NOT NULL, ConnectionStrings varchar(255) NOT NULL, Dbtype varchar(20) NOT NULL)");
-        }
-
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            AppState.ConnectionString = _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.ConnectionStrings).FirstOrDefault();
-            AppState.DatabaseType = _DataBaseList.Where(p=>p.Dbname == comboBox1.Text).Select(p => p.Dbtype).FirstOrDefault();
-            AppState.DatabaseName= _DataBaseList.Where(p => p.Dbname == comboBox1.Text).Select(p => p.Dbname).FirstOrDefault();
-
-        }
-
-        private void dataGridView1_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
-        {
-            ID = Convert.ToInt32(dataGridView1.Rows[e.RowIndex].Cells[0].Value.ToString());
-
-            textBox1.Text = dataGridView1.Rows[e.RowIndex].Cells[1].Value.ToString();
-            textBox2.Text = dataGridView1.Rows[e.RowIndex].Cells[2].Value.ToString();
-            comboBox2.Text = dataGridView1.Rows[e.RowIndex].Cells[3].Value.ToString();
-
-        }
-        //test connection
-        private void button10_Click(object sender, EventArgs e)
-        {
-          var  dbaccesstest = DbAccessFactory.Create(textBox2.Text, comboBox2.Text);
-
-            try
-            {
-                dbaccesstest.conn.Open();
-                MessageBox.Show("Test success!");
-                dbaccesstest.conn.Close();
-            }
+            if (operationRunning) return;
+            operationRunning = true;
+            var controls = Controls.Cast<Control>().Select(control => (Control: control, control.Enabled)).ToArray();
+            foreach (var item in controls) item.Control.Enabled = false;
+            try { await action(); }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                if (!IsDisposed) MessageBox.Show(this, ex.Message, "Connection error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            
-        }
-
-        private void Add_Click(object sender, EventArgs e)
-        {
-            if (textBox1.Text != "" && textBox2.Text != "") 
+            finally
             {
-
-                string sql = string.Format("insert into Dbinfo(Dbname, ConnectionStrings,Dbtype) values('{0}', '{1}', '{2}')", textBox1.Text, textBox2.Text, comboBox2.Text);
-
-                dbaccess.ExecuteSql(sql);
-
-                DisplayData();
-
-                ClearData();
-
-            }
-            else
-            {
-                MessageBox.Show("Please Provide Details!");
-            }
-
-        }
-
-        private void Update_Click(object sender, EventArgs e)
-        {
-            if (textBox1.Text != "" && textBox2.Text != "" && ID>0)
-            {
-
-                string sql = string.Format("update Dbinfo set Dbname = '{0}' ,ConnectionStrings = '{1}' ,Dbtype = '{2}' where Id= '{3}'", textBox1.Text, textBox2.Text, comboBox2.Text,ID);
-
-                dbaccess.ExecuteSql(sql);
-
-                DisplayData();
-
-                ClearData();
-
-            }
-
-            else
-            {
-                MessageBox.Show("Please Select Record to Update");
-            }
-
-
-        }
-
-        private void Delete_Click(object sender, EventArgs e)
-        {
-
-            if (ID>0)
-            {
-
-                string sql = string.Format("delete from Dbinfo where  Id= {0}", ID);
-
-                dbaccess.ExecuteSql(sql);
-
-                DisplayData();
-
-                ClearData();
-            }
-
-            else
-            {
-                MessageBox.Show("Please Select Record to Delete");
-            }
-        }
-
-        //Display Data in DataGridView  
-        private void DisplayData()
-        {
-            _DataBaseList = dbaccess.GetDataTable("select * from Dbinfo where UPPER(Dbtype) <> 'MYSQL'").ToList<Dbinfo>();
-
-            dataGridView1.DataSource = _DataBaseList;
-
-            comboBox1.DataSource = _DataBaseList.Select(p => p.Dbname).ToList();
-            //comboBox1.SelectedIndex = 0;
-
-        }
-
-        //Clear Data  
-        private void ClearData()
-        {
-            textBox1.Text = "";
-            textBox2.Text = "";
-            ID = 0;
-        }
-
-        private void button4_Click(object sender, EventArgs e)
-        {
-
-            System.ServiceProcess.ServiceController  sc = new System.ServiceProcess.ServiceController();
-            sc.ServiceName = "MSSQLSERVER";
-            sc.MachineName = System.Environment.MachineName;
-
-            if (sc == null)
-            {
-                MessageBox.Show("No SQL SERVER on the machine", "Message");
-                return;
-            }
-            else if (sc.Status != System.ServiceProcess.ServiceControllerStatus.Running)
-            {
-                sc.Start();
-                MessageBox.Show("SQL SERVER started successfully!", "Message");
-            }
-        }
-
-        private void button5_Click(object sender, EventArgs e)
-        {
-            System.ServiceProcess.ServiceController sc = new System.ServiceProcess.ServiceController();
-            sc.ServiceName = "MSSQLSERVER";
-            sc.MachineName = System.Environment.MachineName;
-            if (!sc.Status.Equals(System.ServiceProcess.ServiceControllerStatus.Stopped))
-            {
-                sc.Stop();
-                MessageBox.Show(" SQL SERVER Stoped !", "Message");
-            }
-        }
-
-        private void button6_Click(object sender, EventArgs e)
-        {
-            if (checkDb() < 0)
-            {
-                return;
-            }
-            else
-            {
-                List<string> _DataBaseList = new List<string>();
-
-
-                db.ServerName = comboBox4.Text.ToString();
-
-                if (comboBox3.Text == "Windows")
+                operationRunning = false;
+                if (!IsDisposed)
                 {
-                    db.ValidataType = "Windows";
+                    foreach (var item in controls) item.Control.Enabled = item.Enabled;
+                    connectSavedConnectionButton.Enabled = savedConnectionComboBox.SelectedItem is Dbinfo;
+                }
+            }
+        }
+
+        private async void DatabaseConnectionForm_Load(object sender, EventArgs e)
+        {
+            databaseTypeComboBox.DataSource = new[] { "SQLSERVER", "SQLITE" };
+            authenticationModeComboBox.SelectedIndex = 0;
+            authenticationModeComboBox_SelectedIndexChanged(sender, e);
+            await RunActionAsync(() => { LoadSavedConnections(); return Task.CompletedTask; });
+        }
+
+        private void LoadSavedConnections()
+        {
+            int? selectedId = (savedConnectionComboBox.SelectedItem as Dbinfo)?.Id;
+            var records = connectionStore.Load();
+            savedConnectionsGridView.DataSource = records;
+            savedConnectionComboBox.DisplayMember = nameof(Dbinfo.Dbname);
+            savedConnectionComboBox.ValueMember = nameof(Dbinfo.Id);
+            savedConnectionComboBox.DataSource = records.ToList();
+            if (selectedId.HasValue && records.Any(record => record.Id == selectedId))
+                savedConnectionComboBox.SelectedValue = selectedId.Value;
+            connectSavedConnectionButton.Enabled = records.Count > 0;
+        }
+
+        private void savedConnectionComboBox_SelectedIndexChanged(object sender, EventArgs e)
+            => connectSavedConnectionButton.Enabled = savedConnectionComboBox.SelectedItem is Dbinfo;
+
+        private void savedConnectionsGridView_RowHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
+        {
+            if (e.RowIndex < 0 || savedConnectionsGridView.Rows[e.RowIndex].DataBoundItem is not Dbinfo record) return;
+            selectedConnectionId = record.Id;
+            connectionNameTextBox.Text = record.Dbname;
+            connectionStringTextBox.Text = record.ConnectionStrings;
+            databaseTypeComboBox.Text = record.Dbtype;
+        }
+
+        private Dbinfo ReadEditedConnection() => new()
+        {
+            Id = selectedConnectionId, Dbname = connectionNameTextBox.Text.Trim(),
+            ConnectionStrings = connectionStringTextBox.Text, Dbtype = databaseTypeComboBox.Text
+        };
+
+        private async Task EditConnectionAsync(Action edit)
+        {
+            await RunActionAsync(() =>
+            {
+                edit();
+                LoadSavedConnections();
+                connectionNameTextBox.Clear();
+                connectionStringTextBox.Clear();
+                selectedConnectionId = 0;
+                return Task.CompletedTask;
+            });
+        }
+
+        private async void addConnectionButton_Click(object sender, EventArgs e) => await EditConnectionAsync(() =>
+        {
+            var record = ReadEditedConnection();
+            record.Id = 0;
+            connectionStore.Save(record);
+        });
+
+        private async void updateConnectionButton_Click(object sender, EventArgs e) => await EditConnectionAsync(() =>
+        {
+            if (selectedConnectionId <= 0) throw new InvalidOperationException("Please select a record to update.");
+            connectionStore.Save(ReadEditedConnection());
+        });
+
+        private async void deleteConnectionButton_Click(object sender, EventArgs e) => await EditConnectionAsync(() =>
+        {
+            if (selectedConnectionId <= 0) throw new InvalidOperationException("Please select a record to delete.");
+            connectionStore.Delete(selectedConnectionId);
+        });
+
+        private static void TestConnection(Dbinfo record)
+        {
+            if (record == null || string.IsNullOrWhiteSpace(record.ConnectionStrings))
+                throw new InvalidOperationException("Please select a database connection.");
+            using var access = DbAccessFactory.Create(record.ConnectionStrings, record.Dbtype);
+            access.conn.Open();
+        }
+
+        private async void testConnectionButton_Click(object sender, EventArgs e)
+        {
+            var record = ReadEditedConnection();
+            await RunActionAsync(async () =>
+            {
+                await Task.Run(() => TestConnection(record));
+                MessageBox.Show(this, "Test success!");
+            });
+        }
+
+        private async Task ConnectAsync(Func<Dbinfo> readConnection, bool save)
+        {
+            await RunActionAsync(async () =>
+            {
+                var record = readConnection();
+                await Task.Run(() => TestConnection(record));
+                if (save) connectionStore.Save(record, onlyIfMissing: true);
+                AppState.ConnectionString = record.ConnectionStrings;
+                AppState.DatabaseType = record.Dbtype;
+                AppState.DatabaseName = record.Dbname;
+                if (main == null || main.IsDisposed)
+                {
+                    main = new Main();
+                    main.Show();
                 }
                 else
                 {
-                    textBox3.Enabled = true;
-                    textBox4.Enabled = true;
-                    db.ValidataType = "SQLServer";
-                    db.UserName = textBox3.Text.ToString();
-                    db.UserPwd = textBox4.Text.ToString();
-
+                    main.Show();
+                    await main.LoadDatabaseSchemaAsync();
                 }
+                Hide();
+            });
+        }
 
-                db.ProviderName = "SQLSERVER";
+        private async void connectSavedConnectionButton_Click(object sender, EventArgs e)
+            => await ConnectAsync(() => savedConnectionComboBox.SelectedItem as Dbinfo, false);
 
-                sqlcon = db.GetSQLmasterConstring();
+        private DBConfig ReadSqlServerConfig(string database)
+        {
+            if (string.IsNullOrWhiteSpace(serverNameComboBox.Text)) throw new InvalidOperationException("Please enter a server.");
+            return new DBConfig
+            {
+                ProviderName = "SQLSERVER", ServerName = serverNameComboBox.Text.Trim(), DataBase = database,
+                ValidataType = authenticationModeComboBox.Text, UserName = userNameTextBox.Text, UserPwd = passwordTextBox.Text
+            };
+        }
 
-                dbaccess = DbAccessFactory.Create(sqlcon, db.ProviderName);
-
-
-                _DataBaseList = dbaccess.GetDataBaseInfo();
-
-                if (_DataBaseList.Count > 0)
+        private async void loadDatabasesButton_Click(object sender, EventArgs e)
+        {
+            await RunActionAsync(async () =>
+            {
+                databaseNameComboBox.DataSource = null;
+                databaseNameComboBox.Text = string.Empty;
+                databaseNameComboBox.Enabled = false;
+                string connection = ReadSqlServerConfig("master").GetSQLmasterConstring();
+                var databases = await Task.Run(() =>
                 {
-                    comboBox5.DataSource = _DataBaseList;
-                    comboBox5.Enabled = true;
-                    comboBox5.SelectedIndex = 0;
-                }
-
-            }
-
+                    using var access = DbAccessFactory.Create(connection, "SQLSERVER");
+                    return access.GetDataBaseInfo();
+                });
+                databaseNameComboBox.DataSource = databases;
+                databaseNameComboBox.Enabled = databases.Count > 0;
+            });
         }
 
-        private async void button7_Click(object sender, EventArgs e)
+        private async void connectSqlServerButton_Click(object sender, EventArgs e) => await ConnectAsync(() =>
         {
-            if (comboBox5.Text.ToString() == "")
-            {
-                MessageBox.Show("Please select a database!");
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(databaseNameComboBox.Text)) throw new InvalidOperationException("Please select a database.");
+            return new Dbinfo { Dbname = databaseNameComboBox.Text, Dbtype = "SQLSERVER", ConnectionStrings = ReadSqlServerConfig(databaseNameComboBox.Text).GetConstring() };
+        }, true);
 
-            db.ProviderName = "SQLSERVER";
-
-            db.DataBase = comboBox5.Text.ToString();
-
-            sqlcon = db.GetConstring();
-
-
-            AppState.ConnectionString = sqlcon;
-            AppState.DatabaseType = "SQLSERVER";
-            AppState.DatabaseName = comboBox5.Text.ToString();
-
-            var dbaccess1 = DbAccessFactory.Create("Data Source=data.db", "SQLITE");
-            string sql = string.Format("insert into Dbinfo(Dbname, ConnectionStrings,Dbtype) select '{0}', '{1}', '{2}' WHERE NOT EXISTS(select 1 from Dbinfo where Dbname= '{0}')", comboBox5.Text.ToString(), sqlcon, "SQLSERVER");
-            dbaccess1.ExecuteSql(sql);
-
-            await ShowMainFormAsync();
-
-            this.Hide();
+        private void browseSqliteFileButton_Click(object sender, EventArgs e)
+        {
+            using var dialog = new OpenFileDialog { Filter = "SQLite|*.db", RestoreDirectory = true };
+            if (dialog.ShowDialog(this) != DialogResult.OK) return;
+            sqliteFilePathTextBox.Text = dialog.FileName;
+            sqliteFilePathTextBox.ReadOnly = true;
         }
 
-        private int checkDb()
+        private async void connectSqliteButton_Click(object sender, EventArgs e) => await ConnectAsync(() =>
         {
-            System.ServiceProcess.ServiceController sc = new System.ServiceProcess.ServiceController();
-            sc.ServiceName = "MSSQLSERVER";
-            if (sc == null)
-            {
-                MessageBox.Show("No SQL SERVER on the machine", "Message");
-                return -1;
-            }
-            else if (sc.Status != System.ServiceProcess.ServiceControllerStatus.Running)
-            {
-                MessageBox.Show("Service has not been started. Please click to start SQL service!", "Message");
-                return -2;
-            }
+            if (string.IsNullOrWhiteSpace(sqliteFilePathTextBox.Text)) throw new InvalidOperationException("Please select a database.");
+            var config = new DBConfig { ProviderName = "SQLITE", DataBase = sqliteFilePathTextBox.Text };
+            return new Dbinfo { Dbname = sqliteFilePathTextBox.Text, Dbtype = "SQLITE", ConnectionStrings = config.GetConstring() };
+        }, true);
 
-            return 0;
-
+        private void authenticationModeComboBox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            bool sqlAuthentication = authenticationModeComboBox.Text != "Windows";
+            userNameTextBox.Enabled = sqlAuthentication;
+            passwordTextBox.Enabled = sqlAuthentication;
         }
 
-        private void button8_Click(object sender, EventArgs e)
+        private async void startLocalSqlServerButton_Click(object sender, EventArgs e) => await ChangeLocalServiceAsync(true);
+        private async void stopLocalSqlServerButton_Click(object sender, EventArgs e) => await ChangeLocalServiceAsync(false);
+
+        private async Task ChangeLocalServiceAsync(bool start)
         {
-            OpenFileDialog opeanfile = new OpenFileDialog();
-            opeanfile.Filter = ("SQLite|*.db");
-
-            opeanfile.RestoreDirectory = true;
-            opeanfile.FilterIndex = 1;
-            if (opeanfile.ShowDialog() == DialogResult.OK)
+            await RunActionAsync(async () =>
             {
-                this.textBox5.Text = opeanfile.FileName;
-                textBox5.ReadOnly = true;
-            }
-        }
-
-        private async void button9_Click(object sender, EventArgs e)
-        {
-            if (textBox5.Text.ToString() == "")
-            {
-                MessageBox.Show("Please select a database!");
-                return;
-            }
-
-            DBConfig db = new DBConfig();
-
-            db.ProviderName = "SQLITE";
-
-            db.DataBase = textBox5.Text.ToString();
-
-            sqlcon = db.GetConstring();
-
-            AppState.ConnectionString = sqlcon;
-            AppState.DatabaseType = "SQLITE";
-            AppState.DatabaseName  = textBox5.Text.ToString();
-
-            var dbaccess1 = DbAccessFactory.Create("Data Source=data.db", "SQLITE");
-            string sql = string.Format("insert into Dbinfo(Dbname, ConnectionStrings,Dbtype) select '{0}', '{1}', '{2}' WHERE NOT EXISTS(select 1 from Dbinfo where Dbname= '{0}')", textBox5.Text.ToString(), sqlcon, "SQLITE");
-            dbaccess1.ExecuteSql(sql);
-
-            await ShowMainFormAsync();
-
-            this.Hide();
-        }
-
-        private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (comboBox3.Text.ToString() == "Windows")
-            {
-                textBox3.Enabled = false;
-                textBox4.Enabled = false;
-            }
-            else
-            {
-                textBox3.Enabled = true;
-                textBox4.Enabled = true;
-            }
+                await Task.Run(() =>
+                {
+                    using var service = new ServiceController("MSSQLSERVER", Environment.MachineName);
+                    var target = start ? ServiceControllerStatus.Running : ServiceControllerStatus.Stopped;
+                    if (service.Status == target) return;
+                    if (start && service.Status != ServiceControllerStatus.StartPending) service.Start();
+                    if (!start && service.Status != ServiceControllerStatus.StopPending) service.Stop();
+                    service.WaitForStatus(target, TimeSpan.FromSeconds(30));
+                });
+                MessageBox.Show(this, start ? "Local SQL Server started." : "Local SQL Server stopped.");
+            });
         }
     }
-
-    public class Dbinfo
-    {
-
-        public int Id { get; set; }
-        public string Dbname { get; set; }
-        public string ConnectionStrings { get; set; }
-        public string Dbtype { get; set; }
-
-    }
-
-    public class DBConfig
-    {
-
-        public string ProviderName { get; set; }
-        public string ServerName { get; set; }
-        public string ValidataType { get; set; }
-        public string UserName { get; set; }
-        public string UserPwd { get; set; }
-        public string DataBase { get; set; }
-        public string ConString { get; set; }
-     
-        public string GetSQLmasterConstring()
-        {
-            if (ProviderName == "SQLSERVER")
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("Data Source=" + ServerName);
-                sb.Append(";Initial Catalog=master ;");
-                if (ValidataType == "Windows")
-                {
-                    sb.Append(" Integrated Security=SSPI;");
-                }
-                else
-                {
-
-                    sb.Append("User ID=" + UserName + ";Password=" + UserPwd + ";");
-
-                }
-                return sb.ToString();
-            }
-            return "";
-        }
-
-        public string GetConstring()
-        {
-            if (ProviderName == "SQLSERVER")
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("Data Source=" + ServerName);
-                sb.Append(";Initial Catalog=" + DataBase + " ; ");
-                if (ValidataType == "Windows")
-                {
-                    sb.Append("Integrated Security=SSPI;Connect Timeout=10000");
-                }
-                else
-                {
-
-                    sb.Append("User ID=" + UserName + ";Password=" + UserPwd + ";");
-
-                }
-                return sb.ToString();
-            }
-
-            else if (ProviderName == "SQLITE")
-            {
-                StringBuilder sb = new StringBuilder();
-                sb.Append("Data Source= " + DataBase + ";");
-                return sb.ToString();
-            }
-            else return "";
-
-        }
-
-
-
-    }
-
-
 }
