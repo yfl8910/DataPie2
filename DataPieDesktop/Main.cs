@@ -27,12 +27,12 @@ namespace DataPieDesktop
             operationRunning = true;
             operationVersion++;
             using var progressTimer = new System.Windows.Forms.Timer { Interval = 5000 };
-            var inputs = Descendants(tabControl1)
+            var inputs = Descendants(mainTabControl)
                 .Where(c => c != cancelSqliteExportButton && c != refreshSqliteProgressButton &&
                     (c is ButtonBase || c is TextBoxBase || c is ComboBox || c is ListBox || c is TreeView || c is DataGridView))
                 .Select(c => (Control: c, Enabled: c.Enabled)).ToArray();
             foreach (var input in inputs) input.Control.Enabled = false;
-            toolStrip1.Enabled = false;
+            mainToolStrip.Enabled = false;
             try
             {
                 if (startedMessage != null) ShowMessage(startedMessage);
@@ -68,7 +68,7 @@ namespace DataPieDesktop
                 if (!IsDisposed)
                 {
                     foreach (var input in inputs) input.Control.Enabled = input.Enabled;
-                    toolStrip1.Enabled = true;
+                    mainToolStrip.Enabled = true;
                 }
             }
         }
@@ -116,16 +116,16 @@ namespace DataPieDesktop
 
         private void ConfigureStatusBar()
         {
-            statusStrip1.AutoSize = false;
-            foreach (var label in new[] { toolStripStatusLabel1, toolStripStatusLabel2 })
+            mainStatusStrip.AutoSize = false;
+            foreach (var label in new[] { operationMessageStatusLabel, operationDetailsStatusLabel })
             {
                 label.AutoSize = false;
                 label.Spring = false;
                 label.TextChanged += (_, _) => UpdateStatusLayout();
             }
-            foreach (TabPage page in tabControl1.TabPages) page.AutoScroll = true;
-            statusStrip1.Layout += (_, _) => UpdateStatusLayout();
-            statusStrip1.FontChanged += (_, _) => UpdateStatusLayout();
+            foreach (TabPage page in mainTabControl.TabPages) page.AutoScroll = true;
+            mainStatusStrip.Layout += (_, _) => UpdateStatusLayout();
+            mainStatusStrip.FontChanged += (_, _) => UpdateStatusLayout();
             ClientSizeChanged += (_, _) => UpdateStatusLayout();
             DpiChanged += (_, _) => UpdateStatusLayout();
             UpdateStatusLayout();
@@ -137,23 +137,23 @@ namespace DataPieDesktop
             updatingStatusLayout = true;
             try
             {
-                bool hasProgress = !string.IsNullOrEmpty(toolStripStatusLabel2.Text);
-                toolStripStatusLabel2.Visible = hasProgress;
-                int width = Math.Max(2, statusStrip1.DisplayRectangle.Width - toolStripStatusLabel1.Margin.Horizontal -
-                    (hasProgress ? toolStripStatusLabel2.Margin.Horizontal : 0));
+                bool hasProgress = !string.IsNullOrEmpty(operationDetailsStatusLabel.Text);
+                operationDetailsStatusLabel.Visible = hasProgress;
+                int width = Math.Max(2, mainStatusStrip.DisplayRectangle.Width - operationMessageStatusLabel.Margin.Horizontal -
+                    (hasProgress ? operationDetailsStatusLabel.Margin.Horizontal : 0));
                 int progressWidth = hasProgress ? width / 2 : 0;
                 int messageWidth = width - progressWidth;
-                int height = ((WrappingStatusLabel)toolStripStatusLabel1).MeasureHeight(messageWidth);
-                if (hasProgress) height = Math.Max(height, ((WrappingStatusLabel)toolStripStatusLabel2).MeasureHeight(progressWidth));
-                toolStripStatusLabel1.Size = new Size(messageWidth, height);
-                toolStripStatusLabel2.Size = new Size(progressWidth, height);
-                toolStripStatusLabel1.ToolTipText = toolStripStatusLabel1.Text;
-                toolStripStatusLabel2.ToolTipText = toolStripStatusLabel2.Text;
-                statusStrip1.Height = height + statusStrip1.Padding.Vertical +
-                    Math.Max(toolStripStatusLabel1.Margin.Vertical, toolStripStatusLabel2.Margin.Vertical);
+                int height = ((WrappingStatusLabel)operationMessageStatusLabel).MeasureHeight(messageWidth);
+                if (hasProgress) height = Math.Max(height, ((WrappingStatusLabel)operationDetailsStatusLabel).MeasureHeight(progressWidth));
+                operationMessageStatusLabel.Size = new Size(messageWidth, height);
+                operationDetailsStatusLabel.Size = new Size(progressWidth, height);
+                operationMessageStatusLabel.ToolTipText = operationMessageStatusLabel.Text;
+                operationDetailsStatusLabel.ToolTipText = operationDetailsStatusLabel.Text;
+                mainStatusStrip.Height = height + mainStatusStrip.Padding.Vertical +
+                    Math.Max(operationMessageStatusLabel.Margin.Vertical, operationDetailsStatusLabel.Margin.Vertical);
                 int gap = Math.Max(1, 8 * DeviceDpi / 96);
-                tabControl1.Size = new Size(Math.Max(1, ClientSize.Width - tabControl1.Left * 2),
-                    Math.Max(1, ClientSize.Height - statusStrip1.Height - gap - tabControl1.Top));
+                mainTabControl.Size = new Size(Math.Max(1, ClientSize.Width - mainTabControl.Left * 2),
+                    Math.Max(1, ClientSize.Height - mainStatusStrip.Height - gap - mainTabControl.Top));
             }
             finally { updatingStatusLayout = false; }
         }
@@ -185,35 +185,35 @@ namespace DataPieDesktop
         {
             var tableNames = databaseSchema.Tables.Select(table => table.Name).ToArray();
             // Separate data sources keep the import and query selections independent.
-            comboBox1.DataSource = tableNames;
-            comboBox2.DataSource = tableNames.ToArray();
-            comboBox1.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
-            comboBox2.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
-            toolStripStatusLabel1.Text = databaseSchema.Name;
+            importTableComboBox.DataSource = tableNames;
+            queryTableComboBox.DataSource = tableNames.ToArray();
+            importTableComboBox.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
+            queryTableComboBox.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
+            operationMessageStatusLabel.Text = databaseSchema.Name;
 
-            treeView1.BeginUpdate();
-            treeView2.BeginUpdate();
+            exportObjectsTreeView.BeginUpdate();
+            availableProceduresTreeView.BeginUpdate();
             try
             {
-                treeView1.Nodes.Clear();
-                treeView2.Nodes.Clear();
-                treeView1.Nodes.Add(CreateNodeGroup("All Tables：", tableNames));
-                treeView1.Nodes.Add(CreateNodeGroup("All Views：", databaseSchema.ViewNames));
-                treeView2.Nodes.Add(CreateNodeGroup("Stored Procedure",
+                exportObjectsTreeView.Nodes.Clear();
+                availableProceduresTreeView.Nodes.Clear();
+                exportObjectsTreeView.Nodes.Add(CreateNodeGroup("All Tables：", tableNames));
+                exportObjectsTreeView.Nodes.Add(CreateNodeGroup("All Views：", databaseSchema.ViewNames));
+                availableProceduresTreeView.Nodes.Add(CreateNodeGroup("Stored Procedure",
                     databaseSchema.Procedures?.Select(proc => proc.Name) ?? Enumerable.Empty<string>()));
-                treeView1.ExpandAll();
-                treeView2.ExpandAll();
+                exportObjectsTreeView.ExpandAll();
+                availableProceduresTreeView.ExpandAll();
             }
             finally
             {
-                treeView1.EndUpdate();
-                treeView2.EndUpdate();
+                exportObjectsTreeView.EndUpdate();
+                availableProceduresTreeView.EndUpdate();
             }
-            listBox1.Items.Clear();
-            listBox2.Items.Clear();
-            textBox1.Clear();
-            textBox2.Clear();
-            richTextBox1.Clear();
+            selectedExportObjectsListBox.Items.Clear();
+            selectedProceduresListBox.Items.Clear();
+            importFilePathTextBox.Clear();
+            sqliteOutputFolderTextBox.Clear();
+            sqlEditorRichTextBox.Clear();
         }
 
         private static TreeNode CreateNodeGroup(string title, IEnumerable<string> names)
@@ -226,7 +226,7 @@ namespace DataPieDesktop
         //Template Export
         private async void exportTemplateButton_Click(object sender, EventArgs e)
         {
-            string selectedTable = comboBox1.Text;
+            string selectedTable = importTableComboBox.Text;
             if (string.IsNullOrWhiteSpace(selectedTable)) return;
             string filename = FileDialogs.ShowSaveDialog(selectedTable, ".xlsx");
             if (filename == null) return;
@@ -240,7 +240,7 @@ namespace DataPieDesktop
         //Delete
         private async void clearTableDataButton_Click(object sender, EventArgs e)
         {
-            string selectedTable = comboBox1.Text;
+            string selectedTable = importTableComboBox.Text;
             if (string.IsNullOrWhiteSpace(selectedTable))
             {
                 MessageBox.Show("please choose a table!");
@@ -263,13 +263,13 @@ namespace DataPieDesktop
         // Import Excel
         private async void importFileButton_Click(object sender, EventArgs e)
         {
-            if (textBox1.Text == "" || comboBox1.Text == "")
+            if (importFilePathTextBox.Text == "" || importTableComboBox.Text == "")
             {
                 MessageBox.Show("please choose table and file to import!");
                 return;
             }
-            string importTable = comboBox1.Text;
-            string importPath = textBox1.Text;
+            string importTable = importTableComboBox.Text;
+            string importPath = importFilePathTextBox.Text;
             var watch = new Stopwatch();
             await RunOperationAsync(() =>
             {
@@ -320,7 +320,7 @@ namespace DataPieDesktop
             openFileDialog.FilterIndex = 1;
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
-                textBox1.Text = openFileDialog.FileName;
+                importFilePathTextBox.Text = openFileDialog.FileName;
             }
         }
 
@@ -351,10 +351,10 @@ namespace DataPieDesktop
         //View Data
         private async void previewQueryButton_Click(object sender, EventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(richTextBox1.Text) &&
+            if (string.IsNullOrWhiteSpace(sqlEditorRichTextBox.Text) &&
                 !GenerateSql(table => SqlWriter.WriteSelect(table, AppState.DatabaseType, 1000), "Select SQL generated"))
                 return;
-            await LoadQueryPreviewAsync(richTextBox1.Text);
+            await LoadQueryPreviewAsync(sqlEditorRichTextBox.Text);
         }
 
         private async Task LoadQueryPreviewAsync(string sql)
@@ -369,18 +369,18 @@ namespace DataPieDesktop
             }, () =>
             {
                 if (result == null) return;
-                var previous = dataGridView1.DataSource as DataTable;
-                dataGridView1.DataSource = result;
+                var previous = queryResultsGridView.DataSource as DataTable;
+                queryResultsGridView.DataSource = result;
                 previous?.Dispose();
                 watch.Stop();
-                statusStrip1.Items[1].Text = $"Preview: {result.Rows.Count} rows, {watch.Elapsed.TotalSeconds:F2}s" +
+                operationDetailsStatusLabel.Text = $"Preview: {result.Rows.Count} rows, {watch.Elapsed.TotalSeconds:F2}s" +
                     (truncated ? " (limited to 1000 rows; export for all rows)" : "");
             });
         }
         //OUTPUT CSV
         private async void exportTableToCsvButton_Click(object sender, EventArgs e)
         {
-            string tableName = comboBox2.Text;
+            string tableName = queryTableComboBox.Text;
             if (string.IsNullOrWhiteSpace(tableName))
             {
                 MessageBox.Show(this, "Please choose a table");
@@ -400,13 +400,13 @@ namespace DataPieDesktop
         //Export Excel by sql
         private async void exportQueryToExcelButton_Click(object sender, EventArgs e)
         {
-            string sql = richTextBox1.Text;
+            string sql = sqlEditorRichTextBox.Text;
             if (string.IsNullOrWhiteSpace(sql))
             {
                 MessageBox.Show(this, "Empty SQL for Export");
                 return;
             }
-            string sheetName = comboBox2.Text;
+            string sheetName = queryTableComboBox.Text;
             string filename = FileDialogs.ShowSaveDialog(sheetName, ".xlsx");
             if (filename != null) await ExportQueryToExcelAsync(sql, filename, sheetName);
         }
@@ -414,7 +414,7 @@ namespace DataPieDesktop
         //Export Excel by tableName
         private async void exportTableToExcelButton_Click(object sender, EventArgs e)
         {
-            string tableName = comboBox2.Text;
+            string tableName = queryTableComboBox.Text;
             if (string.IsNullOrWhiteSpace(tableName))
             {
                 MessageBox.Show(this, "Please choose a table");
@@ -436,10 +436,10 @@ namespace DataPieDesktop
 
         private void ShowMessage(string message)
         {
-            toolStripStatusLabel2.Text = string.Empty;
-            toolStripStatusLabel1.Text = AppState.DatabaseName + "-" + message;
-            toolStripStatusLabel1.ToolTipText = toolStripStatusLabel1.Text;
-            toolStripStatusLabel1.ForeColor = Color.Red;
+            operationDetailsStatusLabel.Text = string.Empty;
+            operationMessageStatusLabel.Text = AppState.DatabaseName + "-" + message;
+            operationMessageStatusLabel.ToolTipText = operationMessageStatusLabel.Text;
+            operationMessageStatusLabel.ForeColor = Color.Red;
         }
 
         private void ShowError(Exception error) => ShowMessage("Error! " + error.Message);
@@ -457,7 +457,7 @@ namespace DataPieDesktop
 
         private async Task ExportSelectedTablesAsync(string extension, Func<IList<string>, string, Task> export)
         {
-            var tableNames = listBox1.Items.Cast<string>().ToArray();
+            var tableNames = selectedExportObjectsListBox.Items.Cast<string>().ToArray();
             if (tableNames.Length == 0)
             {
                 MessageBox.Show(this, "Please choose a table");
@@ -469,40 +469,40 @@ namespace DataPieDesktop
 
         private bool GenerateSql(Func<TableStruct, string> buildSql, string message)
         {
-            var table = databaseSchema?.Tables.FirstOrDefault(item => item.Name == comboBox2.Text);
+            var table = databaseSchema?.Tables.FirstOrDefault(item => item.Name == queryTableComboBox.Text);
             if (table == null)
             {
                 MessageBox.Show(this, "Please choose a table");
                 return false;
             }
-            richTextBox1.Text = buildSql(table);
+            sqlEditorRichTextBox.Text = buildSql(table);
             ShowMessage(message);
             return true;
         }
 
         private void clearExportListButton_Click(object sender, EventArgs e)
         {
-            listBox1.Items.Clear();
+            selectedExportObjectsListBox.Items.Clear();
         }
 
-        private void treeView1_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        private void exportObjectsTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            if (e.Button == MouseButtons.Left) AddSelectedNode(listBox1, e.Node);
+            if (e.Button == MouseButtons.Left) AddSelectedNode(selectedExportObjectsListBox, e.Node);
         }
 
-        private void treeView2_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        private void availableProceduresTreeView_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            if (e.Button == MouseButtons.Left) AddSelectedNode(listBox2, e.Node);
+            if (e.Button == MouseButtons.Left) AddSelectedNode(selectedProceduresListBox, e.Node);
         }
 
-        private void listBox2_DoubleClick(object sender, EventArgs e)
+        private void selectedProceduresListBox_DoubleClick(object sender, EventArgs e)
         {
-            RemoveSelectedItem(listBox2);
+            RemoveSelectedItem(selectedProceduresListBox);
         }
 
-        private void listBox1_DoubleClick(object sender, EventArgs e)
+        private void selectedExportObjectsListBox_DoubleClick(object sender, EventArgs e)
         {
-            RemoveSelectedItem(listBox1);
+            RemoveSelectedItem(selectedExportObjectsListBox);
         }
 
         //export muti excel
@@ -540,7 +540,7 @@ namespace DataPieDesktop
         // run stored procedure 
         private async void executeProceduresButton_Click(object sender, EventArgs e)
         {
-            var procedures = listBox2.Items.Cast<string>().ToArray();
+            var procedures = selectedProceduresListBox.Items.Cast<string>().ToArray();
             if (procedures.Length == 0)
             {
                 MessageBox.Show(this, "Please choose a stored procedure");
@@ -598,9 +598,9 @@ namespace DataPieDesktop
         {
             DialogResult result = MessageBox.Show("Confirm  Executation ?", "Message", MessageBoxButtons.OKCancel);
 
-            if (result == DialogResult.OK && richTextBox1.Text.Length > 0)
+            if (result == DialogResult.OK && sqlEditorRichTextBox.Text.Length > 0)
             {
-                await ExecuteSql(richTextBox1.Text);
+                await ExecuteSql(sqlEditorRichTextBox.Text);
             }
 
         }
@@ -623,10 +623,10 @@ namespace DataPieDesktop
             using var dialog = new FolderBrowserDialog
             {
                 Description = "Select the SQLite output folder",
-                SelectedPath = Directory.Exists(textBox2.Text) ? textBox2.Text : string.Empty
+                SelectedPath = Directory.Exists(sqliteOutputFolderTextBox.Text) ? sqliteOutputFolderTextBox.Text : string.Empty
             };
             if (dialog.ShowDialog(this) == DialogResult.OK)
-                textBox2.Text = dialog.SelectedPath;
+                sqliteOutputFolderTextBox.Text = dialog.SelectedPath;
         }
 
         private async void createSqliteButton_Click(object sender, EventArgs e)
@@ -637,7 +637,7 @@ namespace DataPieDesktop
                 MessageBox.Show(this, "Please connect to a SQL Server database first.");
                 return;
             }
-            if (!Directory.Exists(textBox2.Text))
+            if (!Directory.Exists(sqliteOutputFolderTextBox.Text))
             {
                 MessageBox.Show(this, "Please select an existing output folder.");
                 return;
@@ -648,7 +648,7 @@ namespace DataPieDesktop
                 MessageBox.Show(this, "The database name cannot be used as a folder or file name.");
                 return;
             }
-            string filename = Path.Combine(textBox2.Text, databaseSchema.Name, databaseSchema.Name + ".db");
+            string filename = Path.Combine(sqliteOutputFolderTextBox.Text, databaseSchema.Name, databaseSchema.Name + ".db");
             if (File.Exists(filename) && MessageBox.Show(this, $"Replace the existing database?\n{filename}",
                 "Create SQLite", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) != DialogResult.Yes) return;
             await CreateSqlite(filename, null);
@@ -696,14 +696,14 @@ namespace DataPieDesktop
             if (!sqliteExportRunning || IsDisposed || Disposing) return;
             string table = SqlServerToSQLite.currentProcessTable ?? "Preparing schema and procedures";
             string state = SqlServerToSQLite._cancelled ? "Stopping" : "Current Table";
-            toolStripStatusLabel2.Text = $"{state}: {table}, Copy Rows: {SqlServerToSQLite.TotalCopyed}";
+            operationDetailsStatusLabel.Text = $"{state}: {table}, Copy Rows: {SqlServerToSQLite.TotalCopyed}";
         }
         private void cancelSqliteExportButton_Click(object sender, EventArgs e)
         {
             if (!sqliteExportRunning) return;
             SqlServerToSQLite._cancelled = true;
             UpdateSqliteProgress();
-            toolStripStatusLabel2.ForeColor = Color.Red;
+            operationDetailsStatusLabel.ForeColor = Color.Red;
         }
 
         private async void refreshSqliteProgressButton_Click(object sender, EventArgs e)
@@ -728,18 +728,18 @@ namespace DataPieDesktop
             FolderBrowserDialog folder = new FolderBrowserDialog();
             if (folder.ShowDialog(this) == DialogResult.OK)
             {
-                this.textBox3.Text = folder.SelectedPath;
+                this.importFolderPathTextBox.Text = folder.SelectedPath;
             }
         }
 
         private async void importFolderButton_Click(object sender, EventArgs e)
         {
-            if (textBox3.Text == "" || comboBox1.Text == "")
+            if (importFolderPathTextBox.Text == "" || importTableComboBox.Text == "")
             {
                 MessageBox.Show("please choose table and fold to import!");
                 return;
             }
-            await ImportFolderAsync(comboBox1.Text, textBox3.Text);
+            await ImportFolderAsync(importTableComboBox.Text, importFolderPathTextBox.Text);
         }
 
         private async Task ImportFolderAsync(string DbTableName, string path)
@@ -766,22 +766,22 @@ namespace DataPieDesktop
 
         private void addExportItemButton_Click(object sender, EventArgs e)
         {
-            AddSelectedNode(listBox1, treeView1.SelectedNode);
+            AddSelectedNode(selectedExportObjectsListBox, exportObjectsTreeView.SelectedNode);
         }
 
         private void removeExportItemButton_Click(object sender, EventArgs e)
         {
-            RemoveSelectedItem(listBox1);
+            RemoveSelectedItem(selectedExportObjectsListBox);
         }
 
         private void addProcedureButton_Click(object sender, EventArgs e)
         {
-            AddSelectedNode(listBox2, treeView2.SelectedNode);
+            AddSelectedNode(selectedProceduresListBox, availableProceduresTreeView.SelectedNode);
         }
 
         private void removeProcedureButton_Click(object sender, EventArgs e)
         {
-            RemoveSelectedItem(listBox2);
+            RemoveSelectedItem(selectedProceduresListBox);
         }
     }
 }

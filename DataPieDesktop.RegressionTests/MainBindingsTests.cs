@@ -11,6 +11,13 @@ internal static class MainBindingsTests
         T Field<T>(string name) => (T)typeof(Main).GetField(name, instance).GetValue(form);
         void Invoke(string name, params object[] args) => typeof(Main).GetMethod(name, instance).Invoke(form, args);
         void Check(bool value, string message) { if (!value) throw new Exception(message); }
+        foreach (var field in typeof(Main).GetFields(instance).Where(field => field.DeclaringType == typeof(Main)))
+        {
+            if (field.GetValue(form) is Control control)
+                Check(control.Name == field.Name && !char.IsDigit(field.Name[^1]), "Control must have a matching meaningful name: " + field.Name);
+            else if (field.GetValue(form) is ToolStripItem item)
+                Check(item.Name == field.Name && !char.IsDigit(field.Name[^1]), "Toolbar item must have a matching meaningful name: " + field.Name);
+        }
         var schemaField = typeof(Main).GetField("databaseSchema", instance);
         var schema = new DbSchema
         {
@@ -25,8 +32,8 @@ internal static class MainBindingsTests
         };
         schemaField.SetValue(form, schema);
         Invoke("BindDatabaseSchema");
-        var import = Field<ComboBox>("comboBox1");
-        var query = Field<ComboBox>("comboBox2");
+        var import = Field<ComboBox>("importTableComboBox");
+        var query = Field<ComboBox>("queryTableComboBox");
         query.SelectedIndex = 1;
         Check(import.Text == "ImportTable" && query.Text == "QueryTable", "Import and query selections must be independent");
         var databaseType = typeof(Main).Assembly.GetType("DataPieDesktop.AppState").GetField("DatabaseType");
@@ -35,12 +42,12 @@ internal static class MainBindingsTests
         {
             databaseType.SetValue(null, "SQLSERVER");
             Invoke("generateSelectSqlButton_Click", form, EventArgs.Empty);
-            Check(Field<RichTextBox>("richTextBox1").Text.Contains("QueryTable"), "SQL generation uses the query selection");
+            Check(Field<RichTextBox>("sqlEditorRichTextBox").Text.Contains("QueryTable"), "SQL generation uses the query selection");
         }
         finally { databaseType.SetValue(null, originalType); }
 
-        var tree = Field<TreeView>("treeView1");
-        var list = Field<ListBox>("listBox1");
+        var tree = Field<TreeView>("exportObjectsTreeView");
+        var list = Field<ListBox>("selectedExportObjectsListBox");
         var add = typeof(Main).GetMethod("AddSelectedNode", helper);
         void Add(TreeNode node) => add.Invoke(null, new object[] { list, node });
         Add(null);
@@ -52,20 +59,20 @@ internal static class MainBindingsTests
         Add(tree.Nodes[1].Nodes[0]);
         Check(list.Items.Count == 2, "View nodes remain selectable");
         list.SelectedIndex = -1;
-        Invoke("listBox1_DoubleClick", form, EventArgs.Empty);
+        Invoke("selectedExportObjectsListBox_DoubleClick", form, EventArgs.Empty);
         Check(list.Items.Count == 2, "Empty selection removal is safe");
         list.SelectedIndex = 0;
         Invoke("removeExportItemButton_Click", form, EventArgs.Empty);
         Check(list.Items.Count == 1, "Remove button uses shared removal");
-        var procedures = Field<TreeView>("treeView2");
+        var procedures = Field<TreeView>("availableProceduresTreeView");
         procedures.SelectedNode = procedures.Nodes[0].Nodes[0];
         Invoke("addProcedureButton_Click", form, EventArgs.Empty);
-        Check(Field<ListBox>("listBox2").Items.Count == 1, "Procedure addition uses shared validation");
+        Check(Field<ListBox>("selectedProceduresListBox").Items.Count == 1, "Procedure addition uses shared validation");
 
         schemaField.SetValue(form, new DbSchema { Name = "Empty" });
         Invoke("BindDatabaseSchema");
         Check(import.SelectedIndex == -1 && query.SelectedIndex == -1, "Empty schemas clear table selections");
-        Check(list.Items.Count == 0 && Field<ListBox>("listBox2").Items.Count == 0, "Rebinding clears execution lists");
+        Check(list.Items.Count == 0 && Field<ListBox>("selectedProceduresListBox").Items.Count == 0, "Rebinding clears execution lists");
         Add(tree.Nodes[0]);
         Check(list.Items.Count == 0, "Empty groups cannot be selected as tables");
         using var other = new Main();

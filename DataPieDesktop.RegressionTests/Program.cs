@@ -41,7 +41,7 @@ internal static class Program
         bool completed = false;
         await Run(() => throw new InvalidOperationException("expected failure"), () => completed = true, true);
         Check(!completed, "Failure must not run success callback");
-        Check(Field<ToolStripStatusLabel>("toolStripStatusLabel1").Text.Contains("expected failure"), "Failure is shown");
+        Check(Field<ToolStripStatusLabel>("operationMessageStatusLabel").Text.Contains("expected failure"), "Failure is shown");
         Check(!Field<bool>("operationRunning") && !Field<bool>("sqliteExportRunning"), "Failure clears operation state");
 
         using var release = new ManualResetEventSlim();
@@ -54,18 +54,18 @@ internal static class Program
             Task first = Refresh();
             Task second = Refresh();
             Check(first.IsCompleted && second.IsCompleted, "Repeated progress clicks must not start polling loops");
-            Check(Field<ToolStripStatusLabel>("toolStripStatusLabel2").Text.Contains("42"), "Manual refresh shows current count");
+            Check(Field<ToolStripStatusLabel>("operationDetailsStatusLabel").Text.Contains("42"), "Manual refresh shows current count");
             await Run(() => throw new Exception("Busy operation must not run"), () => throw new Exception("Busy callback must not run"));
             SqlServerToSQLite.TotalCopyed = 84;
             await Task.Delay(5200);
-            Check(Field<ToolStripStatusLabel>("toolStripStatusLabel2").Text.Contains("84"), "Timer refreshes progress without manual clicks");
+            Check(Field<ToolStripStatusLabel>("operationDetailsStatusLabel").Text.Contains("84"), "Timer refreshes progress without manual clicks");
         }
         finally { release.Set(); await active; }
         Check(completed && !Field<bool>("sqliteExportRunning"), "Successful export stops progress");
-        Field<ToolStripStatusLabel>("toolStripStatusLabel2").Text = "finished";
+        Field<ToolStripStatusLabel>("operationDetailsStatusLabel").Text = "finished";
         await Refresh();
         await Task.Delay(5200);
-        Check(Field<ToolStripStatusLabel>("toolStripStatusLabel2").Text == "finished", "Stopped progress cannot overwrite final status");
-        Check(Field<ToolStrip>("toolStrip1").Enabled, "Inputs are restored");
+        Check(Field<ToolStripStatusLabel>("operationDetailsStatusLabel").Text == "finished", "Stopped progress cannot overwrite final status");
+        Check(Field<ToolStrip>("mainToolStrip").Enabled, "Inputs are restored");
     }
 }
