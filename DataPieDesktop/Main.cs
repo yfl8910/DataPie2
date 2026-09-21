@@ -681,8 +681,10 @@ namespace DataPieDesktop
                 using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(filename)));
                 SqlServerToSQLite.dbs = databaseSchema;
-                databaseSchema.ViewDefinitions = ((SqlServerDbAccess)access).ReadViewDefinitions();
-                databaseSchema.Procedures = ((SqlServerDbAccess)access).ReadProcedureDefinitions();
+                var sqlServer = (SqlServerDbAccess)access;
+                sqlServer.LoadForeignKeys(databaseSchema.Tables);
+                databaseSchema.ViewDefinitions = sqlServer.ReadViewDefinitions();
+                databaseSchema.Procedures = sqlServer.ReadProcedureDefinitions();
                 migration = SqlServerToSQLite.CreateSQLiteDatabase(filename, password, true);
                 SqlServerToSQLite.CopySqlServerRowsToSQLiteDB(access.ConnectionString, filename, password);
                 watch.Stop();
