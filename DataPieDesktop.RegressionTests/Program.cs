@@ -18,6 +18,7 @@ internal static class Program
             {
                 ConnectionFormTests.Run();
                 MainBindingsTests.Run(form);
+                await ConnectionSwitchTests.Run(form);
                 await CheckOperations(form);
             }
             catch (Exception ex) { failure = ex; }

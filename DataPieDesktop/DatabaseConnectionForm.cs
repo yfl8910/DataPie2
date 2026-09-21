@@ -139,21 +139,13 @@ namespace DataPieDesktop
             await RunActionAsync(async () =>
             {
                 var record = readConnection();
-                await Task.Run(() => TestConnection(record));
-                if (save) connectionStore.Save(record, onlyIfMissing: true);
-                AppState.ConnectionString = record.ConnectionStrings;
-                AppState.DatabaseType = record.Dbtype;
-                AppState.DatabaseName = record.Dbname;
+                if (record == null) throw new InvalidOperationException("Please select a database connection.");
+                var connection = new DatabaseConnectionInfo(record.Dbtype, record.ConnectionStrings, record.Dbname);
                 if (main == null || main.IsDisposed)
-                {
                     main = new Main();
-                    main.Show();
-                }
-                else
-                {
-                    main.Show();
-                    await main.LoadDatabaseSchemaAsync();
-                }
+                await main.SwitchConnectionAsync(connection);
+                main.Show();
+                if (save) connectionStore.Save(record, onlyIfMissing: true);
                 Hide();
             });
         }

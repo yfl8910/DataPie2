@@ -80,11 +80,9 @@ internal static class ConnectionFormTests
             Check(typeof(DatabaseConnectionForm).GetMethod(name + "_Click", flags) != null, "Missing click handler: " + name);
         }
         Check(Field<Button>("loadDatabasesButton").Text == "Load Databases", "Database listing must not be labeled as a connection test");
-        var state = typeof(DatabaseConnectionForm).Assembly.GetType("DataPieDesktop.AppState").GetField("ConnectionString");
-        object previous = state.GetValue(null);
         Field<ComboBox>("savedConnectionComboBox").Items.Add(new Dbinfo { Dbname = "sample", ConnectionStrings = "new", Dbtype = "SQLITE" });
         Field<ComboBox>("savedConnectionComboBox").SelectedIndex = 0;
-        Check(Equals(previous, state.GetValue(null)), "Selecting a saved connection must not change the active connection");
+        Check(typeof(DatabaseConnectionForm).Assembly.GetType("DataPieDesktop.AppState") == null, "Connection selection must not depend on global application state");
         Field<ComboBox>("serverNameComboBox").Text = "changed-server";
         var current = (DBConfig)typeof(DatabaseConnectionForm).GetMethod("ReadSqlServerConfig", flags).Invoke(form, new object[] { "changed-db" });
         Check(current.ServerName == "changed-server" && current.DataBase == "changed-db", "Connection must read current UI values");

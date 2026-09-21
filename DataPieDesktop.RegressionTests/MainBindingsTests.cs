@@ -36,15 +36,15 @@ internal static class MainBindingsTests
         var query = Field<ComboBox>("queryTableComboBox");
         query.SelectedIndex = 1;
         Check(import.Text == "ImportTable" && query.Text == "QueryTable", "Import and query selections must be independent");
-        var databaseType = typeof(Main).Assembly.GetType("DataPieDesktop.AppState").GetField("DatabaseType");
-        object originalType = databaseType.GetValue(null);
+        var connectionField = typeof(Main).GetField("currentConnection", instance);
+        object originalConnection = connectionField.GetValue(form);
         try
         {
-            databaseType.SetValue(null, "SQLSERVER");
+            connectionField.SetValue(form, new DatabaseConnectionInfo("SQLSERVER", "Server=sample", "Sample"));
             Invoke("generateSelectSqlButton_Click", form, EventArgs.Empty);
             Check(Field<RichTextBox>("sqlEditorRichTextBox").Text.Contains("QueryTable"), "SQL generation uses the query selection");
         }
-        finally { databaseType.SetValue(null, originalType); }
+        finally { connectionField.SetValue(form, originalConnection); }
 
         var tree = Field<TreeView>("exportObjectsTreeView");
         var list = Field<ListBox>("selectedExportObjectsListBox");

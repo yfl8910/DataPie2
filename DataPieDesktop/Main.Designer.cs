@@ -765,7 +765,6 @@ namespace DataPieDesktop
             Name = "Main";
             Text = "DataPie V2026.09（杨福来）";
             FormClosed += Main_FormClosed;
-            Load += Main_Load;
             mainTabControl.ResumeLayout(false);
             importTabPage.ResumeLayout(false);
             importFolderGroupBox.ResumeLayout(false);

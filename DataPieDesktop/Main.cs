@@ -15,6 +15,7 @@ namespace DataPieDesktop
     public partial class Main : Form
     {
         private DbSchema databaseSchema;
+        private DatabaseConnectionInfo currentConnection;
         private bool operationRunning;
         private bool updatingStatusLayout;
         private bool sqliteExportRunning;
@@ -86,8 +87,8 @@ namespace DataPieDesktop
 
         private async Task RunExportAsync(Action<IDbAccess, string> export)
         {
-            string connectionString = AppState.ConnectionString;
-            string databaseType = AppState.DatabaseType;
+            string connectionString = currentConnection.ConnectionString;
+            string databaseType = currentConnection.DatabaseType;
             var watch = new Stopwatch();
             await RunOperationAsync(() =>
             {
@@ -158,27 +159,34 @@ namespace DataPieDesktop
             finally { updatingStatusLayout = false; }
         }
 
-        private async void Main_Load(object sender, EventArgs e)
+        public async Task SwitchConnectionAsync(DatabaseConnectionInfo connection)
         {
-            await LoadDatabaseSchemaAsync();
-        }
-
-        public async Task LoadDatabaseSchemaAsync()
-        {
+            ArgumentNullException.ThrowIfNull(connection);
+            if (IsDisposed || Disposing) throw new ObjectDisposedException(nameof(Main));
+            if (operationRunning) throw new InvalidOperationException("Please wait for the current operation before switching databases.");
             var watch = new Stopwatch();
             DbSchema schema = null;
+            bool switched = false;
             await RunOperationAsync(() =>
             {
                 watch.Start();
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
+                access.conn.Open();
                 schema = access.ShowDbSchema();
                 watch.Stop();
             }, () =>
             {
+                currentConnection = connection;
                 databaseSchema = schema;
                 BindDatabaseSchema();
+                var previous = queryResultsGridView.DataSource as DataTable;
+                queryResultsGridView.DataSource = null;
+                previous?.Dispose();
+                importFolderPathTextBox.Clear();
+                switched = true;
                 ShowMessage($"Database loaded successfully! Time: {watch.Elapsed.TotalSeconds:F1} seconds.");
             }, "Loading data...");
+            if (!switched) throw new InvalidOperationException(operationMessageStatusLabel.Text);
         }
 
         private void BindDatabaseSchema()
@@ -187,6 +195,8 @@ namespace DataPieDesktop
             // Separate data sources keep the import and query selections independent.
             importTableComboBox.DataSource = tableNames;
             queryTableComboBox.DataSource = tableNames.ToArray();
+            importTableComboBox.SelectedIndex = -1;
+            queryTableComboBox.SelectedIndex = -1;
             importTableComboBox.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
             queryTableComboBox.SelectedIndex = tableNames.Length > 0 ? 0 : -1;
             operationMessageStatusLabel.Text = databaseSchema.Name;
@@ -226,20 +236,22 @@ namespace DataPieDesktop
         //Template Export
         private async void exportTemplateButton_Click(object sender, EventArgs e)
         {
+            var connection = currentConnection;
             string selectedTable = importTableComboBox.Text;
             if (string.IsNullOrWhiteSpace(selectedTable)) return;
             string filename = FileDialogs.ShowSaveDialog(selectedTable, ".xlsx");
             if (filename == null) return;
             await RunOperationAsync(() =>
             {
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
-                using var reader = access.GetDataReader(SqlQueryBuilder.BuildSelectAll(selectedTable, AppState.DatabaseType) + " where 1=2");
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
+                using var reader = access.GetDataReader(SqlQueryBuilder.BuildSelectAll(selectedTable, connection.DatabaseType) + " where 1=2");
                 ExcelIO.SaveMiniExcel(filename, reader, selectedTable);
             });
         }
         //Delete
         private async void clearTableDataButton_Click(object sender, EventArgs e)
         {
+            var connection = currentConnection;
             string selectedTable = importTableComboBox.Text;
             if (string.IsNullOrWhiteSpace(selectedTable))
             {
@@ -253,7 +265,7 @@ namespace DataPieDesktop
             await RunOperationAsync(() =>
             {
                 watch.Start();
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 access.TruncateTable(selectedTable);
                 watch.Stop();
             }, () => ShowMessage($"Delete time: {watch.Elapsed.TotalSeconds:F1} seconds"),
@@ -263,6 +275,7 @@ namespace DataPieDesktop
         // Import Excel
         private async void importFileButton_Click(object sender, EventArgs e)
         {
+            var connection = currentConnection;
             if (importFilePathTextBox.Text == "" || importTableComboBox.Text == "")
             {
                 MessageBox.Show("please choose table and file to import!");
@@ -274,7 +287,7 @@ namespace DataPieDesktop
             await RunOperationAsync(() =>
             {
                 watch.Start();
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 ImportFile(importTable, importPath, access);
                 watch.Stop();
             }, () => ShowMessage($"Import success, Time: {watch.Elapsed.TotalSeconds:F1} seconds"),
@@ -352,19 +365,20 @@ namespace DataPieDesktop
         private async void previewQueryButton_Click(object sender, EventArgs e)
         {
             if (string.IsNullOrWhiteSpace(sqlEditorRichTextBox.Text) &&
-                !GenerateSql(table => SqlWriter.WriteSelect(table, AppState.DatabaseType, 1000), "Select SQL generated"))
+                !GenerateSql(table => SqlWriter.WriteSelect(table, currentConnection.DatabaseType, 1000), "Select SQL generated"))
                 return;
             await LoadQueryPreviewAsync(sqlEditorRichTextBox.Text);
         }
 
         private async Task LoadQueryPreviewAsync(string sql)
         {
+            var connection = currentConnection;
             DataTable result = null;
             bool truncated = false;
             var watch = Stopwatch.StartNew();
             await RunOperationAsync(() =>
             {
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 result = QueryPreview.Load(access, sql, 1000, out truncated);
             }, () =>
             {
@@ -422,7 +436,7 @@ namespace DataPieDesktop
             }
             string filename = FileDialogs.ShowSaveDialog(tableName, ".xlsx");
             if (filename != null)
-                await ExportQueryToExcelAsync(SqlQueryBuilder.BuildSelectAll(tableName, AppState.DatabaseType), filename, tableName);
+                await ExportQueryToExcelAsync(SqlQueryBuilder.BuildSelectAll(tableName, currentConnection.DatabaseType), filename, tableName);
         }
 
         private Task ExportQueryToExcelAsync(string sql, string filePath, string sheetName)
@@ -437,7 +451,7 @@ namespace DataPieDesktop
         private void ShowMessage(string message)
         {
             operationDetailsStatusLabel.Text = string.Empty;
-            operationMessageStatusLabel.Text = AppState.DatabaseName + "-" + message;
+            operationMessageStatusLabel.Text = currentConnection?.DisplayName + "-" + message;
             operationMessageStatusLabel.ToolTipText = operationMessageStatusLabel.Text;
             operationMessageStatusLabel.ForeColor = Color.Red;
         }
@@ -551,12 +565,13 @@ namespace DataPieDesktop
 
         private async Task ExecuteProceduresAsync(IList<string> procs)
         {
+            var connection = currentConnection;
             var watch = new Stopwatch();
             var warnings = new List<string>();
             await RunOperationAsync(() =>
             {
                 watch.Start();
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 var scripts = access is SQLiteDbAccess ? access.GetProcs() : new List<Proc>();
                 foreach (string name in procs)
                 {
@@ -581,17 +596,17 @@ namespace DataPieDesktop
 
         private void generateSelectSqlButton_Click(object sender, EventArgs e)
         {
-            GenerateSql(table => SqlWriter.WriteSelect(table, AppState.DatabaseType, 1000), "Select SQL generated");
+            GenerateSql(table => SqlWriter.WriteSelect(table, currentConnection.DatabaseType, 1000), "Select SQL generated");
         }
 
         private void generateDeleteSqlButton_Click(object sender, EventArgs e)
         {
-            GenerateSql(table => SqlWriter.WriteDelete(table, AppState.DatabaseType), "Delete SQL generated");
+            GenerateSql(table => SqlWriter.WriteDelete(table, currentConnection.DatabaseType), "Delete SQL generated");
         }
 
         private void generateUpdateSqlButton_Click(object sender, EventArgs e)
         {
-            GenerateSql(table => SqlWriter.WriteUpdate(table, AppState.DatabaseType), "Update SQL generated");
+            GenerateSql(table => SqlWriter.WriteUpdate(table, currentConnection.DatabaseType), "Update SQL generated");
         }
 
         private async void executeSqlButton_Click(object sender, EventArgs e)
@@ -607,12 +622,13 @@ namespace DataPieDesktop
 
         private async Task ExecuteSql(string Sql)
         {
+            var connection = currentConnection;
             var watch = new Stopwatch();
             int affectedRows = 0;
             await RunOperationAsync(() =>
             {
                 watch.Start();
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 affectedRows = access.ExecuteSql(Sql);
                 watch.Stop();
             }, () => ShowMessage($"Execute success, Time: {watch.Elapsed.TotalSeconds:F1} seconds, Affect {affectedRows} Rows"), "Processing...");
@@ -632,7 +648,7 @@ namespace DataPieDesktop
         private async void createSqliteButton_Click(object sender, EventArgs e)
         {
             if (operationRunning) return;
-            if (AppState.DatabaseType != "SQLSERVER" || databaseSchema == null)
+            if (currentConnection?.DatabaseType != "SQLSERVER" || databaseSchema == null)
             {
                 MessageBox.Show(this, "Please connect to a SQL Server database first.");
                 return;
@@ -656,12 +672,13 @@ namespace DataPieDesktop
 
         private async Task CreateSqlite(string filename, string password)
         {
+            var connection = currentConnection;
             var watch = new Stopwatch();
             SQLiteMigrationResult migration = null;
             await RunOperationAsync(() =>
             {
                 watch.Start();
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 Directory.CreateDirectory(Path.GetDirectoryName(Path.GetFullPath(filename)));
                 SqlServerToSQLite.dbs = databaseSchema;
                 databaseSchema.ViewDefinitions = ((SqlServerDbAccess)access).ReadViewDefinitions();
@@ -744,11 +761,12 @@ namespace DataPieDesktop
 
         private async Task ImportFolderAsync(string DbTableName, string path)
         {
+            var connection = currentConnection;
             var watch = new Stopwatch();
             await RunOperationAsync(() =>
             {
                 watch.Start();
-                using var access = DbAccessFactory.Create(AppState.ConnectionString, AppState.DatabaseType);
+                using var access = DbAccessFactory.Create(connection.ConnectionString, connection.DatabaseType);
                 var files = ImportFiles.GetFiles(path, false, "");
                 for (int i = 0; i < files.Count; i++)
                 {
