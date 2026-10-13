@@ -129,23 +129,28 @@ namespace DBUtil
 
             using SqlConnection connection = new SqlConnection(ConnectionString);
             connection.Open();
-            using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection)
+            using SqlBulkCopy bulkCopy = new SqlBulkCopy(connection, SqlBulkCopyOptions.KeepNulls, null)
             {
                 DestinationTableName = destination
             };
 
             // Discover columns using the SAME connection used for bulk copy
             var destinationColumns = new HashSet<string>(StringComparer.Ordinal);
+            var destinationTypes = new Dictionary<string, Type>(StringComparer.Ordinal);
             using (var schemaCmd = new SqlCommand($"SELECT TOP (0) * FROM {destination}", connection))
             using (var schemaReader = schemaCmd.ExecuteReader())
             {
                 for (int i = 0; i < schemaReader.FieldCount; i++)
+                {
                     destinationColumns.Add(schemaReader.GetName(i));
+                    destinationTypes.Add(schemaReader.GetName(i), schemaReader.GetFieldType(i));
+                }
             }
 
             AddColumnMappings(bulkCopy, reader, destinationColumns);
 
-            bulkCopy.WriteToServer(reader);
+            using var importReader = new ImportDataReader(reader, destinationTypes);
+            bulkCopy.WriteToServer(importReader);
             return true;
         }
 

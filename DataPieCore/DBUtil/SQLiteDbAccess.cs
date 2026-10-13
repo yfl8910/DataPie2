@@ -129,6 +129,12 @@ namespace DBUtil
             if (names.Length == 0) throw new ArgumentException("No columns to import.");
             using var connection = new SQLiteConnection(ConnectionString);
             connection.Open();
+            var destinationTypes = new Dictionary<string, Type>(StringComparer.OrdinalIgnoreCase);
+            using (var schemaCommand = new SQLiteCommand("SELECT * FROM " + QuoteIdentifier(tableName) + " WHERE 1=0", connection))
+            using (var schemaReader = schemaCommand.ExecuteReader())
+                for (int i = 0; i < schemaReader.FieldCount; i++)
+                    destinationTypes.Add(schemaReader.GetName(i), schemaReader.GetFieldType(i));
+            using var importReader = new ImportDataReader(reader, destinationTypes);
             using var transaction = connection.BeginTransaction();
             using var command = connection.CreateCommand();
             command.Transaction = transaction;
@@ -145,7 +151,7 @@ namespace DBUtil
             while (reader.Read())
             {
                 for (int i = 0; i < parameters.Length; i++)
-                    parameters[i].Value = reader.GetValue(i) ?? DBNull.Value;
+                    parameters[i].Value = importReader.GetValue(i);
                 command.ExecuteNonQuery();
             }
             transaction.Commit();
